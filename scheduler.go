@@ -11,12 +11,12 @@ import (
 	"encoding/json"
 	"unsafe"
 	"flag"
-
 	"time"
-
 	"log"
 )
 
+//These Constants are the arguments for MMAP, not all of the arguments
+//are used, but are here for completeness
 const(
 	_EINTR  = 0x4
 	_EAGAIN = 0xb
@@ -31,26 +31,42 @@ const(
 	_MAP_PRIVATE = 0x2
 	_MAP_FIXED   = 0x10
 
-	//ADDED
 	_MAP_SHARED = 0x01
+)
 
+//Constants for shared memory. These constants are also in the go
+//runtime in runtime/proc.go, they must agree or communication between
+//runttime and global scheduler will be missaligend. If you change one
+//you must change the other!
+const(
+	//The number of prealocated communication channles in shared
+	//memory. This value can change in the future, for now 5 is the
+	//maximum number of Processes. Invariant: CHANNELS >= procs. TODO
+	//assert this
 	CHANNELS = 5
+	//File discriptor for shared memory. This is set in the runscript.
+	//TODO paramatrize this, or set it as a global variable
 	DARAFD = 666
 
+	//State of spin locks. Thsese are used cas operations to control
+	//the execution of the insturmented runtimes
 	UNLOCKED = 0
 	LOCKED = 1
 
-	SCHEDLEN = 5
-
+	//The max number of goroutines any process can have. This is used
+	//for allocating shared memeory. In the future this may need to be
+	//expaneded for the moment it is intended to be a generous bound.
 	MAXGOROUTINES = 4096
 
+	//The total size of the shared memory region is
+	//PAGESIZE*SHAREDMEMPAGES
 	PAGESIZE = 4096
 	SHAREDMEMPAGES = 65536
 
+	//The length of the schedule. When recording the system will
+	//execute upto SCHEDLEN. The same is true on replay
 	RECORDLEN = 1000
-	
-	ROUNDROBIN = 0
-)
+)	
 
 var (
 	procs = flag.Int("procs", 1, "The number of processes to model check")
@@ -114,7 +130,6 @@ var (
 	err int
 	procchan *[CHANNELS]DaraProc
 	State int
-	ScheduleType int
 	LastProc int
 )
 
@@ -195,7 +210,6 @@ func main() {
 		procchan[i].Run = -1
 	}
 	//State = RECORD
-	ScheduleType = ROUNDROBIN
 	LastProc = -1
 	ProcID := roundRobin()
 	
@@ -354,12 +368,3 @@ func roundRobin() int {
 	}
 	return LastProc
 }
-
-func populateSchedule() []int {
-	s := make([]int,SCHEDLEN)
-	for i:=0;i<SCHEDLEN;i++ {
-		s[i]=i%*procs + 1
-	}
-	return s
-}
-
