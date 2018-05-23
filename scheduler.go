@@ -10,6 +10,7 @@ import (
 	//"runtime/internal/atomic"
 	"encoding/json"
 	"unsafe"
+	"flag"
 
 	"time"
 
@@ -40,21 +41,25 @@ const(
 	LOCKED = 1
 
 	SCHEDLEN = 5
-	PROCS = 3
 
 	MAXGOROUTINES = 4096
 
 	PAGESIZE = 4096
 	SHAREDMEMPAGES = 65536
 
-	RECORD = 0
-	REPLAY = 1
-
-	RECORDLEN = 500
+	RECORDLEN = 1000
 	
 	ROUNDROBIN = 0
 )
 
+var (
+	procs = flag.Int("procs", 1, "The number of processes to model check")
+	record = flag.Bool("w", false, "Record an execution")
+	replay = flag.Bool("r", false, "Replay an execution")
+	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
+)
+
+	//Goroutine states from runtime/proc.go
 const (
 	_Gidle = iota // 0
 	_Grunnable // 1
@@ -72,7 +77,7 @@ const (
 	_Gscanwaiting  = _Gscan + _Gwaiting  // 0x1004
 )
 
-
+//array of status to string from runtime/proc.go
 var gStatusStrings = [...]string{
 	_Gidle:      "idle",
 	_Grunnable:  "runnable",
@@ -139,34 +144,49 @@ func (s *Schedule) String() string{
 	return output
 }
 
+func checkargs() {
+	flag.Parse()
+	if *record && *replay {
+		l.Fatal("enable either replay or record, not both")
+	}
+	if !(*record || *replay) {
+		l.Fatal("enable replay or record")
+	}
+	if *record {
+		l.Print("Recording")
+	} else {
+		l.Print("Replaying")
+	}
+	return
+}
+
+
+
 
 func main() {
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
+	checkargs()
 	l.Println("Starting the Scheduler")
 
-	var errudp error
-	udpl, errudp = net.ListenPacket("udp", "localhost:6666")
-	udpb = make([]byte,128)
-	if errudp !=nil {
-		l.Fatal(errudp)
+
+	//If manual step forward in time by reading udp packets
+	if *manual {
+		var errudp error
+		udpl, errudp = net.ListenPacket("udp", "localhost:6666")
+		udpb = make([]byte,128)
+		if errudp !=nil {
+			l.Fatal(errudp)
+		}
 	}
 
-
-	//TODO Document and use better cmd line args
-	state := os.Args[1]
-	if state == "-w" {
-		State = RECORD
-	} else if state == "-r" {
-		State = REPLAY
-	} else {
-		l.Fatal("Please specify operation mode (-w record, -r replay)")
-	}
 
 	//Init MMAP (this should be moved to the init function
 	p , err = runtime.Mmap(nil,SHAREDMEMPAGES*PAGESIZE,_PROT_READ|_PROT_WRITE ,_MAP_SHARED,DARAFD,0)
 
+	//TODO can probably be deleted
 	time.Sleep(time.Second * 1)
 
+	//Map control struct into shared memory
 	procchan = (*[CHANNELS]DaraProc)(p)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
@@ -179,7 +199,7 @@ func main() {
 	LastProc = -1
 	ProcID := roundRobin()
 	
-	if State == REPLAY {
+	if *replay {
 		var i int
 		f, err := os.Open("Schedule.json")
 		if err != nil {
@@ -196,8 +216,8 @@ func main() {
 			//else busy wait
 			if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) {
 				if procchan[schedule[i].ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
-					l.Print("GET GET GET GET GOT GOT GOT\n")
 
+					//move forward
 					forward()
 
 					//l.Print("Scheduling Event")
@@ -210,6 +230,7 @@ func main() {
 							runnable = append(runnable,j)
 						}
 					}
+					//TODO clean up init
 					runningindex := 0
 					if len(runnable) == 0 {
 						//This should only occur when the processes
@@ -222,6 +243,7 @@ func main() {
 						//replay schedule
 						runningindex = schedule[i].Routine.Gid
 					}
+					//Assign which goroutine to run
 					procchan[schedule[i].ProcID].Run = runningindex //TODO make this the scheduled GID
 					procchan[schedule[i].ProcID].RunningRoutine = schedule[i].Routine //TODO make this the scheduled GID
 					l.Printf("Running (%d/%d) %d %s",i,len(schedule),schedule[i].ProcID,schedule[i].Routine.String())
@@ -245,8 +267,10 @@ func main() {
 								i++
 								break
 							}
-							//l.Print("Still running")
+							//Preemtion is turned off so this should
+							//never happen.
 							atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
+							//TODO log.Fatalf("Preemtion is turned on")
 						}
 						//time.Sleep(time.Second)
 						
@@ -254,13 +278,8 @@ func main() {
 				}
 			}
 		}
-	} else if State == RECORD {
+	} else if *record {
 		var i int
-		f, err := os.Create("Schedule.json")
-		if err != nil {
-			l.Fatal(err)
-		}
-		enc := json.NewEncoder(f)
 		for i<RECORDLEN {
 			//l.Println("RUNNING SCHEDULER")
 			//else busy wait
@@ -305,15 +324,20 @@ func main() {
 					}
 				}
 			}
+			f, erros := os.Create("Schedule.json")
+			if erros != nil {
+				l.Fatal(err)
+			}
+			enc := json.NewEncoder(f)
+			enc.Encode(schedule)
 		}
-		enc.Encode(schedule)
 		l.Printf(schedule.String())
 
 	}
 }
 
 func forward() {
-	if false {
+	if *manual {
 		udpl.ReadFrom(udpb)
 		l.Print(udpb)
 	} else {
@@ -324,7 +348,7 @@ func forward() {
 var schedule Schedule
 
 func roundRobin() int {
-	LastProc = (LastProc + 1) % (PROCS+1)
+	LastProc = (LastProc + 1) % (*procs+1)
 	if LastProc == 0 {
 		LastProc++
 	}
@@ -334,7 +358,7 @@ func roundRobin() int {
 func populateSchedule() []int {
 	s := make([]int,SCHEDLEN)
 	for i:=0;i<SCHEDLEN;i++ {
-		s[i]=i%PROCS + 1
+		s[i]=i%*procs + 1
 	}
 	return s
 }
