@@ -6,6 +6,8 @@ dgo='/usr/local/go/bin/go'
 PROCESSES=1
 #Name of test program
 Program=sharedIntegerChannelRandom
+#Scheduler Directory
+SchedulerDir=github.com/DARA-Projects/GoDist-Scheduler
 
 #Kills all prior running instacnes of the program
 killall $Program
@@ -18,7 +20,7 @@ fi
 
 #Install the scheduler
 echo INSTALLING THE SCHEDULER
-$dgo install github.com/wantonsolutions/dara/scheduler
+$dgo install $SchedulerDir
 
 #Setup shared memory of size 400M
 dd if=/dev/zero of=./DaraSharedMem bs=400M count=1
@@ -32,9 +34,10 @@ exec 666<> ./DaraSharedMem
 
 #args $1 $2 order does not matter, used to specify number procs / read||write / manual
 #read sched documentation fo command line info
-echo "scheduler $1 $2 1>s.out 2>s.out &"
+echo "GoDist-Scheduler $1 $2 1>s.out 2>s.out &"
 #Run scheduler in the background
-scheduler $1 $2 1> s.out 2> s.out &
+GoDist-Scheduler $1 $2 1> s.out 2> s.out &
+sleep 2
 
 #wait 2 seconds to make sure the scheduler has locked all the data to
 #stop the system from making grogress.

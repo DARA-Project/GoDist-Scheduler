@@ -1,4 +1,4 @@
-*.swp
+*.sw*
 DaraSharedMem
 Schedule.json
 s.out
