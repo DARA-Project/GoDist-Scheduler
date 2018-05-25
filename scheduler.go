@@ -104,9 +104,29 @@ var gStatusStrings = [...]string{
 	_Gcopystack: "copystack",
 }
 
-
+//DaraProc is used to communicate control and data information between
+//a single instrumented go runtime and the global scheduler. One of
+//these strucures is mapped into shared memory for each process that
+//is launched during an execution. If there are more runtimes active
+//Than DaraProcs the additional runtimes will not be controlled by the
+//global scheduler, or Segfault immidiatly 
 type DaraProc struct {
+
+	//Lock is used to controll the execution of a process. A process
+	//which is running but Not scheduled will spin on this lock using
+	//checkandset operations If the lock is held The owner can modify
+	//the state of the DaraProc
 	Lock int32
+	
+	//Run is a depricated var with multipul purposes. Procs set their
+	//Run to -1 when they Are done running (in replay mode) to let the
+	//scheduler know they are done. The global scheduler sets this
+	//value to 2 to let the runtime know its replay, and 3 for record
+	//1 is used to denote the first event, and 0 indicates this
+	//variable has not been initalized Originally Run was intended to
+	//report the id of the goroutine that was executed, but that was
+	//not always the same so the program counter  was needed, now
+	//RunningRoutine is used to report this
 	Run int
 	TotalRoutines int
 	RunningRoutine RoutineInfo
