@@ -15,8 +15,26 @@ import (
 	"log"
 )
 
+//Command line arguments
+var (
+	procs = flag.Int("procs", 1, "The number of processes to model check")
+	record = flag.Bool("w", false, "Record an execution")
+	replay = flag.Bool("r", false, "Replay an execution")
+	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
+)
+
+//*****************************************************************/
+// 					BEGIN SHARED VARIABLES
+
+//Varables and constants in the follow section are defined both in the
+//runtime, and in the global scheduler. The MUST agree, if not
+//commucation through shared memory with be missaligend.
+
 //These Constants are the arguments for MMAP, not all of the arguments
 //are used, but are here for completeness
+
+//*****************************************************************/
+
 const(
 	_EINTR  = 0x4
 	_EAGAIN = 0xb
@@ -68,24 +86,18 @@ const(
 	RECORDLEN = 1000
 )	
 
-var (
-	procs = flag.Int("procs", 1, "The number of processes to model check")
-	record = flag.Bool("w", false, "Record an execution")
-	replay = flag.Bool("r", false, "Replay an execution")
-	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
-)
 
-	//Goroutine states from runtime/proc.go
+//Goroutine states from runtime/proc.go
 const (
-	_Gidle = iota // 0
-	_Grunnable // 1
-	_Grunning // 2
-	_Gsyscall // 3
-	_Gwaiting // 4
-	_Gmoribund_unused // 5
-	_Gdead // 6
-	_Genqueue_unused // 7
-	_Gcopystack // 8
+	_Gidle = iota 		// 0
+	_Grunnable 			// 1
+	_Grunning 			// 2
+	_Gsyscall 			// 3
+	_Gwaiting 			// 4
+	_Gmoribund_unused 	// 5
+	_Gdead 				// 6
+	_Genqueue_unused 	// 7
+	_Gcopystack 		// 8
 	_Gscan         = 0x1000
 	_Gscanrunnable = _Gscan + _Grunnable // 0x1001
 	_Gscanrunning  = _Gscan + _Grunning  // 0x1002
@@ -128,16 +140,37 @@ type DaraProc struct {
 	//not always the same so the program counter  was needed, now
 	//RunningRoutine is used to report this
 	Run int
-	TotalRoutines int
+	//RunningRoutine is the goroutine scheduled, running, or ran, for
+	//any single replayed event in a schedule. In Record, the
+	//executed goroutine is reported via this variable, in Replay the
+	//global scheduler tells the runtime which routine to run with
+	//RunningRoutine
 	RunningRoutine RoutineInfo
+	//Routines is the full set of goroutines a process is allowed to
+	//run. The total number is allocated upfront so that shared memory
+	//does not need to be resized dynamically. After each itteration
+	//of scheduling runtimes update the states of all their routines
+	//via this structure
 	Routines [MAXGOROUTINES]RoutineInfo
 }
 
+//RoutineInfo contains data specific to a single goroutine
 type RoutineInfo struct {
+	//Set to one of the statuses in the constant block above
 	Status uint32
+	//Goroutine id as set by the runtime. This is sometimes usefull
+	//for detecting which routine is which, but it is not always the
+	//same between runs. However 1 is allways main, while 2 is a
+	//finalizer, and 3 is a garbage collection invocator.
 	Gid int
+	//Program counter that this goroutine was launched from
 	Gpc uintptr
+	//A count of how many other goroutines were launched on the same
+	//pc prior to this goroutine. (Gpc,Routinecount) is a unique id
+	//for a goroutine on a given processor.
 	RoutineCount int
+	//A textual discription of the function this goroutine was forked
+	//from.In the future it can be removed.
 	FuncInfo [64]byte
 }
 
@@ -145,23 +178,46 @@ func (ri *RoutineInfo) String() string {
 	return fmt.Sprintf("[Status: %s Gid: %d Gpc: %d Rc: %d F: %s]",gStatusStrings[(*ri).Status],(*ri).Gid,(*ri).Gpc,(*ri).RoutineCount, string((*ri).FuncInfo[:64]))
 }
 
+//*****************************************************************/
+// 					END SHARED VARIABLES
+//*****************************************************************/
+
+//Global variables specific to shared memory
 var (
+	//pointer to shared memory, unsafe so that it can be casted
 	p unsafe.Pointer
+	//err is an integer, because it is set from errors in the runtime
+	//where there is no error type set
 	err int
+	//Procchan is the communication channel laid over shared memory
 	procchan *[CHANNELS]DaraProc
-	State int
+	//Used to determine which process (runtime) will be run on the
+	//next scheduling decision when in record mode
 	LastProc int
 )
 
 var (
 	l *log.Logger
+	//dupl connects with a terminal for manual stepping through an
+	//execution
 	udpl net.PacketConn
+	//buffer for reading from the manual event stepper, the values
+	//read into the buffer really don't matter yet
+	//TODO allow users to specifcy scheduling decisions based on udp
+	//stepping
 	udpb []byte
+	//global schedule
+	//TODO make all schedule operations object calls on the scedule
+	//(ie schedule.next())
+	schedule Schedule
 )
 
-
+//Event is a wrapper for a single scheduling event
 type Event struct {
+	//ProcID is an ID for a single runtime
 	ProcID int
+	//Routine contians information about the routine to run, including
+	//state, blocking, and id information
 	Routine RoutineInfo
 }
 
@@ -169,8 +225,12 @@ func (e *Event) String() string {
 		return fmt.Sprintf("[ProcID %d, %s]\n",(*e).ProcID,(*e).Routine.String())
 }
 
+//Type which encapsulates a single schedule
+//TODO integerate with vaastav to build a single schedule for DPOR
 type Schedule []Event
 
+//Get Schedule string
+//TODO make this fast with buffers
 func (s *Schedule) String() string{
 	var output string
 	for i := range *s {
@@ -181,6 +241,7 @@ func (s *Schedule) String() string{
 
 func checkargs() {
 	flag.Parse()
+	//Set exactly one arg for record or replay
 	if *record && *replay {
 		l.Fatal("enable either replay or record, not both")
 	}
@@ -199,6 +260,7 @@ func checkargs() {
 
 
 func main() {
+	//Set up logger
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
 	l.Println("Starting the Scheduler")
@@ -229,16 +291,23 @@ func main() {
 		procchan[i].Lock = UNLOCKED
 		procchan[i].Run = -1
 	}
-	//State = RECORD
+	//Initalize Processes scheduling with scheduling type
 	LastProc = -1
 	ProcID := roundRobin()
 	
+	//-----------------REPLAY-----------------//
 	if *replay {
-		var i int
+		var i int // itterator for schedule
+		//Read in schedule from disk
 		f, err := os.Open("Schedule.json")
 		if err != nil {
+			//TODO print out a reasonable error message along with the
+			//fatal
+			//TODO take the Scedule as a command line arg
+			l.Println("Unable to read Schedule.json from current directory")
 			l.Fatal(err)
 		}
+		//Decode scedule from json encoding
 		dec := json.NewDecoder(f)
 		err = dec.Decode(&schedule)
 		if err != nil {
@@ -358,6 +427,11 @@ func main() {
 					}
 				}
 			}
+			//Here the schedule is written out after every itteration
+			//of the record (exploration) stage. This is done so that
+			//if the record phase fails, all of the schedule up till
+			//this point is recoreded, and can be repayed to find the
+			//root cause of the error.
 			f, erros := os.Create("Schedule.json")
 			if erros != nil {
 				l.Fatal(err)
@@ -370,17 +444,23 @@ func main() {
 	}
 }
 
+//Move the scedule forward one event
 func forward() {
+	//In the manual case read from udp. This should just be a return
+	//read from another terminal from ui.go
 	if *manual {
 		udpl.ReadFrom(udpb)
 		l.Print(udpb)
 	} else {
+		//Sleep for a short period of time
+		//TODO work towards getting this to 0, i.e remove all timing
+		//bugs
 		time.Sleep(100 *time.Millisecond)
 	}
 }
 
-var schedule Schedule
-
+//Round robin scheduling alorithm, uses and sets globals LastProc, and
+//procs
 func roundRobin() int {
 	LastProc = (LastProc + 1) % (*procs+1)
 	if LastProc == 0 {
