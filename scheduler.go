@@ -198,6 +198,10 @@ func main() {
 	//Init MMAP (this should be moved to the init function
 	p , err = runtime.Mmap(nil,SHAREDMEMPAGES*PAGESIZE,_PROT_READ|_PROT_WRITE ,_MAP_SHARED,DARAFD,0)
 
+	if err != 0 {
+		l.Fatal(err)
+	}
+
 	//TODO can probably be deleted
 	time.Sleep(time.Second * 1)
 
