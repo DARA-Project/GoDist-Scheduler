@@ -3,7 +3,7 @@ dgo='/usr/local/go/bin/go'
 PROCESSES=1
 Program=sharedIntegerChannel
 #Scheduler Directory
-SchedulerDir=github.com/DARA-Projects/GoDist-Scheduler
+SchedulerDir=github.com/DARA-Project/GoDist-Scheduler
 
 killall $Program
 

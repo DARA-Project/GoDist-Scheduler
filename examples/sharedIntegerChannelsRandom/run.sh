@@ -7,7 +7,7 @@ PROCESSES=1
 #Name of test program
 Program=sharedIntegerChannelRandom
 #Scheduler Directory
-SchedulerDir=github.com/DARA-Projects/GoDist-Scheduler
+SchedulerDir=github.com/DARA-Project/GoDist-Scheduler
 
 #Kills all prior running instacnes of the program
 killall $Program
