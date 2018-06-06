@@ -1,18 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"net"
-	"sync/atomic"
-	"runtime"
-	//"math/rand"
-	//"runtime/internal/atomic"
 	"encoding/json"
-	"unsafe"
 	"flag"
-	"time"
+	"github.com/DARA-Project/GoDist-Scheduler/common"
 	"log"
+	//"math/rand"
+	"net"
+	"os"
+	"runtime"
+	//"runtime/internal/atomic"
+	"sync/atomic"
+	"time"
+	"unsafe"
 )
 
 //These Constants are the arguments for MMAP, not all of the arguments
@@ -34,6 +34,24 @@ const(
 	_MAP_SHARED = 0x01
 )
 
+//Goroutine states from runtime/proc.go
+const (
+	_Gidle = iota // 0
+	_Grunnable // 1
+	_Grunning // 2
+	_Gsyscall // 3
+	_Gwaiting // 4
+	_Gmoribund_unused // 5
+	_Gdead // 6
+	_Genqueue_unused // 7
+	_Gcopystack // 8
+	_Gscan         = 0x1000
+	_Gscanrunnable = _Gscan + _Grunnable // 0x1001
+	_Gscanrunning  = _Gscan + _Grunning  // 0x1002
+	_Gscansyscall  = _Gscan + _Gsyscall  // 0x1003
+	_Gscanwaiting  = _Gscan + _Gwaiting  // 0x1004
+)
+
 //Constants for shared memory. These constants are also in the go
 //runtime in runtime/proc.go, they must agree or communication between
 //runttime and global scheduler will be missaligend. If you change one
@@ -53,11 +71,6 @@ const(
 	UNLOCKED = 0
 	LOCKED = 1
 
-	//The max number of goroutines any process can have. This is used
-	//for allocating shared memeory. In the future this may need to be
-	//expaneded for the moment it is intended to be a generous bound.
-	MAXGOROUTINES = 4096
-
 	//The total size of the shared memory region is
 	//PAGESIZE*SHAREDMEMPAGES
 	PAGESIZE = 4096
@@ -66,7 +79,7 @@ const(
 	//The length of the schedule. When recording the system will
 	//execute upto SCHEDLEN. The same is true on replay
 	RECORDLEN = 1000
-)	
+)
 
 var (
 	procs = flag.Int("procs", 1, "The number of processes to model check")
@@ -75,60 +88,10 @@ var (
 	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
 )
 
-	//Goroutine states from runtime/proc.go
-const (
-	_Gidle = iota // 0
-	_Grunnable // 1
-	_Grunning // 2
-	_Gsyscall // 3
-	_Gwaiting // 4
-	_Gmoribund_unused // 5
-	_Gdead // 6
-	_Genqueue_unused // 7
-	_Gcopystack // 8
-	_Gscan         = 0x1000
-	_Gscanrunnable = _Gscan + _Grunnable // 0x1001
-	_Gscanrunning  = _Gscan + _Grunning  // 0x1002
-	_Gscansyscall  = _Gscan + _Gsyscall  // 0x1003
-	_Gscanwaiting  = _Gscan + _Gwaiting  // 0x1004
-)
-
-//array of status to string from runtime/proc.go
-var gStatusStrings = [...]string{
-	_Gidle:      "idle",
-	_Grunnable:  "runnable",
-	_Grunning:   "running",
-	_Gsyscall:   "syscall",
-	_Gwaiting:   "waiting",
-	_Gdead:      "dead",
-	_Gcopystack: "copystack",
-}
-
-
-type DaraProc struct {
-	Lock int32
-	Run int
-	TotalRoutines int
-	RunningRoutine RoutineInfo
-	Routines [MAXGOROUTINES]RoutineInfo
-}
-
-type RoutineInfo struct {
-	Status uint32
-	Gid int
-	Gpc uintptr
-	RoutineCount int
-	FuncInfo [64]byte
-}
-
-func (ri *RoutineInfo) String() string {
-	return fmt.Sprintf("[Status: %s Gid: %d Gpc: %d Rc: %d F: %s]",gStatusStrings[(*ri).Status],(*ri).Gid,(*ri).Gpc,(*ri).RoutineCount, string((*ri).FuncInfo[:64]))
-}
-
 var (
 	p unsafe.Pointer
 	err int
-	procchan *[CHANNELS]DaraProc
+	procchan *[CHANNELS]common.DaraProc
 	State int
 	LastProc int
 )
@@ -138,26 +101,6 @@ var (
 	udpl net.PacketConn
 	udpb []byte
 )
-
-
-type Event struct {
-	ProcID int
-	Routine RoutineInfo
-}
-
-func (e *Event) String() string {
-		return fmt.Sprintf("[ProcID %d, %s]\n",(*e).ProcID,(*e).Routine.String())
-}
-
-type Schedule []Event
-
-func (s *Schedule) String() string{
-	var output string
-	for i := range *s {
-		output += (*s)[i].String()
-	}
-	return output
-}
 
 func checkargs() {
 	flag.Parse()
@@ -174,9 +117,6 @@ func checkargs() {
 	}
 	return
 }
-
-
-
 
 func main() {
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
@@ -206,7 +146,7 @@ func main() {
 	time.Sleep(time.Second * 1)
 
 	//Map control struct into shared memory
-	procchan = (*[CHANNELS]DaraProc)(p)
+	procchan = (*[CHANNELS]common.DaraProc)(p)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
 	for i:=range procchan {
@@ -216,7 +156,7 @@ func main() {
 	//State = RECORD
 	LastProc = -1
 	ProcID := roundRobin()
-	
+
 	if *replay {
 		var i int
 		f, err := os.Open("Schedule.json")
@@ -243,7 +183,7 @@ func main() {
 					//the goroutine ID that needs to be run
 					runnable := make([]int,0)
 					for j, info := range procchan[schedule[i].ProcID].Routines {
-						if info.Status != _Gidle {
+						if common.GetDaraProcStatus(info.Status) != common.Idle {
 							l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].ProcID,j,info.String())
 							runnable = append(runnable,j)
 						}
@@ -325,7 +265,7 @@ func main() {
 								//run
 								//ran := procchan[ProcID].Run
 								ri := procchan[ProcID].RunningRoutine
-								e := Event{ProcID,ri}
+								e := common.Event{ProcID,ri}
 								l.Printf("Ran: %s",e.String())
 								schedule = append(schedule,e)
 								procchan[ProcID].Run = -1
@@ -363,7 +303,7 @@ func forward() {
 	}
 }
 
-var schedule Schedule
+var schedule common.Schedule
 
 func roundRobin() int {
 	LastProc = (LastProc + 1) % (*procs+1)
