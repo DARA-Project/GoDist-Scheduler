@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	//"fmt"
 	"github.com/DARA-Project/GoDist-Scheduler/common"
 	"log"
 	//"math/rand"
@@ -131,8 +132,10 @@ func replay_sched() {
 		l.Fatal(err)
 	}
 	for i<len(schedule) {
+		if (i == len(schedule) - 1 || i == len(schedule)) {
+			l.Println("Hmm")
+		}
 		//l.Println("RUNNING SCHEDULER")
-
 		//else busy wait
 		if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) {
 			if procchan[schedule[i].ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
@@ -166,7 +169,7 @@ func replay_sched() {
 				//Assign which goroutine to run
 				procchan[schedule[i].ProcID].Run = runningindex //TODO make this the scheduled GID
 				procchan[schedule[i].ProcID].RunningRoutine = schedule[i].Routine //TODO make this the scheduled GID
-				l.Printf("Running (%d/%d) %d %s",i,len(schedule),schedule[i].ProcID,schedule[i].Routine.String())
+				l.Printf("Running (%d/%d) %d %s",i,len(schedule)-1,schedule[i].ProcID,schedule[i].Routine.String())
 
 				//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 				//TODO explore schedule if in explore mode?
@@ -177,6 +180,13 @@ func replay_sched() {
 
 				for {
 				//l.Printf("Busy waiting")
+					// Solves the issue when there is no progress after the last event
+					if (i == len(schedule) - 1) {
+						l.Println("should finish replay")
+						i++
+						l.Println(i)
+						break
+					}
 					if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) { 
 					//l.Print("go routine locked again")
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
@@ -198,6 +208,7 @@ func replay_sched() {
 			}
 		}
 	}
+	l.Println("Replay is over")
 }
 
 func record_sched() {
@@ -256,7 +267,7 @@ func record_sched() {
 		enc.Encode(schedule)
 	}
 	l.Printf(schedule.String())
-
+	l.Println("The End")
 }
 
 func main() {
@@ -298,7 +309,10 @@ func main() {
 
 	if *replay {
 		replay_sched()
+		l.Println("Finished replaying")
 	} else if *record {
 		record_sched()
+		l.Println("Finished recording")
 	}
+	l.Println("Backstreet's back again")
 }
