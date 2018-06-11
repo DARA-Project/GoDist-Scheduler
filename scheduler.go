@@ -34,24 +34,6 @@ const(
 	_MAP_SHARED = 0x01
 )
 
-//Goroutine states from runtime/proc.go
-const (
-	_Gidle = iota // 0
-	_Grunnable // 1
-	_Grunning // 2
-	_Gsyscall // 3
-	_Gwaiting // 4
-	_Gmoribund_unused // 5
-	_Gdead // 6
-	_Genqueue_unused // 7
-	_Gcopystack // 8
-	_Gscan         = 0x1000
-	_Gscanrunnable = _Gscan + _Grunnable // 0x1001
-	_Gscanrunning  = _Gscan + _Grunning  // 0x1002
-	_Gscansyscall  = _Gscan + _Gsyscall  // 0x1003
-	_Gscanwaiting  = _Gscan + _Gwaiting  // 0x1004
-)
-
 //Constants for shared memory. These constants are also in the go
 //runtime in runtime/proc.go, they must agree or communication between
 //runttime and global scheduler will be missaligend. If you change one
@@ -118,6 +100,165 @@ func checkargs() {
 	return
 }
 
+func forward() {
+	if *manual {
+		udpl.ReadFrom(udpb)
+		l.Print(udpb)
+	} else {
+		time.Sleep(100 *time.Millisecond)
+	}
+}
+
+var schedule common.Schedule
+
+func roundRobin() int {
+	LastProc = (LastProc + 1) % (*procs+1)
+	if LastProc == 0 {
+		LastProc++
+	}
+	return LastProc
+}
+
+func replay_sched() {
+	var i int
+	f, err := os.Open("Schedule.json")
+	if err != nil {
+		l.Fatal(err)
+	}
+	dec := json.NewDecoder(f)
+	err = dec.Decode(&schedule)
+	if err != nil {
+		l.Fatal(err)
+	}
+	for i<len(schedule) {
+		//l.Println("RUNNING SCHEDULER")
+
+		//else busy wait
+		if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) {
+			if procchan[schedule[i].ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
+
+				//move forward
+				forward()
+
+				//l.Print("Scheduling Event")
+				//TODO send a proper signal to the runtime with
+				//the goroutine ID that needs to be run
+				runnable := make([]int,0)
+				for j, info := range procchan[schedule[i].ProcID].Routines {
+					if common.GetDaraProcStatus(info.Status) != common.Idle {
+						l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].ProcID,j,info.String())
+						runnable = append(runnable,j)
+					}
+				}
+				//TODO clean up init
+				runningindex := 0
+				if len(runnable) == 0 {
+					//This should only occur when the processes
+					//have not started yet. There should be a
+					//smarter starting condition here rather than
+					//just borking on the init of the schedule
+					//l.Print("first instance")
+					runningindex = -2
+				} else {
+					//replay schedule
+					runningindex = schedule[i].Routine.Gid
+				}
+				//Assign which goroutine to run
+				procchan[schedule[i].ProcID].Run = runningindex //TODO make this the scheduled GID
+				procchan[schedule[i].ProcID].RunningRoutine = schedule[i].Routine //TODO make this the scheduled GID
+				l.Printf("Running (%d/%d) %d %s",i,len(schedule),schedule[i].ProcID,schedule[i].Routine.String())
+
+				//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
+				//TODO explore schedule if in explore mode?
+
+				//l.Print("unLocking store")
+				atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
+				//l.Print(procchan)
+
+				for {
+				//l.Printf("Busy waiting")
+					if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) { 
+					//l.Print("go routine locked again")
+						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
+						if procchan[schedule[i].ProcID].Run == -1 {
+							//l.Print("Job Done!")
+							atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
+							//l.Print(procchan)
+							i++
+							break
+						}
+						//Preemtion is turned off so this should
+						//never happen.
+						atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
+						//TODO log.Fatalf("Preemtion is turned on")
+					}
+					//time.Sleep(time.Second)
+					
+				}
+			}
+		}
+	}
+}
+
+func record_sched() {
+	LastProc = -1
+	ProcID := roundRobin()
+	var i int
+	for i<RECORDLEN {
+		//l.Println("RUNNING SCHEDULER")
+		//else busy wait
+		if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) {
+			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
+
+				forward()
+
+				runningindex := -3
+				//l.Printf("Running On P %d",ProcID)
+				procchan[ProcID].Run = runningindex 
+
+				//l.Print("unLocking store")
+				atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+				//l.Print(procchan)
+				l.Printf("Recording Event %d",i)
+
+				for {
+							//l.Print(procchan)
+					if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) { 
+						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
+						if procchan[ProcID].Run != -3 {
+							//the process is done running
+							//record which goroutine it let
+							//run
+							//ran := procchan[ProcID].Run
+							ri := procchan[ProcID].RunningRoutine
+							e := common.Event{ProcID,ri}
+							l.Printf("Ran: %s",e.String())
+							schedule = append(schedule,e)
+							procchan[ProcID].Run = -1
+							ProcID = roundRobin()
+							atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+							i++
+							break
+						}
+						//l.Print("Still running")
+						atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+					}
+					time.Sleep(time.Microsecond)
+					
+				}
+			}
+		}
+		f, erros := os.Create("Schedule.json")
+		if erros != nil {
+			l.Fatal(err)
+		}
+		enc := json.NewEncoder(f)
+		enc.Encode(schedule)
+	}
+	l.Printf(schedule.String())
+
+}
+
 func main() {
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
@@ -154,161 +295,10 @@ func main() {
 		procchan[i].Run = -1
 	}
 	//State = RECORD
-	LastProc = -1
-	ProcID := roundRobin()
 
 	if *replay {
-		var i int
-		f, err := os.Open("Schedule.json")
-		if err != nil {
-			l.Fatal(err)
-		}
-		dec := json.NewDecoder(f)
-		err = dec.Decode(&schedule)
-		if err != nil {
-			l.Fatal(err)
-		}
-		for i<len(schedule) {
-			//l.Println("RUNNING SCHEDULER")
-
-			//else busy wait
-			if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) {
-				if procchan[schedule[i].ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
-
-					//move forward
-					forward()
-
-					//l.Print("Scheduling Event")
-					//TODO send a proper signal to the runtime with
-					//the goroutine ID that needs to be run
-					runnable := make([]int,0)
-					for j, info := range procchan[schedule[i].ProcID].Routines {
-						if common.GetDaraProcStatus(info.Status) != common.Idle {
-							l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].ProcID,j,info.String())
-							runnable = append(runnable,j)
-						}
-					}
-					//TODO clean up init
-					runningindex := 0
-					if len(runnable) == 0 {
-						//This should only occur when the processes
-						//have not started yet. There should be a
-						//smarter starting condition here rather than
-						//just borking on the init of the schedule
-						//l.Print("first instance")
-						runningindex = -2
-					} else {
-						//replay schedule
-						runningindex = schedule[i].Routine.Gid
-					}
-					//Assign which goroutine to run
-					procchan[schedule[i].ProcID].Run = runningindex //TODO make this the scheduled GID
-					procchan[schedule[i].ProcID].RunningRoutine = schedule[i].Routine //TODO make this the scheduled GID
-					l.Printf("Running (%d/%d) %d %s",i,len(schedule),schedule[i].ProcID,schedule[i].Routine.String())
-
-					//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
-					//TODO explore schedule if in explore mode?
-
-					//l.Print("unLocking store")
-					atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
-					//l.Print(procchan)
-
-					for {
-					//l.Printf("Busy waiting")
-						if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) { 
-						//l.Print("go routine locked again")
-							//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
-							if procchan[schedule[i].ProcID].Run == -1 {
-								//l.Print("Job Done!")
-								atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
-								//l.Print(procchan)
-								i++
-								break
-							}
-							//Preemtion is turned off so this should
-							//never happen.
-							atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
-							//TODO log.Fatalf("Preemtion is turned on")
-						}
-						//time.Sleep(time.Second)
-						
-					}
-				}
-			}
-		}
+		replay_sched()
 	} else if *record {
-		var i int
-		for i<RECORDLEN {
-			//l.Println("RUNNING SCHEDULER")
-			//else busy wait
-			if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) {
-				if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
-
-					forward()
-
-					runningindex := -3
-					//l.Printf("Running On P %d",ProcID)
-					procchan[ProcID].Run = runningindex 
-
-					//l.Print("unLocking store")
-					atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
-					//l.Print(procchan)
-					l.Printf("Recording Event %d",i)
-
-					for {
-								//l.Print(procchan)
-						if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) { 
-							//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
-							if procchan[ProcID].Run != -3 {
-								//the process is done running
-								//record which goroutine it let
-								//run
-								//ran := procchan[ProcID].Run
-								ri := procchan[ProcID].RunningRoutine
-								e := common.Event{ProcID,ri}
-								l.Printf("Ran: %s",e.String())
-								schedule = append(schedule,e)
-								procchan[ProcID].Run = -1
-								ProcID = roundRobin()
-								atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
-								i++
-								break
-							}
-							//l.Print("Still running")
-							atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
-						}
-						time.Sleep(time.Microsecond)
-						
-					}
-				}
-			}
-			f, erros := os.Create("Schedule.json")
-			if erros != nil {
-				l.Fatal(err)
-			}
-			enc := json.NewEncoder(f)
-			enc.Encode(schedule)
-		}
-		l.Printf(schedule.String())
-
+		record_sched()
 	}
-}
-
-func forward() {
-	if *manual {
-		udpl.ReadFrom(udpb)
-		l.Print(udpb)
-	} else {
-		time.Sleep(100 *time.Millisecond)
-	}
-}
-
-var schedule common.Schedule
-
-func roundRobin() int {
-	LastProc = (LastProc + 1) % (*procs+1)
-	if LastProc == 0 {
-		LastProc++
-	}
-	return LastProc
 }
