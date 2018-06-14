@@ -68,6 +68,7 @@ var (
 	procs = flag.Int("procs", 1, "The number of processes to model check")
 	record = flag.Bool("w", false, "Record an execution")
 	replay = flag.Bool("r", false, "Replay an execution")
+	explore = flag.Bool("e", false, "Explore a recorded execution")
 	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
 )
 
@@ -90,11 +91,13 @@ func checkargs() {
 	if *record && *replay {
 		l.Fatal("enable either replay or record, not both")
 	}
-	if !(*record || *replay) {
-		l.Fatal("enable replay or record")
+	if !(*record || *replay || *explore) {
+		l.Fatal("enable replay or record or explore")
 	}
 	if *record {
 		l.Print("Recording")
+	} else if *explore {
+		l.Print("Exploring")
 	} else {
 		l.Print("Replaying")
 	}
@@ -181,12 +184,16 @@ func replay_sched() {
 				for {
 				//l.Printf("Busy waiting")
 					// Solves the issue when there is no progress after the last event
-					if (i == len(schedule) - 1) {
+					/* if (i == len(schedule) - 1) {
 						l.Println("should finish replay")
 						i++
 						l.Println(i)
+						if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock), UNLOCKED, LOCKED) {
+							procchan[schedule[i].ProcID].Run = -4
+						}
+						atomic.StoreInt32(&procchan[schedule[i].ProcID].Lock, UNLOCKED)
 						break
-					}
+					} */
 					if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) { 
 					//l.Print("go routine locked again")
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
@@ -199,6 +206,9 @@ func replay_sched() {
 						}
 						//Preemtion is turned off so this should
 						//never happen.
+						if (i == len(schedule) - 1) {
+							procchan[schedule[i].ProcID].Run = -4
+						}
 						atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
 						//TODO log.Fatalf("Preemtion is turned on")
 					}
@@ -270,6 +280,10 @@ func record_sched() {
 	l.Println("The End")
 }
 
+func explore_sched() {
+	l.Println("Placeholder for exploring")
+}
+
 func main() {
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
@@ -313,6 +327,9 @@ func main() {
 	} else if *record {
 		record_sched()
 		l.Println("Finished recording")
+	} else if *explore {
+		explore_sched()
+		l.Println("Finished exploring")
 	}
 	l.Println("Backstreet's back again")
 }
