@@ -2,7 +2,7 @@
 dgo='/usr/local/go/bin/go'
 PROCESSES=1
 Program=sharedIntegerNoLock
-SchedulerDir=github.com/DARA-Projects/GoDist-Scheduler
+SchedulerDir=github.com/DARA-Project/GoDist-Scheduler
 
 
 killall nondet
