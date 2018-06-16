@@ -83,6 +83,7 @@ type RoutineInfo struct {
 	Gpc uintptr
 	RoutineCount int
 	FuncInfo [64]byte
+	Syscall int
 }
 
 func (ri *RoutineInfo) String() string {
