@@ -131,7 +131,10 @@ func (ri *RoutineInfo) String() string {
   * Struct representing an event in the lifetime of a process
   */
 type Event struct {
+	//ProcID is an ID for a single runtime
 	ProcID int
+	//Routine contians information about the routine to run, including
+	//state, blocking, and id information
 	Routine RoutineInfo
 }
 
@@ -139,6 +142,8 @@ func (e *Event) String() string {
 		return fmt.Sprintf("[ProcID %d, %s]\n",(*e).ProcID,(*e).Routine.String())
 }
 
+//Type which encapsulates a single schedule
+//TODO integerate with vaastav to build a single schedule for DPOR
 type Schedule []Event
 
 func (s *Schedule) String() string{
