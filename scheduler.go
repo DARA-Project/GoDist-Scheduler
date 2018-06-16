@@ -16,8 +16,27 @@ import (
 	"unsafe"
 )
 
+//Command line arguments
+var (
+	procs = flag.Int("procs", 1, "The number of processes to model check")
+	record = flag.Bool("w", false, "Record an execution")
+	replay = flag.Bool("r", false, "Replay an execution")
+	explore = flag.Bool("e", false, "Explore a recorded execution")
+	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
+)
+
+//*****************************************************************/
+// 					BEGIN SHARED VARIABLES
+
+//Varables and constants in the follow section are defined both in the
+//runtime, and in the global scheduler. The MUST agree, if not
+//commucation through shared memory with be missaligend.
+
 //These Constants are the arguments for MMAP, not all of the arguments
 //are used, but are here for completeness
+
+//*****************************************************************/
+
 const(
 	_EINTR  = 0x4
 	_EAGAIN = 0xb
@@ -64,30 +83,40 @@ const(
 	RECORDLEN = 1000
 )
 
-var (
-	procs = flag.Int("procs", 1, "The number of processes to model check")
-	record = flag.Bool("w", false, "Record an execution")
-	replay = flag.Bool("r", false, "Replay an execution")
-	explore = flag.Bool("e", false, "Explore a recorded execution")
-	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
-)
+//*****************************************************************/
+// 					END SHARED VARIABLES
+//*****************************************************************/
 
+
+//Global variables specific to shared memory
 var (
+	//pointer to shared memory, unsafe so that it can be casted
 	p unsafe.Pointer
+	//err is an integer, because it is set from errors in the runtime
+	//where there is no error type set
 	err int
+	//Procchan is the communication channel laid over shared memory
 	procchan *[CHANNELS]common.DaraProc
-	State int
+	//Used to determine which process (runtime) will be run on the
+	//next scheduling decision when in record mode
 	LastProc int
 )
 
 var (
 	l *log.Logger
+	//dupl connects with a terminal for manual stepping through an
+	//execution
 	udpl net.PacketConn
+	//buffer for reading from the manual event stepper, the values
+	//read into the buffer really don't matter yet
+	//TODO allow users to specifcy scheduling decisions based on udp
+	//stepping
 	udpb []byte
 )
 
 func checkargs() {
 	flag.Parse()
+	//Set exactly one arg for record or replay
 	if *record && *replay {
 		l.Fatal("enable either replay or record, not both")
 	}
@@ -113,6 +142,9 @@ func forward() {
 	}
 }
 
+	//global schedule
+	//TODO make all schedule operations object calls on the scedule
+	//(ie schedule.next())
 var schedule common.Schedule
 
 func roundRobin() int {
@@ -285,6 +317,7 @@ func explore_sched() {
 }
 
 func main() {
+	//Set up logger
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
 	l.Println("Starting the Scheduler")
