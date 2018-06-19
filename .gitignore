@@ -2,3 +2,8 @@
 DaraSharedMem
 Schedule.json
 s.out
+*.moniter
+*.record
+*.replay
+*.out
+

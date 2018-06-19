@@ -80,7 +80,7 @@ const(
 
 	//The length of the schedule. When recording the system will
 	//execute upto SCHEDLEN. The same is true on replay
-	RECORDLEN = 1000
+	RECORDLEN = 100
 )
 
 //*****************************************************************/
@@ -138,7 +138,7 @@ func forward() {
 		udpl.ReadFrom(udpb)
 		l.Print(udpb)
 	} else {
-		time.Sleep(100 *time.Millisecond)
+		time.Sleep(1 *time.Millisecond)
 	}
 }
 
@@ -214,21 +214,7 @@ func replay_sched() {
 				//l.Print(procchan)
 
 				for {
-				//l.Printf("Busy waiting")
-					// Solves the issue when there is no progress after the last event
-					/* if (i == len(schedule) - 1) {
-						l.Println("should finish replay")
-						i++
-						l.Println(i)
-						if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock), UNLOCKED, LOCKED) {
-							procchan[schedule[i].ProcID].Run = -4
-						}
-						atomic.StoreInt32(&procchan[schedule[i].ProcID].Lock, UNLOCKED)
-						break
-					} */
 					if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) { 
-					//l.Print("go routine locked again")
-						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[schedule[i].ProcID].Run == -1 {
 							//l.Print("Job Done!")
 							atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
@@ -236,17 +222,23 @@ func replay_sched() {
 							i++
 							break
 						}
-						//Preemtion is turned off so this should
-						//never happen.
-						if (i == len(schedule) - 1) {
-							procchan[schedule[i].ProcID].Run = -4
-						}
 						atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
 						//TODO log.Fatalf("Preemtion is turned on")
 					}
 					//time.Sleep(time.Second)
 					
 				}
+			}
+		}
+	}
+	//End computation
+	for i := 1;i <= *procs;i++{
+		for {
+			if atomic.CompareAndSwapInt32(&(procchan[i].Lock),UNLOCKED,LOCKED) {
+				l.Printf("Stopping Proc %d",i)
+				procchan[i].Run = -4 
+				atomic.StoreInt32(&(procchan[i].Lock),UNLOCKED)
+				break
 			}
 		}
 	}
@@ -258,7 +250,6 @@ func record_sched() {
 	ProcID := roundRobin()
 	var i int
 	for i<RECORDLEN {
-		//l.Println("RUNNING SCHEDULER")
 		//else busy wait
 		if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) {
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
@@ -279,19 +270,28 @@ func record_sched() {
 					if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) { 
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run != -3 {
-							//the process is done running
-							//record which goroutine it let
-							//run
-							//ran := procchan[ProcID].Run
-							ri := procchan[ProcID].RunningRoutine
-							e := common.Event{ProcID,ri}
-							l.Printf("Ran: %s",e.String())
-							schedule = append(schedule,e)
-							procchan[ProcID].Run = -1
-							ProcID = roundRobin()
-							atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
-							i++
-							break
+							if (i == RECORDLEN - 1) {
+								//mark the processes for death
+								l.Printf("Ending Execution!")
+								procchan[ProcID].Run = -4
+								atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+								i++
+								break
+							} else {
+								//the process is done running
+								//record which goroutine it let
+								//run
+								//ran := procchan[ProcID].Run
+								ri := procchan[ProcID].RunningRoutine
+								e := common.Event{ProcID,ri}
+								l.Printf("Ran: %s",e.String())
+								schedule = append(schedule,e)
+								procchan[ProcID].Run = -1
+								ProcID = roundRobin()
+								atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+								i++
+								break
+							}
 						}
 						//l.Print("Still running")
 						atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
