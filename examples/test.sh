@@ -11,6 +11,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+PASS=true
+
 
 function RunTestCase {
 
@@ -25,22 +27,25 @@ function RunTestCase {
         return
         ;;
     "-c")
-        rm *.replay
-        rm *.record
-        rm *.out
-        rm DaraSharedMem
+        rm *.replay         $2 > $silent 2>&1
+        rm *.record         $2 > $silent 2>&1
+        rm *.out            $2 > $silent 2>&1
+        rm Schedule.json    $2 > $silent 2>&1
+        rm DaraSharedMem    $2 > $silent 2>&1
         return
         ;;
     "-t")
         difference=`diff $Program.record $Program.replay`
         if [ "$difference" == "" ];then
             printf "${GREEN}PASS${NC}\n"
-            return 0
+            PASS=true
+            return
         else
             printf "${RED}FAIL${NC}\n"
             echo -e "DIFF ---->"
             echo $difference
-            return -1
+            PASS=false
+            return
         fi
         return
         ;;
@@ -101,6 +106,11 @@ for testprogramdir  in *_test; do
     RunTestCase -k $testprogram
 
     RunTestCase -t $testprogram
+    if [ $PASS ]; then
+        RunTestCase -c $testprogram
+    else
+        exit -1
+    fi
 
     #TODO START HERE TOMORROW, you are about to standardize the output
     #of all the test cases so that when they pass or fail the output of
