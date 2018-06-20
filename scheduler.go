@@ -236,7 +236,7 @@ func replay_sched() {
 		for {
 			if atomic.CompareAndSwapInt32(&(procchan[i].Lock),UNLOCKED,LOCKED) {
 				l.Printf("Stopping Proc %d",i)
-				procchan[i].Run = -4 
+				procchan[i].Run = -4
 				atomic.StoreInt32(&(procchan[i].Lock),UNLOCKED)
 				break
 			}
@@ -255,14 +255,9 @@ func record_sched() {
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 
 				forward()
+				procchan[ProcID].Run = -3
 
-				runningindex := -3
-				//l.Printf("Running On P %d",ProcID)
-				procchan[ProcID].Run = runningindex 
-
-				//l.Print("unLocking store")
 				atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
-				//l.Print(procchan)
 				l.Printf("Recording Event %d",i)
 
 				for {
@@ -270,28 +265,25 @@ func record_sched() {
 					if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) { 
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run != -3 {
-							if (i == RECORDLEN - 1) {
+							//Update the last running routine
+							ri := procchan[ProcID].RunningRoutine
+							e := common.Event{ProcID,ri}
+							l.Printf("Ran: %s",e.String())
+							schedule = append(schedule,e)
+							//Set the status of the routine that just
+							//ran
+							if (i >= RECORDLEN - *procs) {
 								//mark the processes for death
 								l.Printf("Ending Execution!")
-								procchan[ProcID].Run = -4
-								atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
-								i++
-								break
+								procchan[ProcID].Run = -4 //mark process for death
 							} else {
-								//the process is done running
-								//record which goroutine it let
-								//run
-								//ran := procchan[ProcID].Run
-								ri := procchan[ProcID].RunningRoutine
-								e := common.Event{ProcID,ri}
-								l.Printf("Ran: %s",e.String())
-								schedule = append(schedule,e)
-								procchan[ProcID].Run = -1
-								ProcID = roundRobin()
-								atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
-								i++
-								break
+								procchan[ProcID].Run = -1	//lock process
 							}
+
+							ProcID = roundRobin()
+							i++
+							atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+							break
 						}
 						//l.Print("Still running")
 						atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)

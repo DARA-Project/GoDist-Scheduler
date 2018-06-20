@@ -6,4 +6,6 @@ s.out
 *.record
 *.replay
 *.out
+record.master
+replay.master
 
