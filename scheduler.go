@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dara"
 	"encoding/json"
 	"flag"
 	//"fmt"
@@ -25,61 +26,9 @@ var (
 	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
 )
 
-//*****************************************************************/
-// 					BEGIN SHARED VARIABLES
-
-//Varables and constants in the follow section are defined both in the
-//runtime, and in the global scheduler. The MUST agree, if not
-//commucation through shared memory with be missaligend.
-
-//These Constants are the arguments for MMAP, not all of the arguments
-//are used, but are here for completeness
-
-//*****************************************************************/
-
 const(
-	_EINTR  = 0x4
-	_EAGAIN = 0xb
-	_ENOMEM = 0xc
-
-	_PROT_NONE  = 0x0
-	_PROT_READ  = 0x1
-	_PROT_WRITE = 0x2
-	_PROT_EXEC  = 0x4
-
-	_MAP_ANON    = 0x20
-	_MAP_PRIVATE = 0x2
-	_MAP_FIXED   = 0x10
-
-	_MAP_SHARED = 0x01
-)
-
-//Constants for shared memory. These constants are also in the go
-//runtime in runtime/proc.go, they must agree or communication between
-//runttime and global scheduler will be missaligend. If you change one
-//you must change the other!
-const(
-	//The number of prealocated communication channles in shared
-	//memory. This value can change in the future, for now 5 is the
-	//maximum number of Processes. Invariant: CHANNELS >= procs. TODO
-	//assert this
-	CHANNELS = 5
-	//File discriptor for shared memory. This is set in the runscript.
-	//TODO paramatrize this, or set it as a global variable
-	DARAFD = 666
-
-	//State of spin locks. Thsese are used cas operations to control
-	//the execution of the insturmented runtimes
-	UNLOCKED = 0
-	LOCKED = 1
-
-	//The total size of the shared memory region is
-	//PAGESIZE*SHAREDMEMPAGES
-	PAGESIZE = 4096
-	SHAREDMEMPAGES = 65536
-
 	//The length of the schedule. When recording the system will
-	//execute upto SCHEDLEN. The same is true on replay
+	//execute up to dara.SCHEDLEN. The same is true on replay
 	RECORDLEN = 100
 )
 
@@ -96,7 +45,7 @@ var (
 	//where there is no error type set
 	err int
 	//Procchan is the communication channel laid over shared memory
-	procchan *[CHANNELS]common.DaraProc
+	procchan *[dara.CHANNELS]dara.DaraProc
 	//Used to determine which process (runtime) will be run on the
 	//next scheduling decision when in record mode
 	LastProc int
@@ -145,7 +94,7 @@ func forward() {
 	//global schedule
 	//TODO make all schedule operations object calls on the scedule
 	//(ie schedule.next())
-var schedule common.Schedule
+var schedule dara.Schedule
 
 func roundRobin() int {
 	LastProc = (LastProc + 1) % (*procs+1)
@@ -172,7 +121,7 @@ func replay_sched() {
 		}
 		//l.Println("RUNNING SCHEDULER")
 		//else busy wait
-		if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) {
+		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 			if procchan[schedule[i].ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 
 				//move forward
@@ -183,8 +132,8 @@ func replay_sched() {
 				//the goroutine ID that needs to be run
 				runnable := make([]int,0)
 				for j, info := range procchan[schedule[i].ProcID].Routines {
-					if common.GetDaraProcStatus(info.Status) != common.Idle {
-						l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].ProcID,j,info.String())
+					if dara.GetDaraProcStatus(info.Status) != dara.Idle {
+						l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].ProcID,j,common.PrintRoutineInfo(&info))
 						runnable = append(runnable,j)
 					}
 				}
@@ -204,29 +153,28 @@ func replay_sched() {
 				//Assign which goroutine to run
 				procchan[schedule[i].ProcID].Run = runningindex //TODO make this the scheduled GID
 				procchan[schedule[i].ProcID].RunningRoutine = schedule[i].Routine //TODO make this the scheduled GID
-				l.Printf("Running (%d/%d) %d %s",i,len(schedule)-1,schedule[i].ProcID,schedule[i].Routine.String())
+				l.Printf("Running (%d/%d) %d %s",i,len(schedule)-1,schedule[i].ProcID,common.PrintRoutineInfo(&schedule[i].Routine))
 
 				//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 				//TODO explore schedule if in explore mode?
 
 				//l.Print("unLocking store")
-				atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
+				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
 				//l.Print(procchan)
 
 				for {
-					if atomic.CompareAndSwapInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED,LOCKED) { 
+					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) { 
 						if procchan[schedule[i].ProcID].Run == -1 {
 							//l.Print("Job Done!")
-							atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
+							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
 							//l.Print(procchan)
 							i++
 							break
 						}
-						atomic.StoreInt32(&(procchan[schedule[i].ProcID].Lock),UNLOCKED)
+						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
 						//TODO log.Fatalf("Preemtion is turned on")
 					}
 					//time.Sleep(time.Second)
-					
 				}
 			}
 		}
@@ -234,10 +182,10 @@ func replay_sched() {
 	//End computation
 	for i := 1;i <= *procs;i++{
 		for {
-			if atomic.CompareAndSwapInt32(&(procchan[i].Lock),UNLOCKED,LOCKED) {
+			if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED,dara.LOCKED) {
 				l.Printf("Stopping Proc %d",i)
 				procchan[i].Run = -4
-				atomic.StoreInt32(&(procchan[i].Lock),UNLOCKED)
+				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED)
 				break
 			}
 		}
@@ -251,24 +199,24 @@ func record_sched() {
 	var i int
 	for i<RECORDLEN {
 		//else busy wait
-		if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) {
+		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 
 				forward()
 				procchan[ProcID].Run = -3
 
-				atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 				l.Printf("Recording Event %d",i)
 
 				for {
 							//l.Print(procchan)
-					if atomic.CompareAndSwapInt32(&(procchan[ProcID].Lock),UNLOCKED,LOCKED) { 
+					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) { 
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run != -3 {
 							//Update the last running routine
 							ri := procchan[ProcID].RunningRoutine
-							e := common.Event{ProcID,ri}
-							l.Printf("Ran: %s",e.String())
+							e := dara.Event{ProcID,ri}
+							l.Printf("Ran: %s",common.PrintEvent(&e))
 							schedule = append(schedule,e)
 							//Set the status of the routine that just
 							//ran
@@ -282,14 +230,13 @@ func record_sched() {
 
 							ProcID = roundRobin()
 							i++
-							atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 							break
 						}
 						//l.Print("Still running")
-						atomic.StoreInt32(&(procchan[ProcID].Lock),UNLOCKED)
+						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 					}
 					time.Sleep(time.Microsecond)
-					
 				}
 			}
 		}
@@ -300,7 +247,7 @@ func record_sched() {
 		enc := json.NewEncoder(f)
 		enc.Encode(schedule)
 	}
-	l.Printf(schedule.String())
+	l.Printf(common.PrintSchedule(&schedule))
 	l.Println("The End")
 }
 
@@ -327,7 +274,7 @@ func main() {
 
 
 	//Init MMAP (this should be moved to the init function
-	p , err = runtime.Mmap(nil,SHAREDMEMPAGES*PAGESIZE,_PROT_READ|_PROT_WRITE ,_MAP_SHARED,DARAFD,0)
+	p , err = runtime.Mmap(nil,dara.SHAREDMEMPAGES*dara.PAGESIZE,dara.PROT_READ|dara.PROT_WRITE ,dara.MAP_SHARED,dara.DARAFD,0)
 
 	if err != 0 {
 		l.Fatal(err)
@@ -337,11 +284,11 @@ func main() {
 	time.Sleep(time.Second * 1)
 
 	//Map control struct into shared memory
-	procchan = (*[CHANNELS]common.DaraProc)(p)
+	procchan = (*[dara.CHANNELS]dara.DaraProc)(p)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
 	for i:=range procchan {
-		procchan[i].Lock = UNLOCKED
+		procchan[i].Lock = dara.UNLOCKED
 		procchan[i].Run = -1
 	}
 	//State = RECORD
