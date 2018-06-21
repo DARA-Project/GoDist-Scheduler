@@ -8,8 +8,9 @@
 Hosts=3
 BasePort=6000
 DINV=$GOPATH/src/bitbucket.org/bestchai/dinv
-DARA=$GOPATH/src/github.com/Dara-Project/dara
+DARA=$GOPATH/src/github.com/DARA-Project/GoDist-Scheduler
 testDir=$DARA/examples/diningPhil
+dgo=/usr/local/go/bin/go
 P1=diningphilosopher.go
 Original=original
 
@@ -18,7 +19,7 @@ LOGSERVER="localhost:17000"
 function installDinv {
     echo "Install dinv"
     cd $DINV
-    go install
+    $dgo install
     cd $testDir
 }
 
@@ -33,7 +34,7 @@ function runTestPrograms {
         export DINV_HOSTNAME="localhost:$hostPort"
         export DINV_LOG_STORE="localhost:17000"
         export DINV_PROJECT="phil"
-        go run diningphilosopher.go -mP $hostPort -nP $neighbourPort &
+        $dgo run diningphilosopher.go -mP $hostPort -nP $neighbourPort &
     done
     sleep 60
     kill `ps | pgrep dining | awk '{print $1}'`

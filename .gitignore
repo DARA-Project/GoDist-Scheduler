@@ -9,3 +9,6 @@ s.out
 record.master
 replay.master
 
+*log-Log.txt
+*Encoded.txt
+

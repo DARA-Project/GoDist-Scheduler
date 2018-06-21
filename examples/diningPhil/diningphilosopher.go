@@ -8,8 +8,7 @@ import (
 	"net"
 	"os"
 	"time"
-
-	"../../util"
+	"runtime"
 	logging "github.com/op/go-logging"
 
 	"bitbucket.org/bestchai/dinv/dinvRT"
@@ -42,7 +41,7 @@ var (
 	ID             string
 
 	logger   *logging.Logger
-	loglevel = 3
+	loglevel = 5
 )
 
 //Transition into the eating state
@@ -53,7 +52,6 @@ func EatingState() {
 	RightChopstick = true
 	Eaten++
 	logger.Noticef("Eaten [%d/%d]", Eaten, n)
-	dinvRT.Track(fmt.Sprintf("%d-1", ID), "Excused,Ack,ReleaseStick,ExcuseMe,SLEEP_MAX,Eating,RightChopstick,n,BUFF_SIZE,Thinking,RequestStick,SIZEOFINT,LeftChopstick,Eaten,Chopsticks", Excused, Ack, ReleaseStick, ExcuseMe, SLEEP_MAX, Eating, RightChopstick, n, BUFF_SIZE, Thinking, RequestStick, SIZEOFINT, LeftChopstick, Eaten, Chopsticks)
 
 }
 
@@ -64,7 +62,6 @@ func ThinkingState() {
 	LeftChopstick = false
 	RightChopstick = false
 	Chopsticks = 0
-	dinvRT.Track(fmt.Sprintf("%d-2", ID), "Excused,Ack,ReleaseStick,ExcuseMe,SLEEP_MAX,Eating,RightChopstick,n,BUFF_SIZE,Thinking,RequestStick,SIZEOFINT,LeftChopstick,Eaten,Chopsticks", Excused, Ack, ReleaseStick, ExcuseMe, SLEEP_MAX, Eating, RightChopstick, n, BUFF_SIZE, Thinking, RequestStick, SIZEOFINT, LeftChopstick, Eaten, Chopsticks)
 }
 
 //obtain the left chopstick
@@ -73,7 +70,6 @@ func LeftChopstickState() {
 	Thinking = true
 	LeftChopstick = true
 	Chopsticks++
-	dinvRT.Track(fmt.Sprintf("%d-3", ID), "Excused,Ack,ReleaseStick,ExcuseMe,SLEEP_MAX,Eating,RightChopstick,n,BUFF_SIZE,Thinking,RequestStick,SIZEOFINT,LeftChopstick,Eaten,Chopsticks", Excused, Ack, ReleaseStick, ExcuseMe, SLEEP_MAX, Eating, RightChopstick, n, BUFF_SIZE, Thinking, RequestStick, SIZEOFINT, LeftChopstick, Eaten, Chopsticks)
 
 }
 
@@ -83,7 +79,6 @@ func RightChopstickState() {
 	Thinking = true
 	RightChopstick = true
 	Chopsticks++
-	dinvRT.Track(fmt.Sprintf("%d-4", ID), "Excused,Ack,ReleaseStick,ExcuseMe,SLEEP_MAX,Eating,RightChopstick,n,BUFF_SIZE,Thinking,RequestStick,SIZEOFINT,LeftChopstick,Eaten,Chopsticks", Excused, Ack, ReleaseStick, ExcuseMe, SLEEP_MAX, Eating, RightChopstick, n, BUFF_SIZE, Thinking, RequestStick, SIZEOFINT, LeftChopstick, Eaten, Chopsticks)
 }
 
 //structure defining a philosopher
@@ -94,7 +89,7 @@ type Philosopher struct {
 }
 
 func makePhilosopher(port, neighbourPort int) *Philosopher {
-	logger = util.SetupLogger(loglevel, "Phil-"+fmt.Sprintf("%d", port))
+	logger = SetupLogger(loglevel, "Phil-"+fmt.Sprintf("%d", port))
 	logger.Debugf("Setting up listing connection on %d\n", port)
 	conn, err := net.ListenPacket("udp", ":"+fmt.Sprintf("%d", port))
 	if err != nil {
@@ -140,7 +135,6 @@ func ListenForChopsticks(port int, chopstick chan bool, conn net.PacketConn) {
 	defer logger.Debugf("Chopstick #%d\n is down", port) //attempt to show when the chopsticks are no longer available
 	//Incomming request handler
 	for true {
-		dinvRT.Track(fmt.Sprintf("%d-5", ID), "Excused,Ack,ReleaseStick,ExcuseMe,SLEEP_MAX,Eating,RightChopstick,n,BUFF_SIZE,Thinking,RequestStick,SIZEOFINT,LeftChopstick,Eaten,Chopsticks", Excused, Ack, ReleaseStick, ExcuseMe, SLEEP_MAX, Eating, RightChopstick, n, BUFF_SIZE, Thinking, RequestStick, SIZEOFINT, LeftChopstick, Eaten, Chopsticks)
 
 		req, addr := getRequest(conn)
 		go func(request int) {
@@ -177,7 +171,6 @@ func getRequest(conn net.PacketConn) (int, net.Addr) {
 		log.Fatalf("Unable to read while getting a request Dying for a reason %s", err.Error())
 	}
 
-	dinvRT.Track(fmt.Sprintf("%d-6", ID), "Excused,Ack,ReleaseStick,ExcuseMe,SLEEP_MAX,Eating,RightChopstick,n,BUFF_SIZE,Thinking,RequestStick,SIZEOFINT,LeftChopstick,Eaten,Chopsticks", Excused, Ack, ReleaseStick, ExcuseMe, SLEEP_MAX, Eating, RightChopstick, n, BUFF_SIZE, Thinking, RequestStick, SIZEOFINT, LeftChopstick, Eaten, Chopsticks)
 	dinvRT.UnpackM(buf, &msg, "reading request")
 	return msg.Type, addr
 }
@@ -216,7 +209,6 @@ func (phil *Philosopher) getChopsticks() {
 		msg.Type = RequestStick
 		buf := make([]byte, BUFF_SIZE)
 
-		dinvRT.Track(fmt.Sprintf("%d-7", ID), "Excused,Ack,ReleaseStick,ExcuseMe,SLEEP_MAX,Eating,RightChopstick,n,BUFF_SIZE,Thinking,RequestStick,SIZEOFINT,LeftChopstick,Eaten,Chopsticks", Excused, Ack, ReleaseStick, ExcuseMe, SLEEP_MAX, Eating, RightChopstick, n, BUFF_SIZE, Thinking, RequestStick, SIZEOFINT, LeftChopstick, Eaten, Chopsticks)
 		req := dinvRT.PackM(msg, "requesting chopsticks")
 		conn := phil.neighbour
 		conn.Write(req)
@@ -230,7 +222,6 @@ func (phil *Philosopher) getChopsticks() {
 			return
 		}
 
-		dinvRT.Track(fmt.Sprintf("%d-8", ID), "Excused,Ack,ReleaseStick,ExcuseMe,SLEEP_MAX,Eating,RightChopstick,n,BUFF_SIZE,Thinking,RequestStick,SIZEOFINT,LeftChopstick,Eaten,Chopsticks", Excused, Ack, ReleaseStick, ExcuseMe, SLEEP_MAX, Eating, RightChopstick, n, BUFF_SIZE, Thinking, RequestStick, SIZEOFINT, LeftChopstick, Eaten, Chopsticks)
 		dinvRT.UnpackM(buf, &msg, "received a chopstick")
 		resp := msg.Type
 		if resp == Ack {
@@ -290,6 +281,8 @@ func main() {
 	var (
 		myPort, neighbourPort int
 	)
+
+	runtime.SchedulerPrint("\n\n\nThis is a mega test VAASTAV & Amy\n\n\n\n\n\n")
 	flag.IntVar(&myPort, "mP", 8080, "The port number this host will listen on")
 	flag.IntVar(&neighbourPort, "nP", 8081, "The port this host neighbour will listen on")
 	flag.Parse()
@@ -310,3 +303,25 @@ func PrintErr(err error) {
 		os.Exit(1)
 	}
 }
+
+func SetupLogger(loglevel int, name string) *logging.Logger {
+
+	logger := logging.MustGetLogger(name)
+	format := logging.MustStringFormatter(
+		`%{color}%{time:15:04:05.000} %{shortfile} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
+	)
+	// For demo purposes, create two backend for os.Stderr.
+	backend := logging.NewLogBackend(os.Stderr, "", 0)
+
+	// For messages written to backend2 we want to add some additional
+	// information to the output, including the used log level and the name of
+	// the function.
+	backendFormatter := logging.NewBackendFormatter(backend, format)
+	// Only errors and more severe messages should be sent to backend1
+	backendlevel := logging.AddModuleLevel(backendFormatter)
+	backendlevel.SetLevel(logging.Level(loglevel), "")
+	// Set the backends to be used.
+	logging.SetBackend(backendlevel)
+	return logger
+}
+
