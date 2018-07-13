@@ -1,5 +1,5 @@
 #!/bin/bash
-dgo='/usr/local/go/bin/go'
+dgo='/usr/bin/dgo'
 SchedulerDir=github.com/DARA-Project/GoDist-Scheduler
 
 testprogram=sharedIntegerNoLocks

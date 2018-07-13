@@ -18,6 +18,7 @@ echo INSTALLING THE SCHEDULER
 $dgo install $SchedulerDir
 
 
+rm DaraSharedMem
 dd if=/dev/zero of=./DaraSharedMem bs=400M count=1
 chmod 777 DaraSharedMem
 exec 666<> ./DaraSharedMem
@@ -29,6 +30,7 @@ sleep 2
 
 #$1 is either -w (record) or -r (replay)
 $dgo build $Program.go
+
 ##Turn on dara
 export GOMAXPROCS=1
 export DARAON=true

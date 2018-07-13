@@ -201,19 +201,20 @@ func record_sched() {
 		//else busy wait
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
-
 				forward()
 				procchan[ProcID].Run = -3
 
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
-				l.Printf("Recording Event %d",i)
+				flag := true
 
-				for {
+				for ; flag; {
 							//l.Print(procchan)
-					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) { 
+					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run != -3 {
+						//	l.Println("if procchan[ProcID].Run != -3")
 							//Update the last running routine
+							l.Printf("Recording Event %d",i)
 							ri := procchan[ProcID].RunningRoutine
 							e := dara.Event{ProcID,ri}
 							l.Printf("Ran: %s",common.PrintEvent(&e))
@@ -230,22 +231,39 @@ func record_sched() {
 
 							ProcID = roundRobin()
 							i++
-							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
-							break
+							flag = false
 						}
 						//l.Print("Still running")
 						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 					}
+					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].SyscallLock))), dara.UNLOCKED, dara.LOCKED) {
+						if procchan[ProcID].Syscall != -1 {
+							l.Printf("Recording Event %d",i)
+							procchan[ProcID].Syscall = -1
+							ri := procchan[ProcID].RunningRoutine
+							e := dara.Event{ProcID, ri}
+							schedule = append(schedule, e)
+							l.Printf("Ran: %s",common.PrintEvent(&e))
+							i++
+							f, erros := os.Create("Schedule.json")
+							if erros != nil {
+								l.Fatal(err)
+							}
+							enc := json.NewEncoder(f)
+							enc.Encode(schedule)
+						}
+						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].SyscallLock))),dara.UNLOCKED)
+					}
 					time.Sleep(time.Microsecond)
 				}
 			}
+			f, erros := os.Create("Schedule.json")
+			if erros != nil {
+				l.Fatal(err)
+			}
+			enc := json.NewEncoder(f)
+			enc.Encode(schedule)
 		}
-		f, erros := os.Create("Schedule.json")
-		if erros != nil {
-			l.Fatal(err)
-		}
-		enc := json.NewEncoder(f)
-		enc.Encode(schedule)
 	}
 	l.Printf(common.PrintSchedule(&schedule))
 	l.Println("The End")
@@ -289,7 +307,9 @@ func main() {
 	//var count int
 	for i:=range procchan {
 		procchan[i].Lock = dara.UNLOCKED
+		procchan[i].SyscallLock = dara.UNLOCKED
 		procchan[i].Run = -1
+		procchan[i].Syscall = -1
 	}
 	//State = RECORD
 
