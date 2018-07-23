@@ -228,70 +228,111 @@ func replay_sched() {
 		l.Fatal(err)
 	}
 	for i<len(schedule) {
-		if (i == len(schedule) - 1 || i == len(schedule)) {
-			l.Println("Hmm")
-		}
 		//l.Println("RUNNING SCHEDULER")
 		//else busy wait
-		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
-			if procchan[schedule[i].ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
+		if schedule[i].Routine.SyscallInfo.SyscallNum != -1 {
+			//move forward
+			forward()
 
-				//move forward
-				forward()
-
-				//l.Print("Scheduling Event")
-				//TODO send a proper signal to the runtime with
-				//the goroutine ID that needs to be run
-				runnable := make([]int,0)
-				for j, info := range procchan[schedule[i].ProcID].Routines {
-					if dara.GetDaraProcStatus(info.Status) != dara.Idle {
-						l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].ProcID,j,common.PrintRoutineInfo(&info))
-						runnable = append(runnable,j)
+			runnable := make([]int,0)
+			for j, info := range procchan[schedule[i].ProcID].Routines {
+				if dara.GetDaraProcStatus(info.Status) != dara.Idle {
+					l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].ProcID,j,common.PrintRoutineInfo(&info))
+					runnable = append(runnable,j)
+				}
+			}
+			//TODO clean up init
+			runningindex := 0
+			if len(runnable) == 0 {
+				//This should only occur when the processes
+				//have not started yet. There should be a
+				//smarter starting condition here rather than
+				//just borking on the init of the schedule
+				//l.Print("first instance")
+				runningindex = -2
+			} else {
+				//replay schedule
+				runningindex = schedule[i].Routine.Gid
+			}
+			//Assign which goroutine to run
+			procchan[schedule[i].ProcID].Run = runningindex //TODO make this the scheduled GID
+			procchan[schedule[i].ProcID].RunningRoutine = schedule[i].Routine //TODO make this the scheduled GID
+			l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].ProcID,common.PrintRoutineInfo(&schedule[i].Routine))
+			for {
+				if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].SyscallLock))), dara.UNLOCKED, dara.LOCKED) {
+					if procchan[schedule[i].ProcID].Syscall != -1 {
+						procchan[schedule[i].ProcID].Syscall = -1
+						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].SyscallLock))), dara.UNLOCKED)
+						l.Print("Here")
+						i++
+						break
 					}
+					atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].SyscallLock))), dara.UNLOCKED)
 				}
-				//TODO clean up init
-				runningindex := 0
-				if len(runnable) == 0 {
-					//This should only occur when the processes
-					//have not started yet. There should be a
-					//smarter starting condition here rather than
-					//just borking on the init of the schedule
-					//l.Print("first instance")
-					runningindex = -2
-				} else {
-					//replay schedule
-					runningindex = schedule[i].Routine.Gid
-				}
-				//Assign which goroutine to run
-				procchan[schedule[i].ProcID].Run = runningindex //TODO make this the scheduled GID
-				procchan[schedule[i].ProcID].RunningRoutine = schedule[i].Routine //TODO make this the scheduled GID
-				l.Printf("Running (%d/%d) %d %s",i,len(schedule)-1,schedule[i].ProcID,common.PrintRoutineInfo(&schedule[i].Routine))
+			}
+		} else {
+			if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
+				if procchan[schedule[i].ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 
-				//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
-				//TODO explore schedule if in explore mode?
+					//move forward
+					forward()
 
-				//l.Print("unLocking store")
-				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
-				//l.Print(procchan)
-
-				for {
-					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) { 
-						if procchan[schedule[i].ProcID].Run == -1 {
-							//l.Print("Job Done!")
-							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
-							//l.Print(procchan)
-							i++
-							break
+					l.Print("Scheduling Event")
+					//TODO send a proper signal to the runtime with
+					//the goroutine ID that needs to be run
+					runnable := make([]int,0)
+					for j, info := range procchan[schedule[i].ProcID].Routines {
+						if dara.GetDaraProcStatus(info.Status) != dara.Idle {
+							l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].ProcID,j,common.PrintRoutineInfo(&info))
+							runnable = append(runnable,j)
 						}
-						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
-						//TODO log.Fatalf("Preemtion is turned on")
 					}
-					//time.Sleep(time.Second)
+					//TODO clean up init
+					runningindex := 0
+					if len(runnable) == 0 {
+						//This should only occur when the processes
+						//have not started yet. There should be a
+						//smarter starting condition here rather than
+						//just borking on the init of the schedule
+						//l.Print("first instance")
+						runningindex = -2
+					} else {
+						//replay schedule
+						runningindex = schedule[i].Routine.Gid
+					}
+					//Assign which goroutine to run
+					procchan[schedule[i].ProcID].Run = runningindex //TODO make this the scheduled GID
+					procchan[schedule[i].ProcID].RunningRoutine = schedule[i].Routine //TODO make this the scheduled GID
+					l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].ProcID,common.PrintRoutineInfo(&schedule[i].Routine))
+
+					//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
+					//TODO explore schedule if in explore mode?
+
+					//l.Print("unLocking store")
+					atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
+					//l.Print(procchan)
+					for {
+						if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
+							if procchan[schedule[i].ProcID].Run == -1 {
+								//l.Print("Job Done!")
+								atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
+								//l.Print(procchan)
+								i++
+								break
+							}
+							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].ProcID].Lock))),dara.UNLOCKED)
+							//TODO log.Fatalf("Preemtion is turned on")
+						}
+						//time.Sleep(time.Second)
+					}
 				}
 			}
 		}
 	}
 	//End computation
+	l.Printf("Wake me up when september ends")
+	time.Sleep(time.Second)
+	l.Printf("1st october")
 	for i := 1;i <= *procs;i++{
 		for {
 			if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED,dara.LOCKED) {
@@ -314,19 +355,20 @@ func record_sched() {
 		//else busy wait
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
-
 				forward()
 				procchan[ProcID].Run = -3
 
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
-				l.Printf("Recording Event %d",i)
+				flag := true
 
-				for {
+				for ; flag; {
 							//l.Print(procchan)
-					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) { 
+					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run != -3 {
+						//	l.Println("if procchan[ProcID].Run != -3")
 							//Update the last running routine
+							l.Printf("Recording Event %d",i)
 							ri := procchan[ProcID].RunningRoutine
 							e := dara.Event{ProcID,ri}
 							l.Printf("Ran: %s",common.PrintEvent(&e))
@@ -344,22 +386,39 @@ func record_sched() {
 
 							ProcID = roundRobin()
 							i++
-							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
-							break
+							flag = false
 						}
 						//l.Print("Still running")
 						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 					}
+					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].SyscallLock))), dara.UNLOCKED, dara.LOCKED) {
+						if procchan[ProcID].Syscall != -1 {
+							l.Printf("Recording Event %d",i)
+							procchan[ProcID].Syscall = -1
+							ri := procchan[ProcID].RunningRoutine
+							e := dara.Event{ProcID, ri}
+							schedule = append(schedule, e)
+							l.Printf("Ran: %s",common.PrintEvent(&e))
+							i++
+							f, erros := os.Create("Schedule.json")
+							if erros != nil {
+								l.Fatal(err)
+							}
+							enc := json.NewEncoder(f)
+							enc.Encode(schedule)
+						}
+						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].SyscallLock))),dara.UNLOCKED)
+					}
 					time.Sleep(time.Microsecond)
 				}
 			}
+			f, erros := os.Create("Schedule.json")
+			if erros != nil {
+				l.Fatal(err)
+			}
+			enc := json.NewEncoder(f)
+			enc.Encode(schedule)
 		}
-		f, erros := os.Create("Schedule.json")
-		if erros != nil {
-			l.Fatal(erros)
-		}
-		enc := json.NewEncoder(f)
-		enc.Encode(schedule)
 	}
 	l.Printf(common.PrintSchedule(&schedule))
 	l.Println("The End")
@@ -404,7 +463,9 @@ func main() {
 	for i:=range procchan {
 		l.Printf("Unlocking %d",i)
 		procchan[i].Lock = dara.UNLOCKED
+		procchan[i].SyscallLock = dara.UNLOCKED
 		procchan[i].Run = -1
+		procchan[i].Syscall = -1
 	}
 	//State = RECORD
 

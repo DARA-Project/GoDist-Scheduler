@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"log"
 	"os"
 //	"time"
@@ -9,19 +9,16 @@ import (
 
 func bar(c chan int) {
 	for i := 0; i < 5; i++{
-		fmt.Println("Opening file2 now")
 		f, err := os.Open("file2.txt")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println("Reading file2 now")
 		b1 := make([]byte, 20)
-		n1, err := f.Read(b1)
+		_, err = f.Read(b1)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%d bytes of file2: %s\n", n1, string(b1[:n1]))
 		f.Close()
 //		time.Sleep(time.Millisecond)
 	}
@@ -31,26 +28,38 @@ func bar(c chan int) {
 
 func foo(c chan int) {
 	for i := 0; i < 5; i++{
-		fmt.Println("Opening file now")
 		f, err := os.Open("file.txt")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println("Reading file now")
 		b1 := make([]byte, 20)
-		n1, err := f.Read(b1)
+		_, err = f.Read(b1)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%d bytes: %s\n", n1, string(b1[:n1]))
 		f.Close()
 //		time.Sleep(time.Millisecond)
 	}
 	c <- 1
 }
 
+func normal() {
+	f, err := os.Open("file.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	b1 := make([]byte, 20)
+	_, err = f.Read(b1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	f.Close()
+}
+
 func main() {
+	/*
 	c := make(chan int)
 	c2 := make(chan int)
 	go foo(c)
@@ -59,4 +68,6 @@ func main() {
 	y := <-c2
 	log.Println(x)
 	log.Println(y)
+	*/
+	normal()
 }
