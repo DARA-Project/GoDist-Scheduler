@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 dgo='/usr/local/go/bin/go'
 SchedulerDir=github.com/DARA-Project/GoDist-Scheduler
 
@@ -49,51 +49,49 @@ function RunTestCase {
         ;;
     esac
 
-
-    dd if=/dev/zero of=./DaraSharedMem bs=400M count=1 > $silent 2>&1
+    pwd
+    dd if=/dev/zero of=./DaraSharedMem bs=1000M count=1
     chmod 777 DaraSharedMem
     exec 666<> ./DaraSharedMem
 
 
     export DARAON=false
-    GoDist-Scheduler $1 -procs=$PROCESSES 1> ../Global-Scheduler.moniter 2> ../Global-Scheduler.moniter &
+    GoDist-Scheduler $1 -procs=$PROCESSES -rl=true -project=phil 1> ../Global-Scheduler.moniter 2> ../Global-Scheduler.moniter &
     schedpid=$!
     sleep 2
 
 
     #$1 is either -w (record) or -r (replay)
+    #TODO restrict this to the config.bash?
     $dgo build $Program.go
     ##Turn on dara
     export GOMAXPROCS=1
-    export DARAON=true
     export DARATESTPEERS=$PROCESSES
 
 
     #Run the required test
     case $1 in
     "-w")
-        for i in $(seq 1 $PROCESSES)
-        do
-            export DARAPID=$i
-            #record an execution
-            ./$Program 1> $Program-$DARAPID.record 2> Local-Scheduler-$DARAPID.record &
-        done
-        wait $schedpid
         #for i in $(seq 1 $PROCESSES)
         #do
-        #    sed -i '$ d' $Program-$DARAPID.record
+        #    export DARAPID=$i
+        #    #record an execution
+        #    ./$Program 1> $Program-$DARAPID.record 2> Local-Scheduler-$DARAPID.record &
         #done
+        RecordExecution
+        wait $schedpid
         cat $Program-[0-9].record > record.master
         ;;
 
 
     "-r")
-        for i in $(seq 1 $PROCESSES)
-        do
-            export DARAPID=$i
-            #record an execution
-            ./$Program 1> $Program-$DARAPID.replay 2> Local-Scheduler-$DARAPID.replay &
-        done
+        #for i in $(seq 1 $PROCESSES)
+        #do
+        #    export DARAPID=$i
+        #    #record an execution
+        #    ./$Program 1> $Program-$DARAPID.replay 2> Local-Scheduler-$DARAPID.replay &
+        #done
+        ReplayExecution
         wait $schedpid
         cat $Program-[0-9].replay > replay.master
         ;;
@@ -107,13 +105,27 @@ $dgo install $SchedulerDir
 echo BUILDING THE SCHEDULER
 $dgo build $SchedulerDir
 echo "---------------TESTS-------------------"
-for testprogramdir  in *_test; do
+
+
+ulimit -n 70000
+tests=""
+
+if [ $1 == "-all" ]; then
+    tests="*_test"
+elif [ $1 != "" ]; then
+    tests=$1
+else
+    echo "Argument to test should either be -all or the name of a directory"
+fi
+
+for testprogramdir in $tests; do
     #testprogramdir=broadcastUDPHashThread_test
     cd $testprogramdir
 
     source config.bash
 
     testprogram=`echo $testprogramdir | cut -d'_' -f 1`
+    pwd
     printf "%-30s" "$testprogram"
     
 
@@ -125,8 +137,8 @@ for testprogramdir  in *_test; do
 
     RunTestCase -t $testprogram 
     if [ $PASS ]; then
-        #echo not cleaning
-        RunTestCase -c $testprogram
+        echo not cleaning
+        #RunTestCase -c $testprogram
     else
         exit -1
     fi

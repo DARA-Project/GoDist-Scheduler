@@ -51,6 +51,7 @@ func EatingState() {
 	LeftChopstick = true
 	RightChopstick = true
 	Eaten++
+	runtime.DaraLog("EatingState","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 	logger.Noticef("Eaten [%d/%d]", Eaten, n)
 
 }
@@ -62,6 +63,7 @@ func ThinkingState() {
 	LeftChopstick = false
 	RightChopstick = false
 	Chopsticks = 0
+	runtime.DaraLog("ThinkingState","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 }
 
 //obtain the left chopstick
@@ -70,6 +72,7 @@ func LeftChopstickState() {
 	Thinking = true
 	LeftChopstick = true
 	Chopsticks++
+	runtime.DaraLog("LeftChopstickState","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 
 }
 
@@ -79,6 +82,7 @@ func RightChopstickState() {
 	Thinking = true
 	RightChopstick = true
 	Chopsticks++
+	runtime.DaraLog("RightChopstickState","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 }
 
 //structure defining a philosopher
@@ -109,6 +113,8 @@ func makePhilosopher(port, neighbourPort int) *Philosopher {
 	connected := false
 	//Continuously try to connect via udp
 	for !connected {
+
+		time.Sleep(time.Millisecond)
 		neighbourAddr, errR := net.ResolveUDPAddr("udp4", ":"+fmt.Sprintf("%d", neighbourPort))
 		PrintErr(errR)
 		listenAddr, errL := net.ResolveUDPAddr("udp4", ":"+fmt.Sprintf("%d", port+1000))
@@ -125,7 +131,7 @@ func makePhilosopher(port, neighbourPort int) *Philosopher {
 	logger.Debugf("launching chopstick server\n")
 
 	//sleep while the others start
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond)
 
 	go ListenForChopsticks(port, chopstick, conn)
 	return &Philosopher{port, neighbourPort, chopstick, neighbour}
@@ -135,24 +141,30 @@ func ListenForChopsticks(port int, chopstick chan bool, conn net.PacketConn) {
 	defer logger.Debugf("Chopstick #%d\n is down", port) //attempt to show when the chopsticks are no longer available
 	//Incomming request handler
 	for true {
-
+		time.Sleep(time.Millisecond)
 		req, addr := getRequest(conn)
 		go func(request int) {
 			switch request {
 			case ReleaseStick:
+
+				runtime.DaraLog("ReleaseStick","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 				logger.Debugf("Receiving left stick on %d\n", port)
 				chopstick <- true
 			case RequestStick:
+				runtime.DaraLog("RequestStick","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 				logger.Debugf("Stick request receved on %d\n", port) //TODO this is where I cant just give it away for fairness
 				select {
 				case <-chopstick:
+					runtime.DaraLog("GiveStick","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 					logger.Debugf("Giving stick on %d\n", port)
 					resp := dinvRT.PackM(Msg{Type: Ack}, fmt.Sprintf("Giving stick on %d\n", port))
 					conn.WriteTo(resp, addr)
 				case <-time.After(time.Duration(SLEEP_MAX * 1.3)):
+					runtime.DaraLog("TimeoutStick","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 					logger.Criticalf("Exiting timed out wait on %d", port)
 				}
 			case ExcuseMe:
+					runtime.DaraLog("Excuse","Eating,Thinking,LeftChopstick,RightChopstick,Eaten",Eating,Thinking,LeftChopstick,RightChopstick,Eaten)
 				if !Excused {
 					logger.Debugf("%d has been excused from the table\n", port)
 				}
@@ -204,6 +216,7 @@ func (phil *Philosopher) getChopsticks() {
 
 	//request chopstick function left should be owned
 	go func() {
+		time.Sleep(time.Millisecond)
 		//Send Request to Neighbour
 		var msg Msg
 		msg.Type = RequestStick
@@ -289,6 +302,8 @@ func main() {
 	log.SetFlags(log.Lshortfile)
 	philosopher := makePhilosopher(myPort, neighbourPort)
 	for i := 0; i < n; i++ {
+
+		time.Sleep(time.Millisecond)
 		philosopher.dine()
 	}
 	logger.Noticef("%v is done dining\n", philosopher.id)

@@ -34,10 +34,31 @@ function runTestPrograms {
         export DINV_HOSTNAME="localhost:$hostPort"
         export DINV_LOG_STORE="localhost:17000"
         export DINV_PROJECT="phil"
+        export DARAON=true
         $dgo run diningphilosopher.go -mP $hostPort -nP $neighbourPort &
+        export DARAON=false
     done
-    sleep 60
+    sleep 15
     kill `ps | pgrep dining | awk '{print $1}'`
+}
+
+function RecordExecution {
+    cd $testDir
+    pwd
+    export DARAON=false
+    $dgo buil diningphilopsophers.go
+    for i in $(seq 1 $PROCESSES)
+    do
+        export DINV_HOSTNAME="localhost:$hostPort"
+        export DINV_LOG_STORE="localhost:17000"
+        export DINV_PROJECT="phil"
+        export DARAON=true
+        export DARAPID=$i
+        #record an execution
+        export DARAON=true
+        ./diningphilosophers 1> $Program-$DARAPID.record 2> Local-Scheduler-$DARAPID.record &
+        export DARAON=false
+    done
 }
 
 
