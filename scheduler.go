@@ -3,8 +3,9 @@ package main
 import (
 	"dara"
 	"encoding/json"
+	"net/rpc"
 	"flag"
-	//"fmt"
+	"fmt"
 	"github.com/DARA-Project/GoDist-Scheduler/common"
 	"log"
 	//"math/rand"
@@ -15,6 +16,9 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
+	ls "github.com/DARA-Project/dara/servers/logserver"
+	ns "github.com/DARA-Project/dara/servers/nameserver"
+	overlord "github.com/DARA-Project/dara/overlord"
 )
 
 //Command line arguments
@@ -24,6 +28,8 @@ var (
 	replay = flag.Bool("r", false, "Replay an execution")
 	explore = flag.Bool("e", false, "Explore a recorded execution")
 	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
+	remoteLogging = flag.Bool("rl", false, "Log program state to remote dara log server")
+	projectName = flag.String("project", "","Project name to associate with log server")
 )
 
 const(
@@ -56,11 +62,13 @@ var (
 	//dupl connects with a terminal for manual stepping through an
 	//execution
 	udpl net.PacketConn
+	//overloard server structure
 	//buffer for reading from the manual event stepper, the values
 	//read into the buffer really don't matter yet
 	//TODO allow users to specifcy scheduling decisions based on udp
 	//stepping
 	udpb []byte
+	rpcClient *rpc.Client
 )
 
 func checkargs() {
@@ -78,6 +86,43 @@ func checkargs() {
 		l.Print("Exploring")
 	} else {
 		l.Print("Replaying")
+	}
+
+	if *remoteLogging {
+		if *projectName == "" {
+			l.Fatal("projectname=\"\" When logging remotely a project name must be specified")
+		}
+		names, err := overlord.ResolveServerNames()
+		if err != nil {
+			l.Fatal(err)
+		}
+		//just get name server
+		var logserverName ns.Server
+		for _, s := range names.Servers {
+			if s.Type == ns.LOG {
+				logserverName = s
+			}
+		}
+		if logserverName.Name == "" {
+			//no remote log server found
+			//TODO look for one locally
+			l.Fatal("Unable to resolve a remote logserver")
+		}
+		var servers overlord.ServerPool
+		servers[ns.LOG] = make(map[string]overlord.ServerInstance,0)
+		overlord.DialServers([]ns.Server{logserverName},&servers)
+		if len(servers) < 1 {
+			l.Fatal("Unable to connect to log server")
+		}
+		for _, instance := range servers[ns.LOG] {
+			rpcClient = instance.RPC
+			break // quit after just one, this loop is just inconvienient
+		}
+		l.Println(names)
+		//Use the first remote logging server available
+
+		//connect to name server
+		//get log server
 	}
 	return
 }
@@ -102,6 +147,73 @@ func roundRobin() int {
 		LastProc++
 	}
 	return LastProc
+}
+
+//Log Generation
+
+func RemoteLog(ProcID int, le dara.LogEntry) {
+	state, errM := json.Marshal(le.Vars)
+	if errM != nil {
+		l.Fatal(errM)
+	}
+	log := ls.SElog{Type: ls.LOCAL,
+		Message: []byte{'I','F','E','E','L','L','I','K','E','D','A','N','C','I','N','G'},
+		VC: []byte{'S','T','O','P'},
+		State: state,
+		Event: []byte{'R','I','G','H','T'},
+		DumpTrace: []byte{'N','O','W'},
+	}
+	rid := ls.LogId{Project: *projectName, Node: fmt.Sprintf("%d",ProcID)}
+	request := ls.PostReq{Id: rid, Log: log}
+	resp := ls.PostReply{}
+	err := rpcClient.Call("LogStore.Log", request, &resp)
+	if err != nil {
+		l.Fatal(err)
+	}
+	if resp.Id.Session == "" {
+		l.Fatal()
+	}
+	//TODO update session, not if the session ever changes after the
+	//first update it means that something died, or the log server
+	//timed out
+}
+
+func ConsumeAndRemoteLog(ProcID int) {
+	cl := ConsumeLog(ProcID)
+	for i := range cl {
+		RemoteLog(ProcID,cl[i])
+	}
+}
+
+
+func ConsumeAndPrint(ProcID int) {
+	cl := ConsumeLog(ProcID)
+	for i := range cl {
+		for j := range cl[i].Vars {
+			l.Println(cl[i].Vars[j])
+		}
+	}
+}
+
+func ConsumeLog(ProcID int) []dara.LogEntry {
+	logsize := procchan[ProcID].LogIndex
+	log := make([]dara.LogEntry,logsize)
+	for i:=0;i<logsize;i++ {
+		ele := &(procchan[ProcID].Log[i])
+		le := &(log[i])
+		(*le).P = (*ele).P
+		(*le).G = (*ele).G
+		(*le).LogID = string((*ele).LogID[:])
+		(*le).Vars = make([]dara.NameValuePair,(*ele).Length)
+		l.Printf("Reading Logging Instance P=%d G=%s ID=%s Length=%d",(*le).P,common.PrintRoutineInfo(&((*le).G)),(*le).LogID,len((*le).Vars))
+		for j:=0;j<len((*le).Vars);j++{
+			(*le).Vars[j].VarName = string((*ele).Vars[j].VarName[:])
+			(*le).Vars[j].Value = runtime.DecodeValue((*ele).Vars[j].Type,(*ele).Vars[j].Value)
+			(*le).Vars[j].Type = string((*ele).Vars[j].Type[:])
+		}
+	}
+	procchan[ProcID].LogIndex = 0
+	return log
 }
 
 func replay_sched() {
@@ -193,6 +305,7 @@ func replay_sched() {
 	l.Println("Replay is over")
 }
 
+
 func record_sched() {
 	LastProc = -1
 	ProcID := roundRobin()
@@ -217,6 +330,7 @@ func record_sched() {
 							ri := procchan[ProcID].RunningRoutine
 							e := dara.Event{ProcID,ri}
 							l.Printf("Ran: %s",common.PrintEvent(&e))
+							ConsumeAndRemoteLog(ProcID)
 							schedule = append(schedule,e)
 							//Set the status of the routine that just
 							//ran
@@ -242,7 +356,7 @@ func record_sched() {
 		}
 		f, erros := os.Create("Schedule.json")
 		if erros != nil {
-			l.Fatal(err)
+			l.Fatal(erros)
 		}
 		enc := json.NewEncoder(f)
 		enc.Encode(schedule)
@@ -288,6 +402,7 @@ func main() {
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
 	for i:=range procchan {
+		l.Printf("Unlocking %d",i)
 		procchan[i].Lock = dara.UNLOCKED
 		procchan[i].Run = -1
 	}

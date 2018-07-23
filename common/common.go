@@ -20,4 +20,3 @@ func PrintSchedule(s *dara.Schedule) string{
 	}
 	return output
 }
-
