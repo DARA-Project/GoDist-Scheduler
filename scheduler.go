@@ -149,43 +149,6 @@ func roundRobin() int {
 	return LastProc
 }
 
-//Log Generation
-/*TODO Refactor for new events
-func RemoteLog(ProcID int, le dara.LogEntry) {
-	state, errM := json.Marshal(le.Vars)
-	if errM != nil {
-		l.Fatal(errM)
-	}
-	log := ls.SElog{Type: ls.LOCAL,
-		Message: []byte{'I','F','E','E','L','L','I','K','E','D','A','N','C','I','N','G'},
-		VC: []byte{'S','T','O','P'},
-		State: state,
-		Event: []byte{'R','I','G','H','T'},
-		DumpTrace: []byte{'N','O','W'},
-	}
-	rid := ls.LogId{Project: *projectName, Node: fmt.Sprintf("%d",ProcID)}
-	request := ls.PostReq{Id: rid, Log: log}
-	resp := ls.PostReply{}
-	err := rpcClient.Call("LogStore.Log", request, &resp)
-	if err != nil {
-		l.Fatal(err)
-	}
-	if resp.Id.Session == "" {
-		l.Fatal()
-	}
-	//TODO update session, not if the session ever changes after the
-	//first update it means that something died, or the log server
-	//timed out
-}
-
-func ConsumeAndRemoteLog(ProcID int) {
-	cl := ConsumeLog(ProcID)
-	for i := range cl {
-		RemoteLog(ProcID,cl[i])
-	}
-}*/
-
-
 func ConsumeAndPrint(ProcID int) []dara.Event{
 	cl := ConsumeLog(ProcID)
 
@@ -326,13 +289,8 @@ func record_sched() {
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run != -3 {
 							l.Printf("Recording Event on %d\n",ProcID)
-						//	l.Println("if procchan[ProcID].Run != -3")
 							//Update the last running routine
 							l.Printf("Recording Event %d",i)
-							//ri := procchan[ProcID].RunningRoutine
-							//e := dara.Event{ProcID,ri}
-							//l.Printf("Ran: %s",common.PrintEvent(&e))
-							//ConsumeAndRemoteLog(ProcID)
 							events := ConsumeAndPrint(ProcID)
 							schedule = append(schedule,events...)
 							//Set the status of the routine that just
@@ -352,25 +310,6 @@ func record_sched() {
 						//l.Print("Still running")
 						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 					}
-					/*
-					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].SyscallLock))), dara.UNLOCKED, dara.LOCKED) {
-						if procchan[ProcID].Syscall != -1 {
-							l.Printf("Recording Event %d",i)
-							procchan[ProcID].Syscall = -1
-							//ri := procchan[ProcID].RunningRoutine
-							//e := dara.Event{ProcID, ri}
-							//schedule = append(schedule, e)
-							//l.Printf("Ran: %s",common.PrintEvent(&e))
-							//i++
-							//f, erros := os.Create("Schedule.json")
-							//if erros != nil {
-							//	l.Fatal(err)
-							//}
-							//enc := json.NewEncoder(f)
-							//enc.Encode(schedule)
-						}
-						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].SyscallLock))),dara.UNLOCKED)
-					}*/
 					time.Sleep(time.Microsecond)
 				}
 			}
