@@ -7,6 +7,7 @@ import (
 	"flag"
 	//"fmt"
 	"github.com/DARA-Project/GoDist-Scheduler/common"
+	"github.com/DARA-Project/GoDist-Scheduler/explorer"
 	"log"
 	//"math/rand"
 	"net"
@@ -17,8 +18,8 @@ import (
 	"time"
 	"unsafe"
 	//ls "github.com/DARA-Project/dara/servers/logserver"
-	ns "github.com/DARA-Project/dara/servers/nameserver"
-	overlord "github.com/DARA-Project/dara/overlord"
+	//ns "github.com/DARA-Project/dara/servers/nameserver"
+	//overlord "github.com/DARA-Project/dara/overlord"
 )
 
 //Command line arguments
@@ -36,6 +37,9 @@ const(
 	//The length of the schedule. When recording the system will
 	//execute up to dara.SCHEDLEN. The same is true on replay
 	RECORDLEN = 100
+	EXPLORELEN = 100
+	EXPLORATION_LOG_FILE = "visitedLog.txt"
+	MAX_EXPLORATION_DEPTH = 10
 )
 
 //*****************************************************************/
@@ -88,6 +92,7 @@ func checkargs() {
 		l.Print("Replaying")
 	}
 
+	/*
 	if *remoteLogging {
 		if *projectName == "" {
 			l.Fatal("projectname=\"\" When logging remotely a project name must be specified")
@@ -124,6 +129,7 @@ func checkargs() {
 		//connect to name server
 		//get log server
 	}
+	*/
 	return
 }
 
@@ -326,8 +332,71 @@ func record_sched() {
 	l.Println("The End")
 }
 
+func explore_init() *explorer.Explorer {
+	e, err := explorer.MountExplorer(EXPLORATION_LOG_FILE, explorer.RANDOM)
+	if err != nil {
+		l.Fatal(err)
+	}
+	e.SetMaxDepth(MAX_EXPLORATION_DEPTH)
+	return e
+}
+
+func getDaraProcs() []explorer.ProcThread {
+	threads := []explorer.ProcThread{}
+	for i := 0; i < *procs; i++ {
+		for _, routine := range procchan[i].Routines {
+			if dara.GetDaraProcStatus(routine.Status) != dara.Idle {
+				t := explorer.ProcThread{ProcID: i, Thread: routine}
+				threads = append(threads, t)
+			}
+		}
+	}
+	return threads
+}
+
 func explore_sched() {
-	l.Println("Placeholder for exploring")
+	e := explore_init()
+	l.Println("Dora the Explorer begins")
+	LastProc = -1
+	ProcID := roundRobin()
+	var i int
+	for i < EXPLORELEN {
+		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
+			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
+				forward()
+				procchan[ProcID].Run = -3
+
+				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
+				flag := true
+				for ; flag; {
+					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
+						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
+						if procchan[ProcID].Run != -3 {
+							events := ConsumeAndPrint(ProcID)
+							schedule = append(schedule,events...)
+							if (i >= EXPLORELEN - *procs) {
+								//mark the processes for death
+								l.Printf("Ending Execution!")
+								procchan[ProcID].Run = -4 //mark process for death
+							} else {
+								procchan[ProcID].Run = -1	//lock process
+							}
+							procs := getDaraProcs()
+							nextProc := e.GetNextThread(procs)
+							ProcID = nextProc.ProcID
+							procchan[ProcID].Run = nextProc.Thread.Gid
+							procchan[ProcID].RunningRoutine = nextProc.Thread
+							i++
+							flag = false
+						}
+						//l.Print("Still running")
+						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
+					}
+					time.Sleep(time.Microsecond)
+				}
+			}
+		}
+	}
 }
 
 func main() {
@@ -378,7 +447,7 @@ func main() {
 		record_sched()
 		l.Println("Finished recording")
 	} else if *explore {
-		explore_sched()
+		//explore_sched()
 		l.Println("Finished exploring")
 	}
 	l.Println("Backstreet's back again")
