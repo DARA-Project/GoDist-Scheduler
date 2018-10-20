@@ -3,7 +3,7 @@ dgo='/usr/bin/dgo'
 PROCESSES=1
 Program=file_read
 SchedulerDir=github.com/DARA-Project/GoDist-Scheduler
-
+export PATH="$PATH:$GOPATH/bin"
 
 killall nondet
 
@@ -17,7 +17,6 @@ fi
 echo INSTALLING THE SCHEDULER
 $dgo install $SchedulerDir
 
-
 rm DaraSharedMem
 dd if=/dev/zero of=./DaraSharedMem bs=400M count=1
 chmod 777 DaraSharedMem
@@ -25,6 +24,7 @@ exec 666<> ./DaraSharedMem
 
 echo "GoDist-Scheduler $1 $2 1>s.out 2>s.out &"
 GoDist-Scheduler $1 $2 1> s.out 2> s.out &
+echo "Here"
 sleep 2
 
 

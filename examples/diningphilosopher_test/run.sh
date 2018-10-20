@@ -10,7 +10,7 @@ BasePort=6000
 DINV=$GOPATH/src/bitbucket.org/bestchai/dinv
 DARA=$GOPATH/src/github.com/DARA-Project/GoDist-Scheduler
 testDir=$DARA/examples/diningPhil
-dgo=/usr/local/go/bin/go
+dgo=/usr/bin/dgo
 P1=diningphilosopher.go
 Original=original
 
@@ -46,7 +46,7 @@ function RecordExecution {
     cd $testDir
     pwd
     export DARAON=false
-    $dgo buil diningphilopsophers.go
+    $dgo build diningphilopsophers.go
     for i in $(seq 1 $PROCESSES)
     do
         export DINV_HOSTNAME="localhost:$hostPort"
