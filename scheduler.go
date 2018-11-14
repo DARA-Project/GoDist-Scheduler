@@ -404,6 +404,7 @@ func main() {
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
 	l.Println("Starting the Scheduler")
+	log.Println("Starting the Scheduler")
 
 
 	//If manual step forward in time by reading udp packets
@@ -421,6 +422,7 @@ func main() {
 	p , err = runtime.Mmap(nil,dara.SHAREDMEMPAGES*dara.PAGESIZE,dara.PROT_READ|dara.PROT_WRITE ,dara.MAP_SHARED,dara.DARAFD,0)
 
 	if err != 0 {
+		log.Println(err)
 		l.Fatal(err)
 	}
 
@@ -431,6 +433,7 @@ func main() {
 	procchan = (*[dara.CHANNELS]dara.DaraProc)(p)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
+	log.Println("Ranging procchan")
 	for i:=range procchan {
 		l.Printf("Unlocking %d",i)
 		procchan[i].Lock = dara.UNLOCKED
@@ -441,9 +444,11 @@ func main() {
 	//State = RECORD
 
 	if *replay {
+		l.Println("Started replaying")
 		replay_sched()
 		l.Println("Finished replaying")
 	} else if *record {
+		l.Println("Finished recording")
 		record_sched()
 		l.Println("Finished recording")
 	} else if *explore {
