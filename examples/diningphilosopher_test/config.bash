@@ -12,7 +12,7 @@ export BasePort=6000
 DINV=$GOPATH/src/bitbucket.org/bestchai/dinv
 DARA=$GOPATH/src/github.com/DARA-Project/GoDist-Scheduler
 testDir=$DARA/examples/diningphilosopher_test
-dgo=/usr/local/go/bin/go
+dgo=/usr/bin/dgo
 LOGSERVER="localhost:17000"
 
 function installDinv {

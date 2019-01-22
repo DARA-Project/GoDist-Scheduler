@@ -82,6 +82,3 @@ func mult(n int) {
 	log.Println("mult ->",shared,"<------------------------------------")
 }
 
-
-
-

@@ -204,6 +204,7 @@ func replay_sched() {
 	if err != nil {
 		l.Fatal(err)
 	}
+	l.Println("Num Events : ", len(schedule))
 	for i<len(schedule) {
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
 			if procchan[schedule[i].P].Run == -1 { //TODO check predicates on goroutines + schedule
@@ -292,7 +293,6 @@ func record_sched() {
 				flag := true
 				for ; flag; {
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
-						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run != -3 {
 							l.Printf("Recording Event on %d\n",ProcID)
 							//Update the last running routine
@@ -313,7 +313,15 @@ func record_sched() {
 							i++
 							flag = false
 						}
+						if procchan[ProcID].LogIndex > 0 {
+							l.Printf("Procchan %d\n", procchan[ProcID].Run)
+							events := ConsumeAndPrint(ProcID)
+							schedule = append(schedule,events...)
+							flag = false
+						}
 						//l.Print("Still running")
+						//l.Printf("Status is %d\n",procchan[ProcID].RunningRoutine.Status)
+						//l.Printf("GoID is %d\n", procchan[ProcID].RunningRoutine.Gid)
 						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 					}
 					time.Sleep(time.Microsecond)
@@ -404,8 +412,6 @@ func main() {
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
 	l.Println("Starting the Scheduler")
-	log.Println("Starting the Scheduler")
-
 
 	//If manual step forward in time by reading udp packets
 	if *manual {
@@ -419,7 +425,9 @@ func main() {
 
 
 	//Init MMAP (this should be moved to the init function
-	p , err = runtime.Mmap(nil,dara.SHAREDMEMPAGES*dara.PAGESIZE,dara.PROT_READ|dara.PROT_WRITE ,dara.MAP_SHARED,dara.DARAFD,0)
+	p , err = runtime.Mmap(nil,
+			       dara.CHANNELS*dara.DARAPROCSIZE,
+                               dara.PROT_READ|dara.PROT_WRITE ,dara.MAP_SHARED,dara.DARAFD,0)
 
 	if err != 0 {
 		log.Println(err)
@@ -433,29 +441,28 @@ func main() {
 	procchan = (*[dara.CHANNELS]dara.DaraProc)(p)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
-	log.Println("Ranging procchan")
 	for i:=range procchan {
-		l.Printf("Unlocking %d",i)
+		//l.Printf("Unlocking %d",i)
+		//l.Println(i)
 		procchan[i].Lock = dara.UNLOCKED
 		procchan[i].SyscallLock = dara.UNLOCKED
 		procchan[i].Run = -1
 		procchan[i].Syscall = -1
 	}
 	//State = RECORD
-
 	if *replay {
 		l.Println("Started replaying")
 		replay_sched()
 		l.Println("Finished replaying")
 	} else if *record {
-		l.Println("Finished recording")
+		l.Println("Started recording")
 		record_sched()
 		l.Println("Finished recording")
 	} else if *explore {
 		//explore_sched()
 		l.Println("Finished exploring")
 	}
-	l.Println("Backstreet's back again")
+	l.Println("Exiting scheduler")
 }
 
 
