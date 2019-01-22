@@ -25,9 +25,9 @@ import (
 //Command line arguments
 var (
 	procs = flag.Int("procs", 1, "The number of processes to model check")
-	record = flag.Bool("w", false, "Record an execution")
-	replay = flag.Bool("r", false, "Replay an execution")
-	explore = flag.Bool("e", false, "Explore a recorded execution")
+	record = flag.Bool("record", false, "Record an execution")
+	replay = flag.Bool("replay", false, "Replay an execution")
+	explore = flag.Bool("explore", false, "Explore a recorded execution")
 	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
 	remoteLogging = flag.Bool("rl", false, "Log program state to remote dara log server")
 	projectName = flag.String("project", "","Project name to associate with log server")
@@ -317,7 +317,12 @@ func record_sched() {
 							l.Printf("Procchan %d\n", procchan[ProcID].Run)
 							events := ConsumeAndPrint(ProcID)
 							schedule = append(schedule,events...)
-							flag = false
+							f, erros := os.Create("Schedule.json")
+							if erros != nil {
+								l.Fatal(err)
+							}
+							enc := json.NewEncoder(f)
+							enc.Encode(schedule)
 						}
 						//l.Print("Still running")
 						//l.Printf("Status is %d\n",procchan[ProcID].RunningRoutine.Status)
