@@ -4,7 +4,7 @@ import (
 	//"fmt"
 	"log"
 	"os"
-//	"time"
+	"time"
 )
 
 func bar(c chan int) {
@@ -20,7 +20,7 @@ func bar(c chan int) {
 			log.Fatal(err)
 		}
 		f.Close()
-//		time.Sleep(time.Millisecond)
+		time.Sleep(time.Millisecond)
 	}
 	c <- 1
 
@@ -39,23 +39,9 @@ func foo(c chan int) {
 			log.Fatal(err)
 		}
 		f.Close()
-//		time.Sleep(time.Millisecond)
+		time.Sleep(time.Millisecond)
 	}
 	c <- 1
-}
-
-func normal() {
-	f, err := os.Open("file.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	b1 := make([]byte, 20)
-	_, err = f.Read(b1)
-	if err != nil {
-		log.Fatal(err)
-	}
-	f.Close()
 }
 
 func main() {
@@ -69,5 +55,4 @@ func main() {
 	log.Println("Got x", x)
 	log.Println("Got y", y)
 
-	//normal()
 }
