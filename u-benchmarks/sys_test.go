@@ -53,6 +53,51 @@ func BenchmarkFileWrite(b *testing.B) {
 	RemoveOrDie("write_hello.txt")
 }
 
+func BenchmarkFileFstat(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.Stat()
+	}
+	b.StopTimer()
+	f.Close()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkFileStat(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Stat("hello_world.txt")
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkFileLstat(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Lstat("hello_world.txt")
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkFileLseek(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	f.Write([]byte("Hello World"))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.Seek(5, 0)
+	}
+	b.StopTimer()
+	f.Close()
+	RemoveOrDie("hello_world.txt")
+}
+
 // Helpers to reduce boilerplate code
 
 func CreateOrDie(name string) *os.File {
