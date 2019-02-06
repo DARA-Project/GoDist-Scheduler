@@ -20,6 +20,9 @@ func BenchmarkFileOpen(b *testing.B) {
 
 func BenchmarkFileRead(b *testing.B) {
 	f := CreateOrDie("hello_world.txt")
+	f.Write([]byte("Hello World\n"))
+	f.Close()
+	f = OpenOrDie("hello_world.txt")
 	b1 := make([]byte, 20)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
