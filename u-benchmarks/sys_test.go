@@ -90,11 +90,13 @@ func BenchmarkFileLstat(b *testing.B) {
 }
 
 func BenchmarkFileLseek(b *testing.B) {
+	offset := 5
+	whence := 0 /* offset relative to file origin */
 	f := CreateOrDie("hello_world.txt")
-	f.Write([]byte("Hello World"))
+	f.Write([]byte("Hello World\n"))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		f.Seek(5, 0)
+		f.Seek(offset, whence)
 	}
 	b.StopTimer()
 	f.Close()
