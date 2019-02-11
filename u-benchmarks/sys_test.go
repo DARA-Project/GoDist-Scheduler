@@ -26,9 +26,11 @@ func BenchmarkFileRead(b *testing.B) {
 	b1 := make([]byte, 20)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		b.StartTimer()
 		f.Read(b1)
+		b.StopTimer()
+		f.Seek(0, 0) /* seek to beginning of file */
 	}
-	b.StopTimer()
 	f.Close()
 	RemoveOrDie("hello_world.txt")
 }
@@ -90,7 +92,7 @@ func BenchmarkFileLstat(b *testing.B) {
 }
 
 func BenchmarkFileLseek(b *testing.B) {
-	offset := 5
+	offset := int64(5)
 	whence := 0 /* offset relative to file origin */
 	f := CreateOrDie("hello_world.txt")
 	f.Write([]byte("Hello World\n"))
