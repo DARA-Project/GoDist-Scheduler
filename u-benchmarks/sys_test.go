@@ -119,6 +119,63 @@ func BenchmarkFileLseek(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
+func BenchmarkFilePread64(b *testing.B) {
+	offset := int64(0)
+	f := CreateOrDie("hello_world.txt")
+	f.Write([]byte("Hello World\n"))
+	f.Close()
+	f = OpenOrDie("hello_world.txt")
+	buf := make([]byte, 20)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.ReadAt(buf, offset)
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkFilePwrite64(b *testing.B) {
+	offset := int64(5)
+	f := CreateOrDie("hello_world.txt")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.WriteAt([]byte("hello_world\n"), offset)
+	}
+	b.StopTimer()
+	f.Close()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkGetpagesize(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Getpagesize()
+	}
+}
+
+func BenchmarkExecutable(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Executable()
+	}
+}
+
+func BenchmarkGetpid(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Getpid()
+	}
+}
+
+func BenchmarkGetppid(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Getppid()
+	}
+}
+
+func BenchmarkGetwd(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Getwd()
+	}
+}
+
 // Helpers to reduce boilerplate code
 
 func CreateOrDie(name string) *os.File {
