@@ -36,7 +36,7 @@ var (
 const(
 	//The length of the schedule. When recording the system will
 	//execute up to dara.SCHEDLEN. The same is true on replay
-	RECORDLEN = 100
+	RECORDLEN = 10000
 	EXPLORELEN = 100
 	EXPLORATION_LOG_FILE = "visitedLog.txt"
 	MAX_EXPLORATION_DEPTH = 10
@@ -158,12 +158,6 @@ func roundRobin() int {
 func ConsumeAndPrint(ProcID int) []dara.Event{
 	cl := ConsumeLog(ProcID)
 
-	for i := range cl {
-		l.Println(cl[i])
-		//for j := range cl[i].Vars {
-		//	l.Println(cl[i].Vars[j])
-		//}
-	}
 	return cl
 }
 
@@ -179,7 +173,7 @@ func ConsumeLog(ProcID int) []dara.Event {
 		(*e).Epoch = (*ee).Epoch
 		(*e).LE.LogID = string((*ee).ELE.LogID[:])
 		(*e).LE.Vars = make([]dara.NameValuePair,(*ee).ELE.Length)
-		l.Printf("Reading Logging Instance P=%d G=%s ID=%s Length=%d",(*e).P,common.RoutineInfoString(&((*e).G)),(*e).LE.LogID,len((*e).LE.Vars))
+		//l.Printf("Reading Logging Instance P=%d G=%s ID=%s Length=%d",(*e).P,common.RoutineInfoString(&((*e).G)),(*e).LE.LogID,len((*e).LE.Vars))
 		for j:=0;j<len((*e).LE.Vars);j++{
 			(*e).LE.Vars[j].VarName = string((*ee).ELE.Vars[j].VarName[:])
 			(*e).LE.Vars[j].Value = runtime.DecodeValue((*ee).ELE.Vars[j].Type,(*ee).ELE.Vars[j].Value)
@@ -284,6 +278,7 @@ func record_sched() {
 	var i int
 	for i<RECORDLEN {
 		//else busy wait
+        l.Printf("Procchan status : %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 				forward()
@@ -294,9 +289,9 @@ func record_sched() {
 				for ; flag; {
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 						if procchan[ProcID].Run != -3 {
-							l.Printf("Recording Event on %d\n",ProcID)
+							l.Printf("Recording Event on Process/Node %d\n",ProcID)
 							//Update the last running routine
-							l.Printf("Recording Event %d",i)
+							l.Printf("Recording Event Number %d",i)
 							events := ConsumeAndPrint(ProcID)
 							schedule = append(schedule,events...)
 							//Set the status of the routine that just
@@ -310,7 +305,8 @@ func record_sched() {
 							}
 
 							ProcID = roundRobin()
-							i++
+                            l.Printf("Found %d log events", len(events))
+							i += len(events)
 							flag = false
 						}
 						if procchan[ProcID].LogIndex > 0 {
@@ -340,8 +336,8 @@ func record_sched() {
 			enc.Encode(schedule)
 		}
 	}
-	l.Printf(common.ScheduleString(&schedule))
-	l.Printf("%+v\n",schedule)
+	//l.Printf(common.ScheduleString(&schedule))
+	//l.Printf("%+v\n",schedule)
 	l.Println("The End")
 }
 
@@ -464,7 +460,7 @@ func main() {
 		record_sched()
 		l.Println("Finished recording")
 	} else if *explore {
-		//explore_sched()
+		explore_sched()
 		l.Println("Finished exploring")
 	}
 	l.Println("Exiting scheduler")
