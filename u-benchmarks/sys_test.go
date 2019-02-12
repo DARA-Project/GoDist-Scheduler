@@ -47,7 +47,7 @@ func BenchmarkFileClose(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
-func BenchmarkFileWrite(b *testing.B) {
+func BenchmarkFileWrite_NoRemove(b *testing.B) {
 	f := CreateOrDie("write_hello.txt")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -55,6 +55,20 @@ func BenchmarkFileWrite(b *testing.B) {
 	}
 	b.StopTimer()
 	f.Close()
+	RemoveOrDie("write_hello.txt")
+}
+
+func BenchmarkFileWrite_RemovePerIter(b *testing.B) {
+	f := CreateOrDie("write_hello.txt")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		f.Write([]byte("Hello World\n"))
+		b.StopTimer()
+		f.Close()
+		RemoveOrDie("write_hello.txt")
+		f = CreateOrDie("write_hello.txt")
+	}
 	RemoveOrDie("write_hello.txt")
 }
 
