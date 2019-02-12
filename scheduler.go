@@ -187,6 +187,21 @@ func ConsumeLog(ProcID int) []dara.Event {
 	return log
 }
 
+func CheckAllGoRoutinesDead(ProcID int) bool {
+    allDead := true
+    l.Printf("Checking if all goroutines are dead yet for Process %d", ProcID)
+    //l.Printf("Num routines are %d", len(procchan[ProcID].Routines))
+    for _, routine := range procchan[ProcID].Routines {
+        // Only check for dead goroutines for real go routines
+        if routine.Gid != 0 {
+            status := dara.GetDaraProcStatus(routine.Status)
+            l.Printf("Status of GoRoutine %d is %s\n", routine.Gid, dara.GStatusStrings[status])
+            allDead = allDead && (status == dara.Dead)
+        }
+    }
+    return allDead
+}
+
 func replay_sched() {
 	var i int
 	f, err := os.Open("Schedule.json")
@@ -278,7 +293,6 @@ func record_sched() {
 	var i int
 	for i<RECORDLEN {
 		//else busy wait
-        l.Printf("Procchan status : %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 				forward()
@@ -328,6 +342,9 @@ func record_sched() {
 					time.Sleep(time.Microsecond)
 				}
 			}
+            if CheckAllGoRoutinesDead(ProcID) {
+                break
+            }
 			f, erros := os.Create("Schedule.json")
 			if erros != nil {
 				l.Fatal(err)
