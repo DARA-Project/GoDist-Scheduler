@@ -176,7 +176,28 @@ func BenchmarkGetwd(b *testing.B) {
 	}
 }
 
+func BenchmarkReaddir(b *testing.B) {
+	MkdirOrDie("temp")
+	CreateOrDie("temp/hello_world.txt")
+	f := OpenOrDie("temp")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		f.Readdir(0) /* read all files in directory */
+		b.StopTimer()
+		f.Seek(0, 0) /* seek to beginning of directory */
+	}
+	RemoveOrDie("temp")
+}
+
 // Helpers to reduce boilerplate code
+
+func MkdirOrDie(name string) {
+	err := os.MkdirAll(name, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func CreateOrDie(name string) *os.File {
 	f, err := os.Create(name)
@@ -195,7 +216,7 @@ func OpenOrDie(name string) *os.File {
 }
 
 func RemoveOrDie(name string) {
-	err := os.Remove(name)
+	err := os.RemoveAll(name)
 	if err != nil {
 		log.Fatal(err)
 	}
