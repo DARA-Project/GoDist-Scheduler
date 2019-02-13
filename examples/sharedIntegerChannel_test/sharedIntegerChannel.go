@@ -50,7 +50,7 @@ func op(oper func(int)) {
 		val := <- comm
 		oper(val)
 		comm <- shared + i
-		time.Sleep(time.Nanosecond)
+		//time.Sleep(time.Nanosecond)
 	}
 }
 

@@ -293,7 +293,11 @@ func record_sched() {
 	var i int
 	for i<RECORDLEN {
 		//else busy wait
+        l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
+            if procchan[ProcID].Run == -100 {
+                break
+            }
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 				forward()
 				procchan[ProcID].Run = -3
@@ -301,8 +305,13 @@ func record_sched() {
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 				flag := true
 				for ; flag; {
+//                    l.Printf("Stuck in inner loop")
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
+                        if procchan[ProcID].Run == -100 {
+                            l.Printf("Ending discovered")
+                        }
 						if procchan[ProcID].Run != -3 {
+                            l.Printf("Procchan Run status inside is %d\n", procchan[ProcID].Run)
 							l.Printf("Recording Event on Process/Node %d\n",ProcID)
 							//Update the last running routine
 							l.Printf("Recording Event Number %d",i)
