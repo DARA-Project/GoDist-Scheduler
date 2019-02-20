@@ -289,6 +289,17 @@ func BenchmarkGetgroups(b *testing.B) {
 	}
 }
 
+func BenchmarkRename(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Rename("hello_world.txt", "hello_world.txt")
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
