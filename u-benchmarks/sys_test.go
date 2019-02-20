@@ -312,6 +312,32 @@ func BenchmarkTruncate(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
+func BenchmarkLink(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		os.Link("hello_world.txt", "new.txt")
+		b.StopTimer()
+		RemoveOrDie("new.txt")
+	}
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkSymlink(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		os.Symlink("hello_world.txt", "new.txt")
+		b.StopTimer()
+		RemoveOrDie("new.txt")
+	}
+	RemoveOrDie("hello_world.txt")
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
