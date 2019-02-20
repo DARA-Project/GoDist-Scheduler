@@ -259,6 +259,30 @@ func BenchmarkKill(b *testing.B) {
 	}
 }
 
+func BenchmarkGetuid(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Getuid()
+	}
+}
+
+func BenchmarkGeteuid(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Geteuid()
+	}
+}
+
+func BenchmarkGetgid(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Getgid()
+	}
+}
+
+func BenchmarkGetegid(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Getegid()
+	}
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
