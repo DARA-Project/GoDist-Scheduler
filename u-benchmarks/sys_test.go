@@ -29,7 +29,7 @@ func BenchmarkFileRead(b *testing.B) {
 		b.StartTimer()
 		f.Read(b1)
 		b.StopTimer()
-		f.Seek(0, 0) /* seek to beginning of file */
+		f.Seek(0, 0) // seek to beginning of file
 	}
 	f.Close()
 	RemoveOrDie("hello_world.txt")
@@ -107,7 +107,7 @@ func BenchmarkFileLstat(b *testing.B) {
 
 func BenchmarkFileLseek(b *testing.B) {
 	offset := int64(5)
-	whence := 0 /* offset relative to file origin */
+	whence := 0 // offset relative to file origin
 	f := CreateOrDie("hello_world.txt")
 	f.Write([]byte("Hello World\n"))
 	b.ResetTimer()
@@ -183,9 +183,9 @@ func BenchmarkReaddir(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
-		f.Readdir(0) /* read all files in directory */
+		f.Readdir(0) // read all files in directory
 		b.StopTimer()
-		f.Seek(0, 0) /* seek to beginning of directory */
+		f.Seek(0, 0) // seek to beginning of directory
 	}
 	RemoveOrDie("temp")
 }
@@ -197,15 +197,16 @@ func BenchmarkReaddirnames(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
-		f.Readdirnames(0) /* read all files in directory */
+		f.Readdirnames(0) // read all files in directory
 		b.StopTimer()
-		f.Seek(0, 0) /* seek to beginning of directory */
+		f.Seek(0, 0) // seek to beginning of directory
 	}
 	RemoveOrDie("temp")
 }
 
 func BenchmarkWait4(b *testing.B) {
-	// Parameters to start a new process that sleeps forever, so we can reliably kill it.
+	// Parameters to start a new process that sleeps forever,
+	// so we can reliably kill it.
 	argc := "/bin/sleep"
 	argv := []string{"infinity"}
 	attr := &os.ProcAttr{
