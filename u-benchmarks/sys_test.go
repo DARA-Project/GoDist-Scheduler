@@ -366,6 +366,59 @@ func BenchmarkChdir(b *testing.B) {
 	}
 }
 
+func BenchmarkUnsetenv(b *testing.B) {
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		err := os.Setenv("new_key", "new_value")
+		if err != nil {
+			log.Fatal(err)
+		}
+		b.StartTimer()
+		os.Unsetenv("new_key")
+		b.StopTimer()
+	}
+}
+
+func BenchmarkGetenv(b *testing.B) {
+	err := os.Setenv("new_key", "new_value")
+	if err != nil {
+		log.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Getenv("new_key")
+	}
+	b.StopTimer()
+	err = os.Unsetenv("new_key")
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func BenchmarkSetenv(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		os.Setenv("new_key", "new_value")
+		b.StopTimer()
+		err := os.Unsetenv("new_key")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkClearenv(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Clearenv()
+	}
+}
+
+func BenchmarkEnviron(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Environ()
+	}
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
