@@ -360,6 +360,12 @@ func BenchmarkMkdir(b *testing.B) {
 	}
 }
 
+func BenchmarkChdir(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Chdir(".")
+	}
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
