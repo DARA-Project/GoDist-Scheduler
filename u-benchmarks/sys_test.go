@@ -204,6 +204,32 @@ func BenchmarkReaddirnames(b *testing.B) {
 	RemoveOrDie("temp")
 }
 
+func BenchmarkWait4(b *testing.B) {
+	// Parameters to start a new process that sleeps forever, so we can reliably kill it.
+	argc := "/bin/sleep"
+	argv := []string{"infinity"}
+	attr := &os.ProcAttr{
+		Dir:   "",
+		Files: nil,
+		Env:   nil,
+		Sys:   nil,
+	}
+	b.ResetTimer()
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		proc, err := os.StartProcess(argc, argv, attr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = proc.Kill()
+		if err != nil {
+			log.Fatal(err)
+		}
+		b.StartTimer()
+		proc.Wait()
+		b.StopTimer()
+	}
+}
 
 // Helpers to reduce boilerplate code
 
