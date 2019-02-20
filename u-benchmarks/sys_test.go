@@ -338,6 +338,19 @@ func BenchmarkSymlink(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
+func BenchmarkPipe2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		r, w, err := os.Pipe()
+		b.StopTimer()
+		if err != nil {
+			log.Fatal(err)
+		}
+		r.Close()
+		w.Close()
+	}
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
