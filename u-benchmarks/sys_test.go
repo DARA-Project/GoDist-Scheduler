@@ -190,6 +190,21 @@ func BenchmarkReaddir(b *testing.B) {
 	RemoveOrDie("temp")
 }
 
+func BenchmarkReaddirnames(b *testing.B) {
+	MkdirOrDie("temp")
+	CreateOrDie("temp/hello_world.txt")
+	f := OpenOrDie("temp")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		f.Readdirnames(0) /* read all files in directory */
+		b.StopTimer()
+		f.Seek(0, 0) /* seek to beginning of directory */
+	}
+	RemoveOrDie("temp")
+}
+
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
