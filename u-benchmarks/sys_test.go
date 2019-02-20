@@ -283,6 +283,12 @@ func BenchmarkGetegid(b *testing.B) {
 	}
 }
 
+func BenchmarkGetgroups(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		os.Getgroups()
+	}
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
