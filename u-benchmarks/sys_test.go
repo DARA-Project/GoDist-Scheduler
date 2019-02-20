@@ -232,6 +232,33 @@ func BenchmarkWait4(b *testing.B) {
 	}
 }
 
+func BenchmarkKill(b *testing.B) {
+	// Parameters to start a new process that sleeps forever,
+	// so we can reliably kill it.
+	argc := "/bin/sleep"
+	argv := []string{"infinity"}
+	attr := &os.ProcAttr{
+		Dir:   "",
+		Files: nil,
+		Env:   nil,
+		Sys:   nil,
+	}
+	b.ResetTimer()
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		proc, err := os.StartProcess(argc, argv, attr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		b.StartTimer()
+		proc.Kill()
+		b.StopTimer()
+		// Wait for process to terminate so we don't use up
+		// the allotted number of user processes.
+		proc.Wait()
+	}
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
