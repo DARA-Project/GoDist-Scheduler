@@ -464,6 +464,45 @@ func BenchmarkFchmod(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
+func BenchmarkChown(b *testing.B) {
+	uid := os.Getuid()
+	gid := os.Getgid()
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Chown("hello_world.txt", uid, gid)
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkLchown(b *testing.B) {
+	uid := os.Getuid()
+	gid := os.Getgid()
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Lchown("hello_world.txt", uid, gid)
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkFchown(b *testing.B) {
+	uid := os.Getuid()
+	gid := os.Getgid()
+	f := CreateOrDie("hello_world.txt")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.Chown(uid, gid)
+	}
+	b.StopTimer()
+	f.Close()
+	RemoveOrDie("hello_world.txt")
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
