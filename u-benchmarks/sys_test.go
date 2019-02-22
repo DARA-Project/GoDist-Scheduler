@@ -669,6 +669,28 @@ func BenchmarkNetSetWriteDeadline(b *testing.B) {
 	clientConn.Close()
 }
 
+func BenchmarkNetSetReadBuffer(b *testing.B) {
+	serverConn, clientConn := GenerateTCPConnPair()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		clientConn.SetReadBuffer(100)
+	}
+	b.StopTimer()
+	serverConn.Close()
+	clientConn.Close()
+}
+
+func BenchmarkNetSetWriteBuffer(b *testing.B) {
+	serverConn, clientConn := GenerateTCPConnPair()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		clientConn.SetWriteBuffer(100)
+	}
+	b.StopTimer()
+	serverConn.Close()
+	clientConn.Close()
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
@@ -701,7 +723,7 @@ func RemoveOrDie(name string) {
 	}
 }
 
-func GenerateTCPConnPair() (net.Conn, net.Conn) {
+func GenerateTCPConnPair() (*net.TCPConn, *net.TCPConn) {
 	listener, err := net.Listen("tcp", "127.0.0.1:12345")
 	if err != nil {
 		log.Fatal(err)
@@ -715,5 +737,5 @@ func GenerateTCPConnPair() (net.Conn, net.Conn) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return serverConn, clientConn
+	return serverConn.(*net.TCPConn), clientConn.(*net.TCPConn)
 }
