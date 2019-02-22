@@ -503,6 +503,28 @@ func BenchmarkFchown(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
+func BenchmarkFtruncate(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.Truncate(10)
+	}
+	b.StopTimer()
+	f.Close()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkFsync(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.Sync()
+	}
+	b.StopTimer()
+	f.Close()
+	RemoveOrDie("hello_world.txt")
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
