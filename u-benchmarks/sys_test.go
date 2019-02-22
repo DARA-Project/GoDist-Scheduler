@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 func BenchmarkFileOpen(b *testing.B) {
@@ -416,6 +417,12 @@ func BenchmarkClearenv(b *testing.B) {
 func BenchmarkEnviron(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		os.Environ()
+	}
+}
+
+func BenchmarkTimenow(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		time.Now()
 	}
 }
 
