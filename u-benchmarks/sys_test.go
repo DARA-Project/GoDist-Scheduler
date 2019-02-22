@@ -426,6 +426,22 @@ func BenchmarkTimenow(b *testing.B) {
 	}
 }
 
+func BenchmarkReadlink(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	err := os.Symlink("hello_world.txt", "link.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Readlink("link.txt")
+	}
+	b.StopTimer()
+	RemoveOrDie("link.txt")
+	RemoveOrDie("hello_world.txt")
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
