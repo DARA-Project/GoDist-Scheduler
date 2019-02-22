@@ -525,6 +525,28 @@ func BenchmarkFsync(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
+func BenchmarkUtimes(b *testing.B) {
+	now := time.Now()
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Chtimes("hello_world.txt", now, now)
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkFchdir(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.Chdir()
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
