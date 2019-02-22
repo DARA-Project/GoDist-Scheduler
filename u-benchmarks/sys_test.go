@@ -547,6 +547,51 @@ func BenchmarkFchdir(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
+func BenchmarkSetDeadline(b *testing.B) {
+	now := time.Now()
+	r, w, err := os.Pipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.SetDeadline(now)
+	}
+	b.StopTimer()
+	r.Close()
+	w.Close()
+}
+
+func BenchmarkSetReadDeadline(b *testing.B) {
+	now := time.Now()
+	r, w, err := os.Pipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.SetReadDeadline(now)
+	}
+	b.StopTimer()
+	r.Close()
+	w.Close()
+}
+
+func BenchmarkSetWriteDeadline(b *testing.B) {
+	now := time.Now()
+	r, w, err := os.Pipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		w.SetWriteDeadline(now)
+	}
+	b.StopTimer()
+	r.Close()
+	w.Close()
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
