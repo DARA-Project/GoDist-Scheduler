@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
 	"testing"
 	"time"
@@ -592,6 +593,46 @@ func BenchmarkSetWriteDeadline(b *testing.B) {
 	w.Close()
 }
 
+func BenchmarkNetRead(b *testing.B) {
+	serverConn, clientConn := GenerateTCPConnPair()
+	buf := make([]byte, 20)
+	b.ResetTimer()
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		serverConn.Write([]byte("hello world\n"))
+		b.StartTimer()
+		clientConn.Read(buf)
+		b.StopTimer()
+	}
+	serverConn.Close()
+	clientConn.Close()
+}
+
+func BenchmarkNetWrite(b *testing.B) {
+	serverConn, clientConn := GenerateTCPConnPair()
+	buf := make([]byte, 20)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		clientConn.Write([]byte("hello world\n"))
+		b.StopTimer()
+		serverConn.Read(buf)
+	}
+	serverConn.Close()
+	clientConn.Close()
+}
+
+func BenchmarkNetClose(b *testing.B) {
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		serverConn, clientConn := GenerateTCPConnPair()
+		b.StartTimer()
+		clientConn.Close()
+		b.StopTimer()
+		serverConn.Close()
+	}
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
@@ -622,4 +663,21 @@ func RemoveOrDie(name string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GenerateTCPConnPair() (net.Conn, net.Conn) {
+	listener, err := net.Listen("tcp", "127.0.0.1:12345")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer listener.Close()
+	clientConn, err := net.Dial("tcp", "127.0.0.1:12345")
+	if err != nil {
+		log.Fatal(err)
+	}
+	serverConn, err := listener.Accept()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return serverConn, clientConn
 }
