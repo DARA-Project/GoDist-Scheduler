@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const ipport = "127.0.0.1:12345"
+
 func BenchmarkFileOpen(b *testing.B) {
 	f := CreateOrDie("hello_world.txt")
 	f.Close()
@@ -692,11 +694,11 @@ func BenchmarkNetSetWriteBuffer(b *testing.B) {
 }
 
 func BenchmarkSocket(b *testing.B) {
-	listener, err := net.Listen("tcp", "127.0.0.1:12345")
+	addr, err := net.ResolveTCPAddr("tcp", ipport)
 	if err != nil {
 		log.Fatal(err)
 	}
-	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:12345")
+	listener, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -708,7 +710,7 @@ func BenchmarkSocket(b *testing.B) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		serverConn, err := listener.Accept()
+		serverConn, err := listener.AcceptTCP()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -751,18 +753,22 @@ func RemoveOrDie(name string) {
 }
 
 func GenerateTCPConnPair() (*net.TCPConn, *net.TCPConn) {
-	listener, err := net.Listen("tcp", "127.0.0.1:12345")
+	addr, err := net.ResolveTCPAddr("tcp", ipport)
+	if err != nil {
+		log.Fatal(err)
+	}
+	listener, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer listener.Close()
-	clientConn, err := net.Dial("tcp", "127.0.0.1:12345")
+	clientConn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	serverConn, err := listener.Accept()
+	serverConn, err := listener.AcceptTCP()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return serverConn.(*net.TCPConn), clientConn.(*net.TCPConn)
+	return serverConn, clientConn
 }
