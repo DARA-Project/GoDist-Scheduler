@@ -442,6 +442,28 @@ func BenchmarkReadlink(b *testing.B) {
 	RemoveOrDie("hello_world.txt")
 }
 
+func BenchmarkChmod(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	f.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		os.Chmod("hello_world.txt", os.ModePerm)
+	}
+	b.StopTimer()
+	RemoveOrDie("hello_world.txt")
+}
+
+func BenchmarkFchmod(b *testing.B) {
+	f := CreateOrDie("hello_world.txt")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.Chmod(os.ModePerm)
+	}
+	b.StopTimer()
+	f.Close()
+	RemoveOrDie("hello_world.txt")
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
