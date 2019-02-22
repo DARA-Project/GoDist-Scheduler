@@ -720,6 +720,24 @@ func BenchmarkSocket(b *testing.B) {
 	listener.Close()
 }
 
+func BenchmarkListenTCP(b *testing.B) {
+	addr, err := net.ResolveTCPAddr("tcp", ipport)
+	if err != nil {
+		log.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		listener, err := net.ListenTCP("tcp", addr)
+		b.StopTimer()
+		if err != nil {
+			log.Fatal(err)
+		}
+		listener.Close()
+	}
+
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
