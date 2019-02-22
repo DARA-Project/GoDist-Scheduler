@@ -691,6 +691,33 @@ func BenchmarkNetSetWriteBuffer(b *testing.B) {
 	clientConn.Close()
 }
 
+func BenchmarkSocket(b *testing.B) {
+	listener, err := net.Listen("tcp", "127.0.0.1:12345")
+	if err != nil {
+		log.Fatal(err)
+	}
+	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:12345")
+	if err != nil {
+		log.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StartTimer()
+		clientConn, err := net.DialTCP("tcp", nil, addr)
+		b.StopTimer()
+		if err != nil {
+			log.Fatal(err)
+		}
+		serverConn, err := listener.Accept()
+		if err != nil {
+			log.Fatal(err)
+		}
+		serverConn.Close()
+		clientConn.Close()
+	}
+	listener.Close()
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
