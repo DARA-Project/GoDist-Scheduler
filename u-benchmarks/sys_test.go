@@ -633,6 +633,42 @@ func BenchmarkNetClose(b *testing.B) {
 	}
 }
 
+func BenchmarkNetSetDeadline(b *testing.B) {
+	t := time.Now()
+	serverConn, clientConn := GenerateTCPConnPair()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		clientConn.SetDeadline(t)
+	}
+	b.StopTimer()
+	serverConn.Close()
+	clientConn.Close()
+}
+
+func BenchmarkNetSetReadDeadline(b *testing.B) {
+	t := time.Now()
+	serverConn, clientConn := GenerateTCPConnPair()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		clientConn.SetReadDeadline(t)
+	}
+	b.StopTimer()
+	serverConn.Close()
+	clientConn.Close()
+}
+
+func BenchmarkNetSetWriteDeadline(b *testing.B) {
+	t := time.Now()
+	serverConn, clientConn := GenerateTCPConnPair()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		clientConn.SetWriteDeadline(t)
+	}
+	b.StopTimer()
+	serverConn.Close()
+	clientConn.Close()
+}
+
 // Helpers to reduce boilerplate code
 
 func MkdirOrDie(name string) {
