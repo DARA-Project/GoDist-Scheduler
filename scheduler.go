@@ -248,24 +248,32 @@ func replay_sched() {
 				procchan[schedule[i].P].RunningRoutine = schedule[i].G //TODO make this the scheduled GID
 				l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].P,common.RoutineInfoString(&schedule[i].G))
 
-				//TODO explore schedule if in explore mode?
+
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
-				//l.Print(procchan)
 				for {
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
+                        currentDaraProc := schedule[i].P
 						if procchan[schedule[i].P].Run == -1 {
 							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
 							i++
+                            if i >= len(schedule) {
+                                l.Printf("Informing the local scheduler end of replay")
+                                procchan[currentDaraProc].Run = -4
+                                break
+                            }
 							for schedule[i].Type != dara.SCHED_EVENT {
 								i++
 							}
 							break
 						}
-						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
-						//TODO log.Fatalf("Preemtion is turned on")
+						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[currentDaraProc].Lock))),dara.UNLOCKED)
 					}
 				}
 				time.Sleep(time.Second)
+                l.Printf("End is nigh")
+                //if i >= len(schedule) - 1 {
+                //    procchan[schedule[i].P].Run = -4
+                //}
 			}
 		}
 	}
