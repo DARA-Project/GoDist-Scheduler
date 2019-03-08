@@ -17,6 +17,6 @@ with open(sys.argv[1]) as bm_file:
         entries.append((elem[0][9:-2], elem[1], elem[2]))
 
 with open(sys.argv[2], "w+") as csv_file:
-    csv_file.write("name,n_tier,latency_ns\n")
+    csv_file.write("name,n_iter,latency_ns\n")
     for entry in entries:
         csv_file.write("%s,%s,%s\n" % entry)
