@@ -8,25 +8,26 @@ import (
 	"time"
 )
 
+const textFile = "hello_world.txt"
 const ipport = "127.0.0.1:12345"
 
 func BenchmarkFileOpen(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		os.Open("hello_world.txt")
+		os.Open(textFile)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 
 }
 
 func BenchmarkFileRead(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Write([]byte("Hello World\n"))
 	f.Close()
-	f = OpenOrDie("hello_world.txt")
+	f = OpenOrDie(textFile)
 	b1 := make([]byte, 20)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -36,83 +37,83 @@ func BenchmarkFileRead(b *testing.B) {
 		f.Seek(0, 0) // seek to beginning of file
 	}
 	f.Close()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFileClose(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.Close()
 		b.StopTimer()
-		f = OpenOrDie("hello_world.txt")
+		f = OpenOrDie(textFile)
 		b.StartTimer()
 	}
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFileWrite_NoRemove(b *testing.B) {
-	f := CreateOrDie("write_hello.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.Write([]byte("Hello World\n"))
 	}
 	b.StopTimer()
 	f.Close()
-	RemoveOrDie("write_hello.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFileWrite_RemovePerIter(b *testing.B) {
-	f := CreateOrDie("write_hello.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
 		f.Write([]byte("Hello World\n"))
 		b.StopTimer()
 		f.Close()
-		RemoveOrDie("write_hello.txt")
-		f = CreateOrDie("write_hello.txt")
+		RemoveOrDie(textFile)
+		f = CreateOrDie(textFile)
 	}
-	RemoveOrDie("write_hello.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFileFstat(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.Stat()
 	}
 	b.StopTimer()
 	f.Close()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFileStat(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		os.Stat("hello_world.txt")
+		os.Stat(textFile)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFileLstat(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		os.Lstat("hello_world.txt")
+		os.Lstat(textFile)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFileLseek(b *testing.B) {
 	offset := int64(5)
 	whence := 0 // offset relative to file origin
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Write([]byte("Hello World\n"))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -120,34 +121,34 @@ func BenchmarkFileLseek(b *testing.B) {
 	}
 	b.StopTimer()
 	f.Close()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFilePread64(b *testing.B) {
 	offset := int64(0)
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Write([]byte("Hello World\n"))
 	f.Close()
-	f = OpenOrDie("hello_world.txt")
+	f = OpenOrDie(textFile)
 	buf := make([]byte, 20)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.ReadAt(buf, offset)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFilePwrite64(b *testing.B) {
 	offset := int64(5)
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.WriteAt([]byte("hello_world\n"), offset)
 	}
 	b.StopTimer()
 	f.Close()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkGetpagesize(b *testing.B) {
@@ -294,52 +295,52 @@ func BenchmarkGetgroups(b *testing.B) {
 }
 
 func BenchmarkRename(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		os.Rename("hello_world.txt", "hello_world.txt")
+		os.Rename(textFile, textFile)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkTruncate(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Truncate file to some arbitrary size.
-		os.Truncate("hello_world.txt", 12)
+		os.Truncate(textFile, 12)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkLink(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
-		os.Link("hello_world.txt", "new.txt")
+		os.Link(textFile, "new.txt")
 		b.StopTimer()
 		RemoveOrDie("new.txt")
 	}
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkSymlink(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
-		os.Symlink("hello_world.txt", "new.txt")
+		os.Symlink(textFile, "new.txt")
 		b.StopTimer()
 		RemoveOrDie("new.txt")
 	}
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkPipe2(b *testing.B) {
@@ -430,9 +431,9 @@ func BenchmarkTimenow(b *testing.B) {
 }
 
 func BenchmarkReadlink(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
-	err := os.Symlink("hello_world.txt", "link.txt")
+	err := os.Symlink(textFile, "link.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -442,112 +443,112 @@ func BenchmarkReadlink(b *testing.B) {
 	}
 	b.StopTimer()
 	RemoveOrDie("link.txt")
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkChmod(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		os.Chmod("hello_world.txt", os.ModePerm)
+		os.Chmod(textFile, os.ModePerm)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFchmod(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.Chmod(os.ModePerm)
 	}
 	b.StopTimer()
 	f.Close()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkChown(b *testing.B) {
 	uid := os.Getuid()
 	gid := os.Getgid()
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		os.Chown("hello_world.txt", uid, gid)
+		os.Chown(textFile, uid, gid)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkLchown(b *testing.B) {
 	uid := os.Getuid()
 	gid := os.Getgid()
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		os.Lchown("hello_world.txt", uid, gid)
+		os.Lchown(textFile, uid, gid)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFchown(b *testing.B) {
 	uid := os.Getuid()
 	gid := os.Getgid()
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.Chown(uid, gid)
 	}
 	b.StopTimer()
 	f.Close()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFtruncate(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.Truncate(10)
 	}
 	b.StopTimer()
 	f.Close()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFsync(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.Sync()
 	}
 	b.StopTimer()
 	f.Close()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkUtimes(b *testing.B) {
 	now := time.Now()
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	f.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		os.Chtimes("hello_world.txt", now, now)
+		os.Chtimes(textFile, now, now)
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkFchdir(b *testing.B) {
-	f := CreateOrDie("hello_world.txt")
+	f := CreateOrDie(textFile)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f.Chdir()
 	}
 	b.StopTimer()
-	RemoveOrDie("hello_world.txt")
+	RemoveOrDie(textFile)
 }
 
 func BenchmarkSetDeadline(b *testing.B) {
