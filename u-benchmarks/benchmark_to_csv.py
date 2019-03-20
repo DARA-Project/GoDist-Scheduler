@@ -1,9 +1,7 @@
-#!/usr/bin/env python2
-
 import sys
 
 if len(sys.argv) != 3:
-    print "Usage: %s [input_benchmark_file] [output_csv_file]" % (sys.argv[0])
+    print("Usage: %s [input_benchmark_file] [output_csv_file]" % (sys.argv[0]))
     sys.exit(1)
 
 entries = []
