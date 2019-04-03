@@ -477,8 +477,6 @@ func main() {
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
 	for i:=range procchan {
-		//l.Printf("Unlocking %d",i)
-		//l.Println(i)
 		procchan[i].Lock = dara.UNLOCKED
 		procchan[i].SyscallLock = dara.UNLOCKED
 		procchan[i].Run = -1
