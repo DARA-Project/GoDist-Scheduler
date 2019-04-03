@@ -1,0 +1,12 @@
+{
+    "exec" : {
+        "path" : "../examples/SimpleFileRead/file_read.go",
+        "size" : "400M",
+        "processes" : "1",
+        "sched" : "file_read.json"
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    }
+}

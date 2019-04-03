@@ -1,0 +1,12 @@
+{
+    "exec" : {
+        "path" : "../examples/SimpleFileRead",
+        "size" : "",
+        "processes" : "",
+        "sched" : ""
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    }
+}
