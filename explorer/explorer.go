@@ -126,7 +126,7 @@ func (e *Explorer) getNextPossibleThreads(threads []ProcThread) []ProcThread {
 	return possibleThreads
 }
 
-func (e *Explorer) GetNextThread(threads []ProcThread) ProcThread {
+func (e *Explorer) GetNextThread(threads []ProcThread, events []dara.Event) ProcThread {
 	nextPossibleThreads := e.getNextPossibleThreads(threads)
 
 	// TODO: Switch over different strategies. Currently only random is implemented

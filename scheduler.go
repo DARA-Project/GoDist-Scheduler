@@ -425,7 +425,7 @@ func explore_sched() {
 								procchan[ProcID].Run = -1	//lock process
 							}
 							procs := getDaraProcs()
-							nextProc := e.GetNextThread(procs)
+							nextProc := e.GetNextThread(procs,events)
 							ProcID = nextProc.ProcID
 							procchan[ProcID].Run = nextProc.Thread.Gid
 							procchan[ProcID].RunningRoutine = nextProc.Thread
