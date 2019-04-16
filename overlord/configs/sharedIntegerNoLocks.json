@@ -1,0 +1,12 @@
+{
+    "exec" : {
+        "path" : "../examples/sharedIntegerNoLocks_test/sharedIntegerNoLocks.go",
+        "size" : "400M",
+        "processes" : "1",
+        "sched" : "file_read.json"
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    }
+}
