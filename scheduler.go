@@ -153,7 +153,7 @@ func ConsumeLog(ProcID int) []dara.Event {
 		}
 		(*e).SyscallInfo = (*ee).SyscallInfo
 		//(*e).Msg = (*ee).EM //TODO complete messages
-        l.Println(common.ConciseEventString(e))
+        level_print(dara.DEBUG, func() {l.Println(common.ConciseEventString(e))})
 	}
 	procchan[ProcID].LogIndex = 0
 	procchan[ProcID].Epoch++
@@ -195,6 +195,14 @@ func Is_event_replayable(runnable []int, Gid int) bool {
     return false
 }
 
+func CompareEvents(e1 dara.Event, e2 dara.Event) bool {
+    // TODO Implement this
+    if e1.Type != e2.Type {
+        return false
+    }
+    return true
+}
+
 func replay_sched() {
 	var i int
 	f, err := os.Open("Schedule.json")
@@ -233,11 +241,12 @@ func replay_sched() {
                     }
 					runningindex = schedule[i].G.Gid
 				}
+                _ = runningindex
 				//Assign which goroutine to run
-				procchan[schedule[i].P].Run = runningindex
+				procchan[schedule[i].P].Run = -5
 				procchan[schedule[i].P].RunningRoutine = schedule[i].G
-                level_print(dara.DEBUG, func () { l.Println("Replaying Event :", common.ConciseEventString(&schedule[i]))})
-				level_print(dara.DEBUG, func () { l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].P,common.RoutineInfoString(&schedule[i].G))})
+                level_print(dara.INFO, func () { l.Println("Replaying Event :", common.ConciseEventString(&schedule[i]))})
+				level_print(dara.INFO, func () { l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].P,common.RoutineInfoString(&schedule[i].G))})
 
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
 				for {
@@ -247,8 +256,16 @@ func replay_sched() {
 							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
                             events := ConsumeAndPrint(currentDaraProc)
                             level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(events), "events")})
-							i += len(events)
-                            level_print(dara.DEBUG, func() {l.Println("Replay : At event", i)})
+                            for _, e := range events {
+                                same_event := CompareEvents(e, schedule[i])
+                                if !same_event {
+                                    level_print(dara.WARN, func() {l.Println("Replayed 2 different events", common.ConciseEventString(&e), common.ConciseEventString(&schedule[i]))})
+                                } else {
+                                    level_print(dara.INFO, func() {l.Println("Replayed ", common.ConciseEventString(&schedule[i]))})
+                                }
+                                i++
+                            }
+                            level_print(dara.INFO, func() {l.Println("Replay : At event", i)})
                             if i >= len(schedule) {
                                 level_print(dara.DEBUG, func() { l.Printf("Informing the local scheduler end of replay")})
                                 procchan[currentDaraProc].Run = -4
@@ -259,7 +276,13 @@ func replay_sched() {
                             // This means that the local runtime finished and that we can move on
                             events := ConsumeAndPrint(currentDaraProc)
                             level_print(dara.DEBUG, func() {l.Println("Replay Consumed", len(events), "events")})
-                            i += len(events)
+                            for _, e := range events {
+                                same_event := CompareEvents(e, schedule[i])
+                                if !same_event {
+                                    level_print(dara.WARN, func() {l.Println("Replayed 2 different events", common.ConciseEventString(&e), common.ConciseEventString(&schedule[i]))})
+                                }
+                                i++
+                            }
                             break
                         }
 						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[currentDaraProc].Lock))),dara.UNLOCKED)
