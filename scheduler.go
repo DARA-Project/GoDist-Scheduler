@@ -276,18 +276,15 @@ func replay_sched() {
                         currentDaraProc := schedule[i].P
 						if procchan[schedule[i].P].Run == -1 {
 							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
-							i++
+                            events := ConsumeAndPrint(currentDaraProc)
+                            l.Println("Replay Consumed ", len(events), "events")
+							i += len(events)
                             l.Println("Replay : At event", i)
                             if i >= len(schedule) {
                                 l.Printf("Informing the local scheduler end of replay")
                                 procchan[currentDaraProc].Run = -4
                                 break
                             }
-							if schedule[i].Type != dara.SCHED_EVENT {
-                                events := ConsumeAndPrint(currentDaraProc)
-                                l.Println("Replay Consumed ", len(events), "events")
-								i += len(events)
-							}
 							break
 						} else if procchan[schedule[i].P].Run == -100 {
                             // This means that the local runtime finished and that we can move on
@@ -333,6 +330,7 @@ func record_sched() {
 		//else busy wait
         //l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
+            l.Println("Obtained Lock")
             if procchan[ProcID].Run == -100 {
 			    events := ConsumeAndPrint(ProcID)
 			    schedule = append(schedule,events...)
