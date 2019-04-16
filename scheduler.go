@@ -163,6 +163,7 @@ func ConsumeAndPrint(ProcID int) []dara.Event{
 
 func ConsumeLog(ProcID int) []dara.Event {
 	logsize := procchan[ProcID].LogIndex
+    l.Println("Current log event index is", logsize)
 	log := make([]dara.Event,logsize)
 	for i:=0;i<logsize;i++ {
 		ee := &(procchan[ProcID].Log[i])
@@ -181,6 +182,7 @@ func ConsumeLog(ProcID int) []dara.Event {
 		}
 		(*e).SyscallInfo = (*ee).SyscallInfo
 		//(*e).Msg = (*ee).EM //TODO complete messages
+        l.Println(common.ConciseEventString(e))
 	}
 	procchan[ProcID].LogIndex = 0
 	procchan[ProcID].Epoch++
@@ -202,6 +204,26 @@ func CheckAllGoRoutinesDead(ProcID int) bool {
     return allDead
 }
 
+func GetAllRunnableRoutines(event dara.Event) []int {
+	runnable := make([]int,0)
+	for j, info := range procchan[event.P].Routines {
+		if dara.GetDaraProcStatus(info.Status) != dara.Idle {
+			l.Printf("Proc[%d]Routine[%d].Info = %s",event.P,j,common.RoutineInfoString(&info))
+			runnable = append(runnable,j)
+		}
+	}
+    return runnable
+}
+
+func Is_event_replayable(runnable []int, Gid int) bool {
+    for _, id := range runnable {
+        if Gid == id {
+            return true
+        }
+    }
+    return false
+}
+
 func replay_sched() {
 	var i int
 	f, err := os.Open("Schedule.json")
@@ -214,23 +236,16 @@ func replay_sched() {
 		l.Fatal(err)
 	}
 	l.Println("Num Events : ", len(schedule))
+    l.Println("Replaying the following schedule : ", common.ConciseScheduleString(&schedule))
 	for i<len(schedule) {
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
-			if procchan[schedule[i].P].Run == -1 { //TODO check predicates on goroutines + schedule
+			if procchan[schedule[i].P].Run == -1 { //check predicates on goroutines + schedule
 
 				//move forward
 				forward()
 
 				l.Print("Scheduling Event")
-				//TODO send a proper signal to the runtime with
-				//the goroutine ID that needs to be run
-				runnable := make([]int,0)
-				for j, info := range procchan[schedule[i].P].Routines {
-					if dara.GetDaraProcStatus(info.Status) != dara.Idle {
-						l.Printf("Proc[%d]Routine[%d].Info = %s",schedule[i].P,j,common.RoutineInfoString(&info))
-						runnable = append(runnable,j)
-					}
-				}
+                runnable := GetAllRunnableRoutines(schedule[i])
 				//TODO clean up init
 				runningindex := 0
 				if len(runnable) == 0 {
@@ -241,11 +256,16 @@ func replay_sched() {
 					runningindex = -2
 				} else {
 					//replay schedule
+                    can_run := Is_event_replayable(runnable, schedule[i].G.Gid)
+                    if !can_run {
+                        l.Printf("Can't run event %d\n", i)
+                    }
 					runningindex = schedule[i].G.Gid
 				}
 				//Assign which goroutine to run
-				procchan[schedule[i].P].Run = runningindex //TODO make this the scheduled GID
-				procchan[schedule[i].P].RunningRoutine = schedule[i].G //TODO make this the scheduled GID
+				procchan[schedule[i].P].Run = runningindex
+				procchan[schedule[i].P].RunningRoutine = schedule[i].G
+                l.Println("Replaying Event :", common.ConciseEventString(&schedule[i]))
 				l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].P,common.RoutineInfoString(&schedule[i].G))
 
 
@@ -256,13 +276,16 @@ func replay_sched() {
 						if procchan[schedule[i].P].Run == -1 {
 							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
 							i++
+                            l.Println("Replay : At event", i)
                             if i >= len(schedule) {
                                 l.Printf("Informing the local scheduler end of replay")
                                 procchan[currentDaraProc].Run = -4
                                 break
                             }
-							for schedule[i].Type != dara.SCHED_EVENT {
-								i++
+							if schedule[i].Type != dara.SCHED_EVENT {
+                                events := ConsumeAndPrint(currentDaraProc)
+                                l.Println("-------->Replay : Consumed ", len(events), "events")
+								i += len(events)
 							}
 							break
 						}
@@ -270,7 +293,7 @@ func replay_sched() {
 					}
 				}
 				time.Sleep(time.Second)
-                l.Printf("End is nigh")
+                //l.Printf("End is nigh")
                 //if i >= len(schedule) - 1 {
                 //    procchan[schedule[i].P].Run = -4
                 //}
@@ -301,9 +324,11 @@ func record_sched() {
 	var i int
 	for i<RECORDLEN {
 		//else busy wait
-        l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
+        //l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
             if procchan[ProcID].Run == -100 {
+			    events := ConsumeAndPrint(ProcID)
+			    schedule = append(schedule,events...)
                 break
             }
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
@@ -317,6 +342,10 @@ func record_sched() {
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
                         if procchan[ProcID].Run == -100 {
                             l.Printf("Ending discovered")
+                            events := ConsumeAndPrint(ProcID)
+                            schedule = append(schedule,events...)
+                            flag = false
+                            continue
                         }
 						if procchan[ProcID].Run != -3 {
                             l.Printf("Procchan Run status inside is %d\n", procchan[ProcID].Run)
@@ -359,19 +388,20 @@ func record_sched() {
 					time.Sleep(time.Microsecond)
 				}
 			}
-            if CheckAllGoRoutinesDead(ProcID) {
-                break
-            }
 			f, erros := os.Create("Schedule.json")
 			if erros != nil {
 				l.Fatal(err)
 			}
 			enc := json.NewEncoder(f)
 			enc.Encode(schedule)
+            if CheckAllGoRoutinesDead(ProcID) {
+                break
+            }
 		}
 	}
 	//l.Printf(common.ScheduleString(&schedule))
 	//l.Printf("%+v\n",schedule)
+    l.Println("Recorded schedule is as follows : \n",common.ConciseScheduleString(&schedule))
 	l.Println("The End")
 }
 
@@ -468,9 +498,6 @@ func main() {
 		log.Println(err)
 		l.Fatal(err)
 	}
-
-	//TODO can probably be deleted
-	time.Sleep(time.Second * 1)
 
 	//Map control struct into shared memory
 	procchan = (*[dara.CHANNELS]dara.DaraProc)(p)
