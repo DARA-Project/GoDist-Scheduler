@@ -162,6 +162,8 @@ func ConsumeAndPrint(ProcID int) []dara.Event{
 }
 
 func ConsumeLog(ProcID int) []dara.Event {
+    // The 2 print statements somehow have different values for SimpleFileRead. How the fuck.....
+    l.Println("Current log event index is", procchan[ProcID].LogIndex)
 	logsize := procchan[ProcID].LogIndex
     l.Println("Current log event index is", logsize)
 	log := make([]dara.Event,logsize)
@@ -174,7 +176,6 @@ func ConsumeLog(ProcID int) []dara.Event {
 		(*e).Epoch = (*ee).Epoch
 		(*e).LE.LogID = string((*ee).ELE.LogID[:])
 		(*e).LE.Vars = make([]dara.NameValuePair,(*ee).ELE.Length)
-		//l.Printf("Reading Logging Instance P=%d G=%s ID=%s Length=%d",(*e).P,common.RoutineInfoString(&((*e).G)),(*e).LE.LogID,len((*e).LE.Vars))
 		for j:=0;j<len((*e).LE.Vars);j++{
 			(*e).LE.Vars[j].VarName = string((*ee).ELE.Vars[j].VarName[:])
 			(*e).LE.Vars[j].Value = runtime.DecodeValue((*ee).ELE.Vars[j].Type,(*ee).ELE.Vars[j].Value)
@@ -284,11 +285,17 @@ func replay_sched() {
                             }
 							if schedule[i].Type != dara.SCHED_EVENT {
                                 events := ConsumeAndPrint(currentDaraProc)
-                                l.Println("-------->Replay : Consumed ", len(events), "events")
+                                l.Println("Replay Consumed ", len(events), "events")
 								i += len(events)
 							}
 							break
-						}
+						} else if procchan[schedule[i].P].Run == -100 {
+                            // This means that the local runtime finished and that we can move on
+                            events := ConsumeAndPrint(currentDaraProc)
+                            l.Println("Replay Consumed", len(events), "events")
+                            i += len(events)
+                            break
+                        }
 						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[currentDaraProc].Lock))),dara.UNLOCKED)
 					}
 				}
@@ -302,18 +309,18 @@ func replay_sched() {
 	}
 	//End computation
 	l.Printf("Wake me up when september ends")
-	time.Sleep(time.Second)
 	l.Printf("1st october")
-	for i := 1;i <= *procs;i++{
-		for {
-			if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED,dara.LOCKED) {
-				l.Printf("Stopping Proc %d",i)
-				procchan[i].Run = -4
-				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED)
-				break
-			}
-		}
-	}
+    // All Procs should have stopped by now. Don't need to do this.
+	//for i := 1;i <= *procs;i++{
+	//	for {
+	//		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED,dara.LOCKED) {
+	//			l.Printf("Stopping Proc %d",i)
+	//			procchan[i].Run = -4
+	//			atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED)
+	//			break
+	//		}
+	//	}
+	//}
 	l.Println("Replay is over")
 }
 
