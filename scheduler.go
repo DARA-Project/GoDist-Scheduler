@@ -5,21 +5,16 @@ import (
 	"encoding/json"
 	"net/rpc"
 	"flag"
-	//"fmt"
 	"github.com/DARA-Project/GoDist-Scheduler/common"
 	"github.com/DARA-Project/GoDist-Scheduler/explorer"
 	"log"
-	//"math/rand"
 	"net"
 	"os"
 	"runtime"
-	//"runtime/internal/atomic"
 	"sync/atomic"
+    "strconv"
 	"time"
 	"unsafe"
-	//ls "github.com/DARA-Project/dara/servers/logserver"
-	//ns "github.com/DARA-Project/dara/servers/nameserver"
-	//overlord "github.com/DARA-Project/dara/overlord"
 )
 
 //Command line arguments
@@ -59,6 +54,7 @@ var (
 	//Used to determine which process (runtime) will be run on the
 	//next scheduling decision when in record mode
 	LastProc int
+    LogLevel int
 )
 
 var (
@@ -91,45 +87,12 @@ func checkargs() {
 	} else {
 		l.Print("Replaying")
 	}
-
-	/*
-	if *remoteLogging {
-		if *projectName == "" {
-			l.Fatal("projectname=\"\" When logging remotely a project name must be specified")
-		}
-		names, err := overlord.ResolveServerNames()
-		if err != nil {
-			l.Fatal(err)
-		}
-		//just get name server
-		var logserverName ns.Server
-		for _, s := range names.Servers {
-			if s.Type == ns.LOG {
-				logserverName = s
-			}
-		}
-		if logserverName.Name == "" {
-			//no remote log server found
-			//TODO look for one locally
-			l.Fatal("Unable to resolve a remote logserver")
-		}
-		var servers overlord.ServerPool
-		servers[ns.LOG] = make(map[string]overlord.ServerInstance,0)
-		overlord.DialServers([]ns.Server{logserverName},&servers)
-		if len(servers) < 1 {
-			l.Fatal("Unable to connect to log server")
-		}
-		for _, instance := range servers[ns.LOG] {
-			rpcClient = instance.RPC
-			break // quit after just one, this loop is just inconvienient
-		}
-		l.Println(names)
-		//Use the first remote logging server available
-
-		//connect to name server
-		//get log server
-	}
-	*/
+    level := os.Getenv("DARA_LOG_LEVEL")
+    i, err := strconv.Atoi(level)
+    if err != nil {
+        l.Fatal("Invalid log level specified")
+    }
+    LogLevel = int(i)
 	return
 }
 
@@ -142,9 +105,16 @@ func forward() {
 	}
 }
 
-	//global schedule
-	//TODO make all schedule operations object calls on the scedule
-	//(ie schedule.next())
+func level_print(level int, pfunc func()) {
+    if LogLevel == dara.OFF {
+        return
+    }
+
+    if level >= LogLevel {
+        pfunc()
+    }
+}
+
 var schedule dara.Schedule
 
 func roundRobin() int {
@@ -163,9 +133,9 @@ func ConsumeAndPrint(ProcID int) []dara.Event{
 
 func ConsumeLog(ProcID int) []dara.Event {
     // The 2 print statements somehow have different values for SimpleFileRead. How the fuck.....
-    l.Println("Current log event index is", procchan[ProcID].LogIndex)
+    level_print(dara.INFO, func() { l.Println("Current log event index is", procchan[ProcID].LogIndex) })
 	logsize := procchan[ProcID].LogIndex
-    l.Println("Current log event index is", logsize)
+    level_print(dara.INFO, func() { l.Println("Current log event index is", logsize) })
 	log := make([]dara.Event,logsize)
 	for i:=0;i<logsize;i++ {
 		ee := &(procchan[ProcID].Log[i])
@@ -192,13 +162,13 @@ func ConsumeLog(ProcID int) []dara.Event {
 
 func CheckAllGoRoutinesDead(ProcID int) bool {
     allDead := true
-    l.Printf("Checking if all goroutines are dead yet for Process %d", ProcID)
+    level_print(dara.DEBUG, func() { l.Printf("Checking if all goroutines are dead yet for Process %d\n", ProcID)})
     //l.Printf("Num routines are %d", len(procchan[ProcID].Routines))
     for _, routine := range procchan[ProcID].Routines {
         // Only check for dead goroutines for real go routines
         if routine.Gid != 0 {
             status := dara.GetDaraProcStatus(routine.Status)
-            l.Printf("Status of GoRoutine %d is %s\n", routine.Gid, dara.GStatusStrings[status])
+            level_print(dara.DEBUG, func() {l.Printf("Status of GoRoutine %d is %s\n", routine.Gid, dara.GStatusStrings[status])})
             allDead = allDead && (status == dara.Dead)
         }
     }
@@ -209,7 +179,7 @@ func GetAllRunnableRoutines(event dara.Event) []int {
 	runnable := make([]int,0)
 	for j, info := range procchan[event.P].Routines {
 		if dara.GetDaraProcStatus(info.Status) != dara.Idle {
-			l.Printf("Proc[%d]Routine[%d].Info = %s",event.P,j,common.RoutineInfoString(&info))
+			level_print(dara.DEBUG, func () {l.Printf("Proc[%d]Routine[%d].Info = %s",event.P,j,common.RoutineInfoString(&info))})
 			runnable = append(runnable,j)
 		}
 	}
@@ -236,8 +206,8 @@ func replay_sched() {
 	if err != nil {
 		l.Fatal(err)
 	}
-	l.Println("Num Events : ", len(schedule))
-    l.Println("Replaying the following schedule : ", common.ConciseScheduleString(&schedule))
+	level_print(dara.DEBUG, func () {l.Println("Num Events : ", len(schedule))})
+    level_print(dara.INFO, func () {l.Println("Replaying the following schedule : ", common.ConciseScheduleString(&schedule))})
 	for i<len(schedule) {
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
 			if procchan[schedule[i].P].Run == -1 { //check predicates on goroutines + schedule
@@ -245,7 +215,7 @@ func replay_sched() {
 				//move forward
 				forward()
 
-				l.Print("Scheduling Event")
+				level_print(dara.DEBUG, func () {l.Print("Scheduling Event")})
                 runnable := GetAllRunnableRoutines(schedule[i])
 				//TODO clean up init
 				runningindex := 0
@@ -259,16 +229,15 @@ func replay_sched() {
 					//replay schedule
                     can_run := Is_event_replayable(runnable, schedule[i].G.Gid)
                     if !can_run {
-                        l.Printf("Can't run event %d\n", i)
+                        level_print(dara.FATAL, func () {l.Fatal("Can't run event", i)})
                     }
 					runningindex = schedule[i].G.Gid
 				}
 				//Assign which goroutine to run
 				procchan[schedule[i].P].Run = runningindex
 				procchan[schedule[i].P].RunningRoutine = schedule[i].G
-                l.Println("Replaying Event :", common.ConciseEventString(&schedule[i]))
-				l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].P,common.RoutineInfoString(&schedule[i].G))
-
+                level_print(dara.DEBUG, func () { l.Println("Replaying Event :", common.ConciseEventString(&schedule[i]))})
+				level_print(dara.DEBUG, func () { l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].P,common.RoutineInfoString(&schedule[i].G))})
 
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
 				for {
@@ -277,11 +246,11 @@ func replay_sched() {
 						if procchan[schedule[i].P].Run == -1 {
 							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
                             events := ConsumeAndPrint(currentDaraProc)
-                            l.Println("Replay Consumed ", len(events), "events")
+                            level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(events), "events")})
 							i += len(events)
-                            l.Println("Replay : At event", i)
+                            level_print(dara.DEBUG, func() {l.Println("Replay : At event", i)})
                             if i >= len(schedule) {
-                                l.Printf("Informing the local scheduler end of replay")
+                                level_print(dara.DEBUG, func() { l.Printf("Informing the local scheduler end of replay")})
                                 procchan[currentDaraProc].Run = -4
                                 break
                             }
@@ -289,7 +258,7 @@ func replay_sched() {
 						} else if procchan[schedule[i].P].Run == -100 {
                             // This means that the local runtime finished and that we can move on
                             events := ConsumeAndPrint(currentDaraProc)
-                            l.Println("Replay Consumed", len(events), "events")
+                            level_print(dara.DEBUG, func() {l.Println("Replay Consumed", len(events), "events")})
                             i += len(events)
                             break
                         }
@@ -305,8 +274,6 @@ func replay_sched() {
 		}
 	}
 	//End computation
-	l.Printf("Wake me up when september ends")
-	l.Printf("1st october")
     // All Procs should have stopped by now. Don't need to do this.
 	//for i := 1;i <= *procs;i++{
 	//	for {
@@ -318,7 +285,7 @@ func replay_sched() {
 	//		}
 	//	}
 	//}
-	l.Println("Replay is over")
+	level_print(dara.DEBUG, func() {l.Println("Replay is over")})
 }
 
 
@@ -330,7 +297,7 @@ func record_sched() {
 		//else busy wait
         //l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
-            l.Println("Obtained Lock")
+            level_print(dara.DEBUG, func(){l.Println("Obtained Lock")})
             if procchan[ProcID].Run == -100 {
 			    events := ConsumeAndPrint(ProcID)
 			    schedule = append(schedule,events...)
@@ -346,36 +313,36 @@ func record_sched() {
 //                    l.Printf("Stuck in inner loop")
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
                         if procchan[ProcID].Run == -100 {
-                            l.Printf("Ending discovered")
+                            level_print(dara.DEBUG, func() {l.Printf("Ending discovered")})
                             events := ConsumeAndPrint(ProcID)
                             schedule = append(schedule,events...)
                             flag = false
                             continue
                         }
 						if procchan[ProcID].Run != -3 {
-                            l.Printf("Procchan Run status inside is %d\n", procchan[ProcID].Run)
-							l.Printf("Recording Event on Process/Node %d\n",ProcID)
+                            level_print(dara.DEBUG, func() {l.Printf("Procchan Run status inside is %d\n", procchan[ProcID].Run)})
+							level_print(dara.DEBUG, func() {l.Printf("Recording Event on Process/Node %d\n",ProcID)})
 							//Update the last running routine
-							l.Printf("Recording Event Number %d",i)
+							level_print(dara.DEBUG, func() {l.Printf("Recording Event Number %d",i)})
 							events := ConsumeAndPrint(ProcID)
 							schedule = append(schedule,events...)
 							//Set the status of the routine that just
 							//ran
 							if (i >= RECORDLEN - *procs) {
 								//mark the processes for death
-								l.Printf("Ending Execution!")
+								level_print(dara.DEBUG, func() {l.Printf("Ending Execution!")})
 								procchan[ProcID].Run = -4 //mark process for death
 							} else {
 								procchan[ProcID].Run = -1	//lock process
 							}
 
 							ProcID = roundRobin()
-                            l.Printf("Found %d log events", len(events))
+                            level_print(dara.DEBUG, func() {l.Printf("Found %d log events", len(events))})
 							i += len(events)
 							flag = false
 						}
 						if procchan[ProcID].LogIndex > 0 {
-							l.Printf("Procchan %d\n", procchan[ProcID].Run)
+							level_print(dara.DEBUG, func() {l.Printf("Procchan %d\n", procchan[ProcID].Run)})
 							events := ConsumeAndPrint(ProcID)
 							schedule = append(schedule,events...)
 							f, erros := os.Create("Schedule.json")
@@ -406,8 +373,8 @@ func record_sched() {
 	}
 	//l.Printf(common.ScheduleString(&schedule))
 	//l.Printf("%+v\n",schedule)
-    l.Println("Recorded schedule is as follows : \n",common.ConciseScheduleString(&schedule))
-	l.Println("The End")
+    level_print(dara.INFO, func() {l.Println("Recorded schedule is as follows : \n",common.ConciseScheduleString(&schedule))})
+	level_print(dara.DEBUG, func() {l.Println("The End")})
 }
 
 func explore_init() *explorer.Explorer {
@@ -434,7 +401,7 @@ func getDaraProcs() []explorer.ProcThread {
 
 func explore_sched() {
 	e := explore_init()
-	l.Println("Dora the Explorer begins")
+	level_print(dara.DEBUG, func() {l.Println("Dora the Explorer begins")})
 	LastProc = -1
 	ProcID := roundRobin()
 	var i int
@@ -454,7 +421,7 @@ func explore_sched() {
 							schedule = append(schedule,events...)
 							if (i >= EXPLORELEN - *procs) {
 								//mark the processes for death
-								l.Printf("Ending Execution!")
+								level_print(dara.DEBUG, func() {l.Printf("Ending Execution!")})
 								procchan[ProcID].Run = -4 //mark process for death
 							} else {
 								procchan[ProcID].Run = -1	//lock process
@@ -481,7 +448,7 @@ func main() {
 	//Set up logger
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
-	l.Println("Starting the Scheduler")
+	level_print(dara.INFO, func(){l.Println("Starting the Scheduler")})
 
 	//If manual step forward in time by reading udp packets
 	if *manual {
@@ -516,18 +483,18 @@ func main() {
 	}
 	//State = RECORD
 	if *replay {
-		l.Println("Started replaying")
+		level_print(dara.INFO, func(){l.Println("Started replaying")})
 		replay_sched()
-		l.Println("Finished replaying")
+		level_print(dara.INFO, func(){l.Println("Finished replaying")})
 	} else if *record {
-		l.Println("Started recording")
+		level_print(dara.INFO, func(){l.Println("Started recording")})
 		record_sched()
-		l.Println("Finished recording")
+		level_print(dara.INFO, func(){l.Println("Finished recording")})
 	} else if *explore {
 		explore_sched()
-		l.Println("Finished exploring")
+		level_print(dara.INFO, func(){l.Println("Finished exploring")})
 	}
-	l.Println("Exiting scheduler")
+	level_print(dara.INFO, func(){l.Println("Exiting scheduler")})
 }
 
 

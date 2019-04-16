@@ -23,6 +23,7 @@ type ExecOptions struct {
     SharedMemSize string `json:"size"`
     NumProcesses int `json:"processes"`
     SchedFile string `json:"sched"`
+    LogLevel string  `json:"loglevel"`
 }
 
 type InstrumentOptions struct {
@@ -70,6 +71,26 @@ func instrument_dir(directory string) error {
 func set_environment(program string) {
     // Set the Program name here as PROGRAM
     os.Setenv("PROGRAM", program)
+}
+
+func set_log_level(loglevel string) error {
+    level := ""
+    switch loglevel {
+        case "DEBUG" :
+            level = "0"
+        case "INFO" :
+            level = "1"
+        case "WARN" :
+            level = "2"
+        case "FATAL" :
+            level = "3"
+        case "OFF" :
+            level = "4"
+        default:
+            return errors.New("Invalid log level specified in configuration file")
+    }
+    os.Setenv("DARA_LOG_LEVEL", level)
+    return nil
 }
 
 func copy_file(src string, dst string) error {
@@ -186,7 +207,11 @@ func instrument(options InstrumentOptions) error {
 
 func record(options ExecOptions) error {
     dir := get_directory_from_path(options.Path)
-    err := copy_launch_script(dir)
+    err := set_log_level(options.LogLevel)
+    if err != nil {
+        return err
+    }
+    err = copy_launch_script(dir)
     if err != nil {
         return err
     }
@@ -209,7 +234,11 @@ func record(options ExecOptions) error {
 
 func replay(options ExecOptions) error {
     dir := get_directory_from_path(options.Path)
-    err := copy_launch_script(dir)
+    err := set_log_level(options.LogLevel)
+    if err != nil {
+        return err
+    }
+    err = copy_launch_script(dir)
     if err != nil {
         return err
     }
@@ -232,7 +261,11 @@ func replay(options ExecOptions) error {
 
 func explore(options ExecOptions) error {
     dir := get_directory_from_path(options.Path)
-    err := copy_launch_script(dir)
+    err := set_log_level(options.LogLevel)
+    if err != nil {
+        return err
+    }
+    err = copy_launch_script(dir)
     if err != nil {
         return err
     }
