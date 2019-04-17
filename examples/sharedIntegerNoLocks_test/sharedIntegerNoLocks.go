@@ -6,14 +6,14 @@ import (
 	//"math/rand"
 )
 
-const LOOPS = 3
+const LOOPS = 50
 
 var shared int
 
 func main() {
 	go op(add)
 	go op(sub)
-	//go op(mult)
+	go op(mult)
 	//go op(div)
 	time.Sleep(10 * time.Second)
 	fmt.Println("---------Final value was",shared)
@@ -39,7 +39,7 @@ func sub(n int, i int) {
 
 func mult(n int, i int) {
 	shared *= n
-	fmt.Println(shared)
+    fmt.Println("--------Iteration", i, " Mult value is :", shared)
 	time.Sleep(time.Millisecond)
 }
 

@@ -261,11 +261,11 @@ func replay_sched() {
                                 if !same_event {
                                     level_print(dara.WARN, func() {l.Println("Replayed 2 different events", common.ConciseEventString(&e), common.ConciseEventString(&schedule[i]))})
                                 } else {
-                                    level_print(dara.INFO, func() {l.Println("Replayed ", common.ConciseEventString(&schedule[i]))})
+                                    level_print(dara.DEBUG, func() {l.Println("Replayed ", common.ConciseEventString(&schedule[i]))})
                                 }
                                 i++
                             }
-                            level_print(dara.INFO, func() {l.Println("Replay : At event", i)})
+                            level_print(dara.DEBUG, func() {l.Println("Replay : At event", i)})
                             if i >= len(schedule) {
                                 level_print(dara.DEBUG, func() { l.Printf("Informing the local scheduler end of replay")})
                                 procchan[currentDaraProc].Run = -4
@@ -396,7 +396,15 @@ func record_sched() {
 	}
 	//l.Printf(common.ScheduleString(&schedule))
 	//l.Printf("%+v\n",schedule)
-    level_print(dara.INFO, func() {l.Println("Recorded schedule is as follows : \n",common.ConciseScheduleString(&schedule))})
+    //level_print(dara.INFO, func() {l.Println("Recorded schedule is as follows : \n",common.ConciseScheduleString(&schedule))})
+    f, err := os.Create("Schedule_condensed.txt")
+    if err != nil {
+        l.Fatal(err)
+    }
+    _, err = f.WriteString(common.ConciseScheduleString(&schedule))
+    if err != nil {
+        l.Fatal(err)
+    }
 	level_print(dara.DEBUG, func() {l.Println("The End")})
 }
 
