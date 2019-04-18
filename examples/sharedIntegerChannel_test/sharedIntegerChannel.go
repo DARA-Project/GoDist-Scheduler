@@ -7,12 +7,6 @@ purpose of this test is to demonstrate that GoDist has the ability to
 accuratly replay the thread schedule of a single process which
 communicates on channels
 
-TODO to make this a proper integeration test this system should be
-recorded and then replayed, and the final value of "shared" should be
-compaired.
-
-TODO remove extranious print statements
-
 BUG This test seems to be deterministic automatically when run with
 GOMAXPROCS set to 1, which makes it a bad test becuase a simplifing
 assumptions about GoDist is that the execution will be serialized i.e
