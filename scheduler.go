@@ -1,6 +1,7 @@
 package main
 
 import (
+    "bytes"
 	"dara"
 	"encoding/json"
 	"net/rpc"
@@ -154,6 +155,9 @@ func ConsumeLog(ProcID int) []dara.Event {
 		(*e).SyscallInfo = (*ee).SyscallInfo
 		//(*e).Msg = (*ee).EM //TODO complete messages
         level_print(dara.DEBUG, func() {l.Println(common.ConciseEventString(e))})
+        if e.Type == dara.THREAD_EVENT {
+            level_print(dara.DEBUG, func() { l.Println("Thread creation noted with ID", e.G.Gid, "at function", string(e.G.FuncInfo[:64]))})
+        }
 	}
 	procchan[ProcID].LogIndex = 0
 	procchan[ProcID].Epoch++
@@ -235,9 +239,18 @@ func replay_sched() {
 					runningindex = -2
 				} else {
 					//replay schedule
+                    check_replayable:
                     can_run := Is_event_replayable(runnable, schedule[i].G.Gid)
                     if !can_run {
-                        level_print(dara.FATAL, func () {l.Fatal("Can't run event", i)})
+                        if string(bytes.Trim(schedule[i].G.FuncInfo[:64],"\x00")[:]) != "runtime.timerproc" {
+                            level_print(dara.INFO, func() {l.Println("G info was ", string(schedule[i].G.FuncInfo[:64]))})
+                            level_print(dara.FATAL, func () {l.Fatal("Can't run event ", i, ": ",common.ConciseEventString(&schedule[i]))})
+                        } else {
+                            //Trying to schedule timer thread. Let's just increment the event counter
+                            i++
+                            //Check if the new event is replayable
+                            goto check_replayable
+                        }
                     }
 					runningindex = schedule[i].G.Gid
 				}
@@ -289,25 +302,9 @@ func replay_sched() {
 					}
 				}
 				time.Sleep(time.Second)
-                //l.Printf("End is nigh")
-                //if i >= len(schedule) - 1 {
-                //    procchan[schedule[i].P].Run = -4
-                //}
 			}
 		}
 	}
-	//End computation
-    // All Procs should have stopped by now. Don't need to do this.
-	//for i := 1;i <= *procs;i++{
-	//	for {
-	//		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED,dara.LOCKED) {
-	//			l.Printf("Stopping Proc %d",i)
-	//			procchan[i].Run = -4
-	//			atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[i].Lock))),dara.UNLOCKED)
-	//			break
-	//		}
-	//	}
-	//}
 	level_print(dara.DEBUG, func() {l.Println("Replay is over")})
 }
 

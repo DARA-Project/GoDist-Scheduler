@@ -93,6 +93,10 @@ func set_log_level(loglevel string) error {
     return nil
 }
 
+func set_dara_mode(mode string) {
+    os.Setenv("DARA_MODE", mode)
+}
+
 func copy_file(src string, dst string) error {
     in, err := os.Open(src)
     if err != nil {
@@ -207,6 +211,7 @@ func instrument(options InstrumentOptions) error {
 
 func record(options ExecOptions) error {
     dir := get_directory_from_path(options.Path)
+    set_dara_mode("record")
     err := set_log_level(options.LogLevel)
     if err != nil {
         return err
@@ -234,6 +239,7 @@ func record(options ExecOptions) error {
 
 func replay(options ExecOptions) error {
     dir := get_directory_from_path(options.Path)
+    set_dara_mode("replay")
     err := set_log_level(options.LogLevel)
     if err != nil {
         return err
@@ -261,6 +267,7 @@ func replay(options ExecOptions) error {
 
 func explore(options ExecOptions) error {
     dir := get_directory_from_path(options.Path)
+    set_dara_mode("explore")
     err := set_log_level(options.LogLevel)
     if err != nil {
         return err
