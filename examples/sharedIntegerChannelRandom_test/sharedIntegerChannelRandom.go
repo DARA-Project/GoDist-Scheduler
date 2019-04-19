@@ -11,14 +11,12 @@ The nodeterminism of the first line in main()
 [rand.Seed(int64(time.Now().Nanosecond()))] is killed by a one line
 change to the math/rand package where the seed of any random instance
 is set to 0.
+TODO : Record the value of seed instead and use the same value during replay.
+We shouldn't be changing the random behaviour.
 
 The second line of man instantiates an instance of a rand type also
 using wall clock time as a seed. This nondeterminism is killed in
 math/rng.go by also setting the seed of each rng to 0.
-
-TODO's
-At the time of writing, May 22 2018 the integer output has the
-suffix 225. This should be turned into a test.
 
 */
 

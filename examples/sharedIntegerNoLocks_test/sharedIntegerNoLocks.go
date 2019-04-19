@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"time"
-	//"math/rand"
 )
 
 const LOOPS = 50
