@@ -200,11 +200,40 @@ func Is_event_replayable(runnable []int, Gid int) bool {
 }
 
 func CompareEvents(e1 dara.Event, e2 dara.Event) bool {
-    // TODO Implement this
+    // TODO Make a more detailed comparison
     if e1.Type != e2.Type {
         return false
     }
     return true
+}
+
+func CheckEndOrCrash(e dara.Event) bool {
+    if e.Type == dara.END_EVENT || e.Type == dara.CRASH_EVENT {
+        return true
+    }
+    return false
+}
+
+func explore_init() *explorer.Explorer {
+	e, err := explorer.MountExplorer(EXPLORATION_LOG_FILE, explorer.RANDOM)
+	if err != nil {
+		l.Fatal(err)
+	}
+	e.SetMaxDepth(MAX_EXPLORATION_DEPTH)
+	return e
+}
+
+func getDaraProcs() []explorer.ProcThread {
+	threads := []explorer.ProcThread{}
+	for i := 1; i <= *procs; i++ {
+		for _, routine := range procchan[i].Routines {
+			if dara.GetDaraProcStatus(routine.Status) != dara.Idle {
+				t := explorer.ProcThread{ProcID: i, Thread: routine}
+				threads = append(threads, t)
+			}
+		}
+	}
+	return threads
 }
 
 func replay_sched() {
@@ -405,61 +434,68 @@ func record_sched() {
 	level_print(dara.DEBUG, func() {l.Println("The End")})
 }
 
-func explore_init() *explorer.Explorer {
-	e, err := explorer.MountExplorer(EXPLORATION_LOG_FILE, explorer.RANDOM)
-	if err != nil {
-		l.Fatal(err)
-	}
-	e.SetMaxDepth(MAX_EXPLORATION_DEPTH)
-	return e
-}
-
-func getDaraProcs() []explorer.ProcThread {
-	threads := []explorer.ProcThread{}
-	for i := 0; i < *procs; i++ {
-		for _, routine := range procchan[i].Routines {
-			if dara.GetDaraProcStatus(routine.Status) != dara.Idle {
-				t := explorer.ProcThread{ProcID: i, Thread: routine}
-				threads = append(threads, t)
-			}
-		}
-	}
-	return threads
-}
-
 func explore_sched() {
-	e := explore_init()
-	level_print(dara.DEBUG, func() {l.Println("Dora the Explorer begins")})
+	explore_unit := explore_init()
+	level_print(dara.INFO, func() {l.Println("Dora the Explorer begins")})
 	LastProc = -1
 	ProcID := roundRobin()
+    explore_end := false
 	var i int
 	for i < EXPLORELEN {
+        if explore_end {
+            break
+        }
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
+            if procchan[ProcID].Run == -100 {
+				events := ConsumeAndPrint(ProcID)
+				schedule = append(schedule,events...)
+				i += len(events)
+                // Check if one of them is a crash or end event. If so, exploration should be over.
+                // As they both are ending events, we only need to check the last event in the schedule
+                for _, e := range events {
+                    if CheckEndOrCrash(e) {
+                        level_print(dara.INFO, func() {l.Println("End or Crash discovered")})
+                        explore_end = true
+                        continue
+                    }
+                }
+            }
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 				forward()
-				procchan[ProcID].Run = -3
+				procchan[ProcID].Run = -5
 
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED)
 				flag := true
 				for ; flag; {
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
-						if procchan[ProcID].Run != -3 {
+						if procchan[ProcID].Run == -1 {
 							events := ConsumeAndPrint(ProcID)
 							schedule = append(schedule,events...)
+							i += len(events)
+                            // Check if one of them is a crash or end event. If so, exploration should be over.
+                            // As they both are ending events, we only need to check the last event in the schedule
+                            for _, e := range events {
+                                if CheckEndOrCrash(e) {
+                                    level_print(dara.INFO, func() {l.Println("End or Crash discovered")})
+                                    explore_end = true
+                                    flag = false
+                                    continue
+                                }
+                            }
 							if (i >= EXPLORELEN - *procs) {
 								//mark the processes for death
-								level_print(dara.DEBUG, func() {l.Printf("Ending Execution!")})
+								level_print(dara.DEBUG, func() {l.Printf("Ending Execution\n")})
 								procchan[ProcID].Run = -4 //mark process for death
 							} else {
 								procchan[ProcID].Run = -1	//lock process
 							}
 							procs := getDaraProcs()
-							nextProc := e.GetNextThread(procs,events)
+							nextProc := explore_unit.GetNextThread(procs,events)
 							ProcID = nextProc.ProcID
-							procchan[ProcID].Run = nextProc.Thread.Gid
+                            level_print(dara.DEBUG, func() {l.Println("Chosen Proc ", ProcID, " Thread : ",nextProc.Thread.Gid)})
+							procchan[ProcID].Run = -5
 							procchan[ProcID].RunningRoutine = nextProc.Thread
-							i++
 							flag = false
 						}
 						//l.Print("Still running")
@@ -470,6 +506,11 @@ func explore_sched() {
 			}
 		}
 	}
+    level_print(dara.INFO, func() {l.Println("Exploration ended")})
+    err := explore_unit.SaveVisitedSchedules()
+    if err != nil {
+        level_print(dara.FATAL, func() {l.Fatal(err)})
+    }
 }
 
 func main() {

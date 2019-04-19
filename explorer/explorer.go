@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+    "log"
 )
 
 type Strategy int
@@ -111,7 +112,11 @@ func (e *Explorer) SetMaxDepth(depth int) {
 }
 
 func getNextRandomThread(threads []ProcThread) ProcThread {
+    if len(threads) == 0 {
+        log.Fatal("No possible threads to be run. Possible deadlock detected")
+    }
 	choice := rand.Intn(len(threads))
+    log.Println("Chosen thread is", threads[choice].Thread.Gid)
 	return threads[choice]
 }
 
@@ -119,10 +124,12 @@ func (e *Explorer) getNextPossibleThreads(threads []ProcThread) []ProcThread {
 	possibleThreads := []ProcThread{}
 
 	for i := 0; i < len(threads); i++ {
+        log.Println("Thread", threads[i].Thread.Gid, "has status", dara.GStatusStrings[threads[i].GetStatus()])
 		if threads[i].GetStatus() == dara.Runnable {
 			possibleThreads = append(possibleThreads, threads[i])
 		}
 	}
+    log.Println("Length of possible threads", len(possibleThreads))
 	return possibleThreads
 }
 

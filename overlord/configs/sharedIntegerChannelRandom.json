@@ -4,7 +4,7 @@
         "size" : "400M",
         "processes" : "1",
         "sched" : "file_read.json",
-        "loglevel" : "INFO"
+        "loglevel" : "DEBUG"
     },
     "instr" : {
         "dir" : "./example",
