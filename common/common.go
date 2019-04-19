@@ -66,6 +66,8 @@ func ConciseEventString(e *dara.Event) string {
             return ConciseRoutineInfoString("THREAD", e.G)
         case dara.END_EVENT :
             return "END"
+        case dara.CRASH_EVENT :
+            return "PANIC"
     }
 
     return ""
@@ -89,6 +91,8 @@ func EventTypeString(eventType int) string {
             return "THREAD"
         case dara.END_EVENT :
             return "END"
+        case dara.CRASH_EVENT :
+            return "PANIC"
     }
     return ""
 }
