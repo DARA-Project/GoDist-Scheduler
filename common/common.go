@@ -1,11 +1,19 @@
 package common
 
 import (
+    "bytes"
 	"dara"
 	"fmt"
 	"reflect"
 	"strings"
+    "strconv"
 )
+
+func GoRoutineNameString(ProcID int, ri dara.RoutineInfo) string {
+    func_name := string(bytes.Trim(ri.FuncInfo[:64], "\x00")[:])
+    name := "PID-" + strconv.Itoa(ProcID) + "-G-" + strconv.Itoa(ri.Gid) + "-" + func_name
+    return name
+}
 
 func ScheduleString(s *dara.Schedule) string {
 	var output string
