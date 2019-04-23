@@ -11,6 +11,11 @@ import (
     "os/exec"
     "path/filepath"
     "bitbucket.org/bestchai/dinv/capture"
+    "time"
+)
+
+const (
+    NUM_ITERATIONS = 10
 )
 
 type Options struct {
@@ -137,6 +142,14 @@ func launch_global_scheduler(mode string) (*exec.Cmd, error) {
     return cmd, err
 }
 
+func start_go_benchmark() (*exec.Cmd, error) {
+    cmd := exec.Command("/bin/bash", "./bench_script.sh")
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+    err := cmd.Start()
+    return cmd, err
+}
+
 func start_global_scheduler(mode string) (*exec.Cmd, error) {
     err := install_global_scheduler()
     if err != nil {
@@ -184,12 +197,33 @@ func build_target_program(dir string) error {
     return err
 }
 
+func build_target_program_go(dir string) error {
+    err := os.Chdir(dir)
+    if err != nil {
+        return err
+    }
+    cmd := exec.Command("go", "build", "-v")
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+    err = cmd.Run()
+    return err
+}
+
 func copy_launch_script(dir string) error {
     cwd, err := os.Getwd()
     if err != nil {
         return err
     }
     err = copy_file(cwd + "/exec_script.sh", dir + "/exec_script.sh")
+    return err
+}
+
+func copy_bench_script(dir string) error {
+    cwd, err := os.Getwd()
+    if err != nil {
+        return err
+    }
+    err = copy_file(cwd + "/bench_script.sh", dir + "/bench_script.sh")
     return err
 }
 
@@ -209,9 +243,23 @@ func instrument(options InstrumentOptions) error {
     return nil
 }
 
-func record(options ExecOptions) error {
+func go_setup(options ExecOptions) error {
     dir := get_directory_from_path(options.Path)
-    set_dara_mode("record")
+    err := copy_bench_script(dir)
+    if err != nil {
+        return err
+    }
+    err = build_target_program(dir)
+    if err != nil {
+        return err
+    }
+    set_environment(filepath.Base(dir))
+    return nil
+}
+
+func setup(options ExecOptions, mode string) error {
+    dir := get_directory_from_path(options.Path)
+    set_dara_mode(mode)
     err := set_log_level(options.LogLevel)
     if err != nil {
         return err
@@ -229,6 +277,14 @@ func record(options ExecOptions) error {
         return err
     }
     set_environment(filepath.Base(dir))
+    return nil
+}
+
+func record(options ExecOptions) error {
+    err := setup(options, "record")
+    if err != nil {
+        return err
+    }
     cmd, err := start_global_scheduler("record")
     if err != nil {
         return err
@@ -238,25 +294,10 @@ func record(options ExecOptions) error {
 }
 
 func replay(options ExecOptions) error {
-    dir := get_directory_from_path(options.Path)
-    set_dara_mode("replay")
-    err := set_log_level(options.LogLevel)
+    err := setup(options, "replay")
     if err != nil {
         return err
     }
-    err = copy_launch_script(dir)
-    if err != nil {
-        return err
-    }
-    err = setup_shared_mem(options.SharedMemSize, dir)
-    if err != nil {
-        return err
-    }
-    err = build_target_program(dir)
-    if err != nil {
-        return err
-    }
-    set_environment(filepath.Base(dir))
     cmd, err := start_global_scheduler("replay")
     if err != nil {
         return err
@@ -266,31 +307,78 @@ func replay(options ExecOptions) error {
 }
 
 func explore(options ExecOptions) error {
-    dir := get_directory_from_path(options.Path)
-    set_dara_mode("explore")
-    err := set_log_level(options.LogLevel)
+    err := setup(options, "explore")
     if err != nil {
         return err
     }
-    err = copy_launch_script(dir)
-    if err != nil {
-        return err
-    }
-    err = setup_shared_mem(options.SharedMemSize, dir)
-    if err != nil {
-        return err
-    }
-    err = build_target_program(dir)
-    if err != nil {
-        return err
-    }
-    set_environment(filepath.Base(dir))
     cmd, err := start_global_scheduler("explore")
     if err != nil {
         return err
     }
     err = cmd.Wait()
     return err
+}
+
+func bench(options ExecOptions) error {
+    cwd, err := os.Getwd()
+    if err != nil {
+        return err
+    }
+    err = go_setup(options)
+    if err != nil {
+        return err
+    }
+    for i := 0; i < NUM_ITERATIONS; i++ {
+        fmt.Println("Normal Iteration #",i)
+        start := time.Now()
+        cmd, err := start_go_benchmark()
+        if err != nil {
+            return err
+        }
+        err = cmd.Wait()
+        fmt.Println(time.Since(start).Seconds())
+        if err != nil {
+            return err
+        }
+    }
+    // Reset working directory
+    err = os.Chdir(cwd)
+    if err != nil {
+        return err
+    }
+    err = setup(options, "record")
+    if err != nil {
+        return err
+    }
+    for i := 0; i < NUM_ITERATIONS; i++ {
+        fmt.Println("Record Iteration #",i)
+        start := time.Now()
+        cmd, err := start_global_scheduler("record")
+        if err != nil {
+            return err
+        }
+        err = cmd.Wait()
+        fmt.Println(time.Since(start).Seconds())
+        if err != nil {
+            return err
+        }
+    }
+    // Reset dara mode to do replay
+    set_dara_mode("replay")
+    for i := 0; i < NUM_ITERATIONS; i++ {
+        fmt.Println("Replay Iteration #",i)
+        start := time.Now()
+        cmd, err := start_global_scheduler("replay")
+        if err != nil {
+            return err
+        }
+        err = cmd.Wait()
+        fmt.Println(time.Since(start).Seconds())
+        if err != nil {
+            return err
+        }
+    }
+    return nil
 }
 
 func parse_options(optionsFile string) (options Options, err error) {
@@ -308,7 +396,7 @@ func parse_options(optionsFile string) (options Options, err error) {
 }
 
 func main() {
-    modePtr := flag.String("mode","","The action that needs to be performed : record, replay, explore, instrument")
+    modePtr := flag.String("mode","","The action that needs to be performed : record, replay, explore, instrument, benchmark")
     filePtr := flag.String("optFile", "", "json file containing the configuration options")
 
     flag.Parse()
@@ -346,6 +434,12 @@ func main() {
         err := explore(options.Exec)
         if err != nil {
             fmt.Println("Failed to explore : ", err)
+            os.Exit(1)
+        }
+    } else if *modePtr == "bench" {
+        err := bench(options.Exec)
+        if err != nil {
+            fmt.Println("Failed to bench : ",err)
             os.Exit(1)
         }
     } else {
