@@ -14,13 +14,10 @@ import (
     "time"
 )
 
-const (
-    NUM_ITERATIONS = 10
-)
-
 type Options struct {
     Exec ExecOptions `json:"exec"`
     Instr InstrumentOptions `json:"instr"`
+    Bench BenchOptions `json:"bench"`
 }
 
 type ExecOptions struct {
@@ -29,6 +26,11 @@ type ExecOptions struct {
     NumProcesses int `json:"processes"`
     SchedFile string `json:"sched"`
     LogLevel string  `json:"loglevel"`
+}
+
+type BenchOptions struct {
+    Outfile string `json:"path"`
+    Iterations int `json:"iter"`
 }
 
 type InstrumentOptions struct {
@@ -319,7 +321,11 @@ func explore(options ExecOptions) error {
     return err
 }
 
-func bench(options ExecOptions) error {
+func bench(options ExecOptions, bOptions BenchOptions) error {
+    NUM_ITERATIONS := bOptions.Iterations
+    normal_vals := make([]float64, NUM_ITERATIONS)
+    record_vals := make([]float64, NUM_ITERATIONS)
+    replay_vals := make([]float64, NUM_ITERATIONS)
     cwd, err := os.Getwd()
     if err != nil {
         return err
@@ -336,21 +342,21 @@ func bench(options ExecOptions) error {
             return err
         }
         err = cmd.Wait()
-        fmt.Println(time.Since(start).Seconds())
+        normal_vals[i] = time.Since(start).Seconds()
         if err != nil {
             return err
         }
     }
-    // Reset working directory
-    err = os.Chdir(cwd)
-    if err != nil {
-        return err
-    }
-    err = setup(options, "record")
-    if err != nil {
-        return err
-    }
     for i := 0; i < NUM_ITERATIONS; i++ {
+        // Reset working directory
+        err = os.Chdir(cwd)
+        if err != nil {
+            return err
+        }
+        err = setup(options, "record")
+        if err != nil {
+            return err
+        }
         fmt.Println("Record Iteration #",i)
         start := time.Now()
         cmd, err := start_global_scheduler("record")
@@ -358,14 +364,21 @@ func bench(options ExecOptions) error {
             return err
         }
         err = cmd.Wait()
-        fmt.Println(time.Since(start).Seconds())
+        record_vals[i] = time.Since(start).Seconds()
         if err != nil {
             return err
         }
     }
-    // Reset dara mode to do replay
-    set_dara_mode("replay")
     for i := 0; i < NUM_ITERATIONS; i++ {
+        // Reset working directory
+        err = os.Chdir(cwd)
+        if err != nil {
+            return err
+        }
+        err = setup(options, "replay")
+        if err != nil {
+            return err
+        }
         fmt.Println("Replay Iteration #",i)
         start := time.Now()
         cmd, err := start_global_scheduler("replay")
@@ -373,7 +386,26 @@ func bench(options ExecOptions) error {
             return err
         }
         err = cmd.Wait()
-        fmt.Println(time.Since(start).Seconds())
+        replay_vals[i] = time.Since(start).Seconds()
+        if err != nil {
+            return err
+        }
+    }
+    f, err := os.Create(bOptions.Outfile)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+    _, err = f.WriteString("Normal, Record, Replay\n")
+    if err != nil {
+        return err
+    }
+    for i:=0; i < NUM_ITERATIONS; i++ {
+        val0 := normal_vals[i]
+        val1 := record_vals[i]
+        val2 := replay_vals[i]
+        s := fmt.Sprintf("%f,%f,%f\n",val0, val1, val2)
+        _, err = f.WriteString(s)
         if err != nil {
             return err
         }
@@ -437,7 +469,7 @@ func main() {
             os.Exit(1)
         }
     } else if *modePtr == "bench" {
-        err := bench(options.Exec)
+        err := bench(options.Exec, options.Bench)
         if err != nil {
             fmt.Println("Failed to bench : ",err)
             os.Exit(1)

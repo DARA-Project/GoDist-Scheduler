@@ -4,10 +4,14 @@
         "size" : "400M",
         "processes" : "1",
         "sched" : "file_read.json",
-        "loglevel" : "DEBUG"
+        "loglevel" : "INFO"
     },
     "instr" : {
         "dir" : "./example",
         "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 10
     }
 }

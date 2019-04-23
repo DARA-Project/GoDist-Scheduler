@@ -9,5 +9,9 @@
     "instr" : {
         "dir" : "./example",
         "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 10
     }
 }

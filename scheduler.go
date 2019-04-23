@@ -276,6 +276,7 @@ func replay_sched() {
                             level_print(dara.FATAL, func () {l.Fatal("Can't run event ", i, ": ",common.ConciseEventString(&schedule[i]))})
                         } else {
                             //Trying to schedule timer thread. Let's just increment the event counter
+                            level_print(dara.INFO, func() {l.Println("G info was ", string(schedule[i].G.FuncInfo[:64]))})
                             i++
                             //Check if the new event is replayable
                             goto check_replayable
