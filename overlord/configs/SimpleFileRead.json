@@ -12,6 +12,6 @@
     },
     "bench" : {
         "path" : "stats.csv",
-        "iter" : 10
+        "iter" : 1
     }
 }

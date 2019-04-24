@@ -12,6 +12,8 @@ import (
     "path/filepath"
     "bitbucket.org/bestchai/dinv/capture"
     "time"
+//    "strconv"
+//    "strings"
 )
 
 type Options struct {
@@ -347,6 +349,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
             return err
         }
     }
+    //os.Setenv("BENCH_RECORD", "true")
     for i := 0; i < NUM_ITERATIONS; i++ {
         // Reset working directory
         err = os.Chdir(cwd)
@@ -368,7 +371,20 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
         if err != nil {
             return err
         }
+        //dat, err := ioutil.ReadFile("record.tmp")
+        //if err != nil {
+        //    return err
+        //}
+        //record_time, err := strconv.ParseFloat(strings.TrimSpace(string(dat)), 64)
+        //if err != nil {
+        //    return err
+        //}
+        //record_vals[i] = record_time
+        if err != nil {
+            return err
+        }
     }
+    //os.Unsetenv("BENCH_RECORD")
     for i := 0; i < NUM_ITERATIONS; i++ {
         // Reset working directory
         err = os.Chdir(cwd)
@@ -396,7 +412,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
         return err
     }
     defer f.Close()
-    _, err = f.WriteString("Normal, Record, Replay\n")
+    _, err = f.WriteString("Normal,Record,Replay\n")
     if err != nil {
         return err
     }
