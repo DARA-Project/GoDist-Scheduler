@@ -27,10 +27,12 @@ var comm chan int
 
 func main() {
 	comm = make(chan int, THREADS)
-	go op(add)
+	// Create new goroutine that runs add function 50 times
+    go op(add)
+	// Create new goroutine that runs sub function 50 times
 	go op(sub)
+	// Create new goroutine that runs mult function 50 times
 	go op(mult)
-	//go op(div)
 	comm <- 1
 	comm <- 2
 	comm <- 3
