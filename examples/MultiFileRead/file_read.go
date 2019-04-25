@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// Opens, reads, and closes "file2.txt"
+// and then goes to sleep
 func bar(c chan int) {
 	f, err := os.Open("file2.txt")
 	if err != nil {
@@ -23,6 +25,8 @@ func bar(c chan int) {
 
 }
 
+// Opens, reads, and closes "file.txt"
+// and then goes to sleep
 func foo(c chan int) {
 	f, err := os.Open("file.txt")
 	if err != nil {
