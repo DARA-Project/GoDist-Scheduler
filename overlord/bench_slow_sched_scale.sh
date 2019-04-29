@@ -12,6 +12,7 @@ do
     export ITERATIONS=$iteration
     go run overlord.go -mode=bench -optFile=configs/sharedIntegerChannelIterative.json
     mv ../examples/sharedIntegerChannelIterative/stats.csv ../macro-benchmarks/scalability/SlowSched/stats-$ITERATIONS.csv
+    mv ../examples/sharedIntegerChannelIterative/Schedule.json ../macro-benchmarks/scalability/SlowSched/Schedule-$ITERATIONS.json
     stat --printf="%s" ../examples/sharedIntegerChannelIterative/Schedule.json >> $MEM_FILE
     echo "\n" >> $MEM_FILE
     dgo run ../tools/schedule_info.go ../examples/sharedIntegerChannelIterative/Schedule.json scale >> $EVENT_FILE

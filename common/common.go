@@ -105,6 +105,10 @@ func EventTypeString(eventType int) string {
     return ""
 }
 
+func GetEventTypes() []string {
+    return []string{"LOG", "SYSCALL", "INIT", "END", "RECEIVE", "SCHEDULE", "THREAD", "PANIC"}
+}
+
 func SyscallNameString(syscallNum int) string {
     switch(syscallNum) {
 	    case dara.DSYS_READ : return "READ"
