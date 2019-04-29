@@ -1,0 +1,14 @@
+(?<host>\S*) (?<clock>{.*})\n(?<event>.*)
+
+PID-1-G-1-main.main {"PID-1-G-1-main.main":1}
+INIT
+PID-1-G-1-main.main {"PID-1-G-1-main.main":2}
+SCHEDULE GoID 1 Status running
+PID-1-G-1-main.main {"PID-1-G-1-main.main":3}
+SYSCALL OPEN
+PID-1-G-1-main.main {"PID-1-G-1-main.main":4}
+SYSCALL READ
+PID-1-G-1-main.main {"PID-1-G-1-main.main":5}
+SYSCALL CLOSE
+PID-1-G-1-main.main {"PID-1-G-1-main.main":6}
+END

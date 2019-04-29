@@ -1,0 +1,20 @@
+(?<host>\S*) (?<clock>{.*})\n(?<event>.*)
+
+PID-1-G-1-main.main {"PID-1-G-1-main.main":1}
+INIT
+PID-1-G-1-main.main {"PID-1-G-1-main.main":2}
+SCHEDULE GoID 1 Status running
+PID-1-G-4-main.initmap {"PID-1-G-4-main.initmap":1}
+THREAD GoID 4 Status runnable
+PID-1-G-5-main.reader {"PID-1-G-5-main.reader":1}
+THREAD GoID 5 Status runnable
+PID-1-G-6-main.writer {"PID-1-G-6-main.writer":1}
+THREAD GoID 6 Status runnable
+PID-1-G-1-main.main {"PID-1-G-1-main.main":3}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.writer {"PID-1-G-6-main.writer":2, "PID-1-G-1-main.main":3}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.writer {"PID-1-G-6-main.writer":3, "PID-1-G-1-main.main":3}
+PANIC
+PID-1-G-6-main.writer {"PID-1-G-6-main.writer":4, "PID-1-G-1-main.main":3}
+END

@@ -1,0 +1,1013 @@
+(?<host>\S*) (?<clock>{.*})\n(?<event>.*)
+PID-1-G-1-main.main {"PID-1-G-1-main.main":1}
+INIT
+PID-1-G-1-main.main {"PID-1-G-1-main.main":2}
+SCHEDULE GoID 1 Status running
+PID-1-G-4-main.op {"PID-1-G-4-main.op":1}
+THREAD GoID 4 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":1}
+THREAD GoID 5 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":1}
+THREAD GoID 6 Status runnable
+PID-1-G-1-main.main {"PID-1-G-1-main.main":3}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":1}
+THREAD GoID 7 Status runnable
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":2}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-3-runtime.createfing {"PID-1-G-3-runtime.createfing":1}
+SCHEDULE GoID 3 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":2}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":3}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":4}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":2}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":3}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":4}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":2}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":3}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":4}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":3}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":5}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":6}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":7}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":5}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":6}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":7}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":5}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":6}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":7}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":4}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":8}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":9}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":10}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":8}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":9}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":10}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":8}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":9}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":10}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":5}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":11}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":12}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":13}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":11}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":12}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":13}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":11}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":12}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":13}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":6}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":14}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":15}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":16}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":14}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":15}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":16}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":14}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":15}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":16}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":7}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":17}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":18}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":19}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":17}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":18}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":19}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":17}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":18}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":19}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":8}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":20}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":21}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":22}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":20}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":21}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":22}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":20}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":21}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":22}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":9}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":23}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":24}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":25}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":23}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":24}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":25}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":23}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":24}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":25}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":10}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":26}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":27}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":28}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":26}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":27}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":28}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":26}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":27}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":28}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":11}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":29}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":30}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":31}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":29}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":30}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":31}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":29}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":30}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":31}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":12}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":32}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":33}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":34}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":32}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":33}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":34}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":32}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":33}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":34}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":13}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":35}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":36}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":37}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":35}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":36}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":37}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":35}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":36}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":37}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":14}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":38}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":39}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":40}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":38}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":39}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":40}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":38}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":39}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":40}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":15}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":41}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":42}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":43}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":41}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":42}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":43}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":41}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":42}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":43}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":16}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":44}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":45}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":46}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":44}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":45}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":46}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":44}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":45}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":46}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":17}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":47}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":48}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":49}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":47}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":48}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":49}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":47}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":48}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":49}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":18}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":50}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":51}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":52}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":50}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":51}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":52}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":50}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":51}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":52}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":19}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":53}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":54}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":55}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":53}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":54}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":55}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":53}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":54}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":55}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":20}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":56}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":57}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":58}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":56}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":57}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":58}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":56}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":57}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":58}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":21}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":59}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":60}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":61}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":59}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":60}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":61}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":59}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":60}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":61}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":22}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":62}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":63}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":64}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":62}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":63}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":64}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":62}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":63}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":64}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":23}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":65}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":66}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":67}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":65}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":66}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":67}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":65}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":66}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":67}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":24}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":68}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":69}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":70}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":68}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":69}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":70}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":68}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":69}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":70}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":25}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":71}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":72}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":73}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":71}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":72}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":73}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":71}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":72}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":73}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":26}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":74}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":75}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":76}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":74}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":75}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":76}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":74}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":75}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":76}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":27}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":77}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":78}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":79}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":77}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":78}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":79}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":77}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":78}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":79}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":28}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":80}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":81}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":82}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":80}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":81}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":82}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":80}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":81}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":82}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":29}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":83}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":84}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":85}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":83}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":84}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":85}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":83}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":84}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":85}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":30}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":86}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":87}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":88}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":86}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":87}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":88}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":86}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":87}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":88}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":31}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":89}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":90}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":91}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":89}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":90}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":91}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":89}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":90}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":91}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":32}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":92}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":93}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":94}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":92}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":93}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":94}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":92}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":93}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":94}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":33}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":95}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":96}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":97}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":95}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":96}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":97}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":95}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":96}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":97}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":34}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":98}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":99}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":100}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":98}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":99}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":100}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":98}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":99}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":100}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":35}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":101}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":102}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":103}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":101}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":102}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":103}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":101}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":102}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":103}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":36}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":104}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":105}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":106}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":104}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":105}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":106}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":104}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":105}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":106}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":37}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":107}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":108}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":109}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":107}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":108}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":109}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":107}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":108}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":109}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":38}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":110}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":111}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":112}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":110}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":111}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":112}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":110}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":111}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":112}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":39}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":113}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":114}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":115}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":113}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":114}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":115}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":113}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":114}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":115}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":40}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":116}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":117}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":118}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":116}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":117}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":118}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":116}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":117}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":118}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":41}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":119}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":120}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":121}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":119}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":120}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":121}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":42}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":122}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":123}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":124}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":119}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":120}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":121}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":122}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":123}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":124}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":43}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":125}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":126}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":127}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":125}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":126}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":127}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":122}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":123}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":124}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":44}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":125}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":126}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":127}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":128}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":129}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":130}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":128}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":129}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":130}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":45}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":131}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":132}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":133}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":128}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":129}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":130}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":131}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":132}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":133}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":46}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":134}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":135}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":136}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":134}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":135}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":136}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":131}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":132}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":133}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":47}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":134}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":135}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":136}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":137}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":138}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":139}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":137}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":138}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":139}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":48}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":140}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":141}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":142}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":137}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":138}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":139}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":140}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":141}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":142}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":49}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":143}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":144}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":145}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":143}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":144}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":145}
+SYSCALL SLEEP
+PID-1-G-6-main.op {"PID-1-G-6-main.op":140}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":141}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":142}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":50}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":143}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":144}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":145}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":146}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-4-main.op {"PID-1-G-4-main.op":147}
+SYSCALL WRITE
+PID-1-G-4-main.op {"PID-1-G-4-main.op":148}
+SYSCALL SLEEP
+PID-1-G-5-main.op {"PID-1-G-5-main.op":146}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":147}
+SYSCALL WRITE
+PID-1-G-5-main.op {"PID-1-G-5-main.op":148}
+SYSCALL SLEEP
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":51}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-5-main.op {"PID-1-G-5-main.op":149}
+SCHEDULE GoID 5 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":146}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":147}
+SYSCALL WRITE
+PID-1-G-6-main.op {"PID-1-G-6-main.op":148}
+SYSCALL SLEEP
+PID-1-G-4-main.op {"PID-1-G-4-main.op":149}
+SCHEDULE GoID 4 Status runnable
+PID-1-G-7-runtime.timerproc {"PID-1-G-7-runtime.timerproc":52}
+SCHEDULE GoID 7 Status runnable
+PID-1-G-6-main.op {"PID-1-G-6-main.op":149}
+SCHEDULE GoID 6 Status runnable
+PID-1-G-1-main.main {"PID-1-G-1-main.main":4}
+SCHEDULE GoID 1 Status runnable
+PID-1-G-1-main.main {"PID-1-G-1-main.main":5}
+SYSCALL WRITE
+PID-1-G-1-main.main {"PID-1-G-1-main.main":6}
+END
