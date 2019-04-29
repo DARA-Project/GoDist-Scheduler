@@ -1,0 +1,17 @@
+{
+    "exec" : {
+        "path" : "../examples/MapCrash/MapCrash.go",
+        "size" : "400M",
+        "processes" : "1",
+        "sched" : "file_read.json",
+        "loglevel" : "INFO"
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}
