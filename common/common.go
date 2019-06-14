@@ -175,6 +175,12 @@ func SyscallNameString(syscallNum int) string {
 	    case dara.DSYS_SOCKET : return "SOCKET"
 	    case dara.DSYS_LISTEN_TCP : return "LISTEN_TCP"
         case dara.DSYS_SLEEP : return "SLEEP"
+        case dara.MUX_LOCK : return "LOCK"
+        case dara.MUX_UNLOCK : return "UNLOCK"
+        case dara.WG_ADD : return "WG.ADD"
+        case dara.WG_WAIT : return "WG.WAIT"
+        case dara.CTX_DONE : return "CTX.DONE"
+        case dara.CTX_CANCEL : return "CTX.CANCEL"
     }
     return ""
 }
