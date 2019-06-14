@@ -1,0 +1,13 @@
+{
+    "exec" : {
+        "path" : "../examples/SimpleWaitGroup/SimpleWaitGroup.go",
+        "size" : "400M",
+        "processes" : "1",
+        "sched" : "file_read.json",
+        "loglevel" : "INFO"
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    }
+}
