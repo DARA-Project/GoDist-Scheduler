@@ -8,6 +8,10 @@ s.out
 *.out
 record.master
 replay.master
+examples/*/*.sh
+examples/*/*.txt
+examples/*/*.csv
+examples/*/*.tmp
 
 *log-Log.txt
 *Encoded.txt
