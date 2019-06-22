@@ -12,6 +12,7 @@ import (
     "path/filepath"
     "bitbucket.org/bestchai/dinv/capture"
     "time"
+    "log"
 //    "strconv"
 //    "strings"
 )
@@ -22,12 +23,18 @@ type Options struct {
     Bench BenchOptions `json:"bench"`
 }
 
+type BuildOptions struct {
+    BuildScript string `json:"build_path"`
+    RunScript string `json:"run_path"`
+}
+
 type ExecOptions struct {
     Path string `json:"path"`
     SharedMemSize string `json:"size"`
     NumProcesses int `json:"processes"`
     SchedFile string `json:"sched"`
     LogLevel string  `json:"loglevel"`
+    Build BuildOptions `json:"build"`
 }
 
 type BenchOptions struct {
@@ -80,6 +87,11 @@ func instrument_dir(directory string) error {
 func set_environment(program string) {
     // Set the Program name here as PROGRAM
     os.Setenv("PROGRAM", program)
+}
+
+func set_env_run_script(script string) {
+    // Set the run script as RUN_SCRIPT
+    os.Setenv("RUN_SCRIPT", script)
 }
 
 func set_log_level(loglevel string) error {
@@ -189,6 +201,19 @@ func setup_shared_mem(size string, dir string) error {
     return err
 }
 
+func execute_build_script(script string, execution_dir string) error {
+    cmd := exec.Command(script)
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+    err := cmd.Run()
+    if err != nil {
+        return err
+    }
+    log.Println("[Overlord]Finished building using build script")
+    err = os.Chdir(execution_dir)
+    return err
+}
+
 func build_target_program(dir string) error {
     err := os.Chdir(dir)
     if err != nil {
@@ -276,9 +301,18 @@ func setup(options ExecOptions, mode string) error {
     if err != nil {
         return err
     }
-    err = build_target_program(dir)
-    if err != nil {
-        return err
+    build_script := options.Build.BuildScript
+    if build_script == "" {
+        err = build_target_program(dir)
+        if err != nil {
+            return err
+        }
+    } else {
+        err = execute_build_script(build_script,dir)
+        if err != nil {
+            return err
+        }
+        set_env_run_script(options.Build.RunScript)
     }
     set_environment(filepath.Base(dir))
     return nil

@@ -11,12 +11,22 @@ export DARAON=true
 export DARA_PROFILING=true
 export DARAPID=1
 
-if [[ -z $BENCH_RECORD ]]; then
-    date +"%s%6N" > record.tmp
-    ./$PROGRAM
-    date +"%s%6N" >> record.tmp
+launch_program() {
+    if [ -z "$RUN_SCRIPT" ]
+    then
+        ./$PROGRAM
+    else
+        ./$RUN_SCRIPT
+    fi
+}
+
+if [ -z "$BENCH_RECORD" ]
+then
+	launch_program
 else
-	./$PROGRAM
+    date +"%s%6N" > record.tmp
+    launch_program
+    date +"%s%6N" >> record.tmp
 fi
 # Bring back GoDist-Scheduler to foreground
 fg
