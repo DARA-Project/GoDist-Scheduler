@@ -17,17 +17,21 @@ import (
 //    "strings"
 )
 
+//Options struct which configures the Dara run
+//This stores the parsed config results
 type Options struct {
     Exec ExecOptions `json:"exec"`
     Instr InstrumentOptions `json:"instr"`
     Bench BenchOptions `json:"bench"`
 }
 
+//Custom build & run script options
 type BuildOptions struct {
     BuildScript string `json:"build_path"`
     RunScript string `json:"run_path"`
 }
 
+//Dara execution options
 type ExecOptions struct {
     Path string `json:"path"`
     SharedMemSize string `json:"size"`
@@ -37,20 +41,24 @@ type ExecOptions struct {
     Build BuildOptions `json:"build"`
 }
 
+//Options specific for benchmarking
 type BenchOptions struct {
     Outfile string `json:"path"`
     Iterations int `json:"iter"`
 }
 
+//Options specific for instrumentation
 type InstrumentOptions struct {
     Dir string `json:"dir"`
     File string `json:"file"`
 }
 
+//Returns the directory from the path
 func get_directory_from_path(path string) string {
     return filepath.Dir(path)
 }
 
+//Writes the instrumented file
 func write_instrumented_file(filename string, source_code string) error {
     file, err := os.Create(filename)
     if err != nil {
@@ -61,6 +69,7 @@ func write_instrumented_file(filename string, source_code string) error {
     return nil
 }
 
+//Instruments a given file using Dinv's capture module
 func instrument_file(filename string) error {
     options := make(map[string]string)
     options["file"] = filename
@@ -69,6 +78,7 @@ func instrument_file(filename string) error {
     return write_instrumented_file(filename, new_source)
 }
 
+//Instruments all go files in a directory
 func instrument_dir(directory string) error {
     err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
             if err != nil {
@@ -84,16 +94,19 @@ func instrument_dir(directory string) error {
     return err
 }
 
+//Sets the Program name as $PROGRAM for use in exec script
 func set_environment(program string) {
     // Set the Program name here as PROGRAM
     os.Setenv("PROGRAM", program)
 }
 
+//Sets the $RUN_SCRIPT variable to the value provided in config file
 func set_env_run_script(script string) {
     // Set the run script as RUN_SCRIPT
     os.Setenv("RUN_SCRIPT", script)
 }
 
+//Sets the log level for the entire Dara run
 func set_log_level(loglevel string) error {
     level := ""
     switch loglevel {
@@ -114,10 +127,12 @@ func set_log_level(loglevel string) error {
     return nil
 }
 
+//Sets the Dara mode environment variable
 func set_dara_mode(mode string) {
     os.Setenv("DARA_MODE", mode)
 }
 
+//Generic function for copying file from src to dst
 func copy_file(src string, dst string) error {
     in, err := os.Open(src)
     if err != nil {
@@ -138,6 +153,7 @@ func copy_file(src string, dst string) error {
     return out.Close()
 }
 
+//Installs the global scheduler
 func install_global_scheduler() error {
     cmd := exec.Command("/usr/bin/dgo", "install", "github.com/DARA-Project/GoDist-Scheduler")
     cmd.Stdout = os.Stdout
@@ -149,6 +165,7 @@ func install_global_scheduler() error {
     return err
 }
 
+//Launches the global scheduler and the run script to run the system
 func launch_global_scheduler(mode string) (*exec.Cmd, error) {
     arg := "--" + mode + "=true"
     cmd := exec.Command("/bin/bash", "./exec_script.sh", arg)
@@ -158,6 +175,7 @@ func launch_global_scheduler(mode string) (*exec.Cmd, error) {
     return cmd, err
 }
 
+//Starts running the go benchmark
 func start_go_benchmark() (*exec.Cmd, error) {
     cmd := exec.Command("/bin/bash", "./bench_script.sh")
     cmd.Stdout = os.Stdout
@@ -166,6 +184,7 @@ func start_go_benchmark() (*exec.Cmd, error) {
     return cmd, err
 }
 
+//Starts the global scheduler for this dara run
 func start_global_scheduler(mode string) (*exec.Cmd, error) {
     err := install_global_scheduler()
     if err != nil {
@@ -178,6 +197,7 @@ func start_global_scheduler(mode string) (*exec.Cmd, error) {
     return cmd, err
 }
 
+//Setup the shared memory to be used by the global and local schedulers
 func setup_shared_mem(size string, dir string) error {
     // Remove existing shared memory
     path := dir + "/DaraSharedMem"
@@ -201,6 +221,7 @@ func setup_shared_mem(size string, dir string) error {
     return err
 }
 
+//Execute the build script to build the program
 func execute_build_script(script string, execution_dir string) error {
     cmd := exec.Command(script)
     cmd.Stdout = os.Stdout
@@ -214,6 +235,7 @@ func execute_build_script(script string, execution_dir string) error {
     return err
 }
 
+//Build the program executable using vanilla dgo
 func build_target_program(dir string) error {
     err := os.Chdir(dir)
     if err != nil {
@@ -226,6 +248,7 @@ func build_target_program(dir string) error {
     return err
 }
 
+//Build the program executable using vanilla go
 func build_target_program_go(dir string) error {
     err := os.Chdir(dir)
     if err != nil {
@@ -238,6 +261,7 @@ func build_target_program_go(dir string) error {
     return err
 }
 
+//Copies the execution script to the directory that contains the run script/executable
 func copy_launch_script(dir string) error {
     cwd, err := os.Getwd()
     if err != nil {
@@ -247,6 +271,7 @@ func copy_launch_script(dir string) error {
     return err
 }
 
+//Copies the benchmarking script to the directory that contains the run script/executable
 func copy_bench_script(dir string) error {
     cwd, err := os.Getwd()
     if err != nil {
@@ -256,6 +281,7 @@ func copy_bench_script(dir string) error {
     return err
 }
 
+//Initial handler for instrumentation mode
 func instrument(options InstrumentOptions) error {
     if options.File == "" && options.Dir == "" {
         return errors.New("Instrument must have only one option(file or dir) selected.")
@@ -272,6 +298,7 @@ func instrument(options InstrumentOptions) error {
     return nil
 }
 
+//Sets up the environment and scripts for benchmarking go programs
 func go_setup(options ExecOptions) error {
     dir := get_directory_from_path(options.Path)
     err := copy_bench_script(dir)
@@ -286,6 +313,7 @@ func go_setup(options ExecOptions) error {
     return nil
 }
 
+//Sets up the environment and scripts for running Dara
 func setup(options ExecOptions, mode string) error {
     dir := get_directory_from_path(options.Path)
     set_dara_mode(mode)
@@ -318,6 +346,7 @@ func setup(options ExecOptions, mode string) error {
     return nil
 }
 
+//Handler for recording executions
 func record(options ExecOptions) error {
     err := setup(options, "record")
     if err != nil {
@@ -331,6 +360,7 @@ func record(options ExecOptions) error {
     return err
 }
 
+//Handler for replaying executions
 func replay(options ExecOptions) error {
     err := setup(options, "replay")
     if err != nil {
@@ -344,6 +374,7 @@ func replay(options ExecOptions) error {
     return err
 }
 
+//Handler for exploring state space of a program
 func explore(options ExecOptions) error {
     err := setup(options, "explore")
     if err != nil {
@@ -357,6 +388,7 @@ func explore(options ExecOptions) error {
     return err
 }
 
+//Handler for benchmarking between go and dgo
 func bench(options ExecOptions, bOptions BenchOptions) error {
     NUM_ITERATIONS := bOptions.Iterations
     normal_vals := make([]float64, NUM_ITERATIONS)
@@ -463,6 +495,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
     return nil
 }
 
+//Parse the config file provided by command line
 func parse_options(optionsFile string) (options Options, err error) {
     file, err := os.Open(optionsFile)
     if err != nil {
