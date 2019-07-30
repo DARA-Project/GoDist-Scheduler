@@ -5,6 +5,7 @@
         "processes" : "1",
         "sched" : "file_read.json",
         "loglevel" : "INFO",
+        "fast_replay" : true,
         "build" : {
             "build_path" : "../examples/Deadlock_test/build.sh",
             "run_path" : "run.sh"

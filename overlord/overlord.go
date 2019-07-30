@@ -39,6 +39,7 @@ type ExecOptions struct {
     SchedFile string `json:"sched"`
     LogLevel string  `json:"loglevel"`
     Build BuildOptions `json:"build"`
+    PreloadReplay bool `json:"fast_replay"`
 }
 
 //Options specific for benchmarking
@@ -104,6 +105,11 @@ func set_environment(program string) {
 func set_env_run_script(script string) {
     // Set the run script as RUN_SCRIPT
     os.Setenv("RUN_SCRIPT", script)
+}
+
+//Sets the Fast replay option where the replay works from a loaded schedule
+func set_fast_replay() {
+    os.Setenv("FAST_REPLAY", "true")
 }
 
 //Sets the log level for the entire Dara run
@@ -365,6 +371,9 @@ func replay(options ExecOptions) error {
     err := setup(options, "replay")
     if err != nil {
         return err
+    }
+    if options.PreloadReplay {
+        set_fast_replay()
     }
     cmd, err := start_global_scheduler("replay")
     if err != nil {

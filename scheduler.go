@@ -248,93 +248,98 @@ func replay_sched() {
 		l.Fatal(err)
 	}
 	level_print(dara.DEBUG, func () {l.Println("Num Events : ", len(schedule))})
-    level_print(dara.INFO, func () {l.Println("Replaying the following schedule : ", common.ConciseScheduleString(&schedule))})
-	for i<len(schedule) {
-		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
-			if procchan[schedule[i].P].Run == -1 { //check predicates on goroutines + schedule
+    level_print(dara.DEBUG, func () {l.Println("Replaying the following schedule : ", common.ConciseScheduleString(&schedule))})
+    fast_replay := os.Getenv("FAST_REPLAY")
+    if fast_replay == "true" {
+        level_print(dara.INFO, func() {l.Println("Fast replay not implemented yet")})
+    } else {
+	    for i<len(schedule) {
+	    	if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
+	    		if procchan[schedule[i].P].Run == -1 { //check predicates on goroutines + schedule
 
-				//move forward
-				forward()
+	    			//move forward
+	    			forward()
 
-				level_print(dara.DEBUG, func () {l.Print("Scheduling Event")})
-                runnable := GetAllRunnableRoutines(schedule[i])
-				//TODO clean up init
-				runningindex := 0
-				if len(runnable) == 0 {
-					//This should only occur when the processes
-					//have not started yet. There should be a
-					//smarter starting condition here rather than
-					//just borking on the init of the schedule
-					runningindex = -2
-				} else {
-					//replay schedule
-                    check_replayable:
-                    can_run := Is_event_replayable(runnable, schedule[i].G.Gid)
-                    if !can_run {
-                        if string(bytes.Trim(schedule[i].G.FuncInfo[:64],"\x00")[:]) != "runtime.timerproc" {
-                            level_print(dara.INFO, func() {l.Println("G info was ", string(schedule[i].G.FuncInfo[:64]))})
-                            level_print(dara.FATAL, func () {l.Fatal("Can't run event ", i, ": ",common.ConciseEventString(&schedule[i]))})
-                        } else {
-                            //Trying to schedule timer thread. Let's just increment the event counter
-                            level_print(dara.INFO, func() {l.Println("G info was ", string(schedule[i].G.FuncInfo[:64]))})
-                            i++
-                            //Check if the new event is replayable
-                            goto check_replayable
-                        }
-                    }
-					runningindex = schedule[i].G.Gid
-				}
-                _ = runningindex
-				//Assign which goroutine to run
-				procchan[schedule[i].P].Run = -5
-				procchan[schedule[i].P].RunningRoutine = schedule[i].G
-                level_print(dara.INFO, func () { l.Println("Replaying Event :", common.ConciseEventString(&schedule[i]))})
-				level_print(dara.INFO, func () { l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].P,common.RoutineInfoString(&schedule[i].G))})
-
-				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
-				for {
-					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
-                        currentDaraProc := schedule[i].P
-						if procchan[schedule[i].P].Run == -1 {
-							atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
-                            events := ConsumeAndPrint(currentDaraProc)
-                            level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(events), "events")})
-                            for _, e := range events {
-                                same_event := CompareEvents(e, schedule[i])
-                                if !same_event {
-                                    level_print(dara.WARN, func() {l.Println("Replayed 2 different events", common.ConciseEventString(&e), common.ConciseEventString(&schedule[i]))})
-                                } else {
-                                    level_print(dara.DEBUG, func() {l.Println("Replayed ", common.ConciseEventString(&schedule[i]))})
-                                }
+	    			level_print(dara.DEBUG, func () {l.Print("Scheduling Event")})
+                    runnable := GetAllRunnableRoutines(schedule[i])
+	    			//TODO clean up init
+	    			runningindex := 0
+	    			if len(runnable) == 0 {
+	    				//This should only occur when the processes
+	    				//have not started yet. There should be a
+	    				//smarter starting condition here rather than
+	    				//just borking on the init of the schedule
+	    				runningindex = -2
+	    			} else {
+	    				//replay schedule
+                        check_replayable:
+                        can_run := Is_event_replayable(runnable, schedule[i].G.Gid)
+                        if !can_run {
+                            if string(bytes.Trim(schedule[i].G.FuncInfo[:64],"\x00")[:]) != "runtime.timerproc" {
+                                level_print(dara.INFO, func() {l.Println("G info was ", string(schedule[i].G.FuncInfo[:64]))})
+                                level_print(dara.FATAL, func () {l.Fatal("Can't run event ", i, ": ",common.ConciseEventString(&schedule[i]))})
+                            } else {
+                                //Trying to schedule timer thread. Let's just increment the event counter
+                                level_print(dara.INFO, func() {l.Println("G info was ", string(schedule[i].G.FuncInfo[:64]))})
                                 i++
+                                //Check if the new event is replayable
+                                goto check_replayable
                             }
-                            level_print(dara.DEBUG, func() {l.Println("Replay : At event", i)})
-                            if i >= len(schedule) {
-                                level_print(dara.DEBUG, func() { l.Printf("Informing the local scheduler end of replay")})
-                                procchan[currentDaraProc].Run = -4
+                        }
+	    				runningindex = schedule[i].G.Gid
+	    			}
+                    _ = runningindex
+	    			//Assign which goroutine to run
+	    			procchan[schedule[i].P].Run = -5
+	    			procchan[schedule[i].P].RunningRoutine = schedule[i].G
+                    level_print(dara.INFO, func () { l.Println("Replaying Event :", common.ConciseEventString(&schedule[i]))})
+	    			level_print(dara.INFO, func () { l.Printf("Running (%d/%d) %d %s",i+1,len(schedule),schedule[i].P,common.RoutineInfoString(&schedule[i].G))})
+
+	    			atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
+	    			for {
+	    				if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
+                            currentDaraProc := schedule[i].P
+	    					if procchan[schedule[i].P].Run == -1 {
+	    						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
+                                events := ConsumeAndPrint(currentDaraProc)
+                                level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(events), "events")})
+                                for _, e := range events {
+                                    same_event := CompareEvents(e, schedule[i])
+                                    if !same_event {
+                                        level_print(dara.WARN, func() {l.Println("Replayed 2 different events", common.ConciseEventString(&e), common.ConciseEventString(&schedule[i]))})
+                                    } else {
+                                        level_print(dara.DEBUG, func() {l.Println("Replayed ", common.ConciseEventString(&schedule[i]))})
+                                    }
+                                    i++
+                                }
+                                level_print(dara.DEBUG, func() {l.Println("Replay : At event", i)})
+                                if i >= len(schedule) {
+                                    level_print(dara.DEBUG, func() { l.Printf("Informing the local scheduler end of replay")})
+                                    procchan[currentDaraProc].Run = -4
+                                    break
+                                }
+	    						break
+	    					} else if procchan[schedule[i].P].Run == -100 {
+                                // This means that the local runtime finished and that we can move on
+                                events := ConsumeAndPrint(currentDaraProc)
+                                level_print(dara.DEBUG, func() {l.Println("Replay Consumed", len(events), "events")})
+                                for _, e := range events {
+                                    same_event := CompareEvents(e, schedule[i])
+                                    if !same_event {
+                                        level_print(dara.WARN, func() {l.Println("Replayed 2 different events", common.ConciseEventString(&e), common.ConciseEventString(&schedule[i]))})
+                                    }
+                                    i++
+                                }
                                 break
                             }
-							break
-						} else if procchan[schedule[i].P].Run == -100 {
-                            // This means that the local runtime finished and that we can move on
-                            events := ConsumeAndPrint(currentDaraProc)
-                            level_print(dara.DEBUG, func() {l.Println("Replay Consumed", len(events), "events")})
-                            for _, e := range events {
-                                same_event := CompareEvents(e, schedule[i])
-                                if !same_event {
-                                    level_print(dara.WARN, func() {l.Println("Replayed 2 different events", common.ConciseEventString(&e), common.ConciseEventString(&schedule[i]))})
-                                }
-                                i++
-                            }
-                            break
-                        }
-						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[currentDaraProc].Lock))),dara.UNLOCKED)
-					}
-				}
-				time.Sleep(time.Second)
-			}
-		}
-	}
+	    					atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[currentDaraProc].Lock))),dara.UNLOCKED)
+	    				}
+	    			}
+	    			time.Sleep(time.Second)
+	    		}
+	    	}
+	    }
+    }
 	level_print(dara.DEBUG, func() {l.Println("Replay is over")})
 }
 
