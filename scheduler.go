@@ -126,6 +126,20 @@ func roundRobin() int {
 	return LastProc
 }
 
+func getSchedulingEvents(sched dara.Schedule) map[int][]dara.Event {
+    proc_event_map := make(map[int][]dara.Event)
+    for i := 0; i < len(sched); i++ {
+        eventTypeString := common.EventTypeString(sched[i].Type)
+        if eventTypeString == "SCHEDULE" {
+            // Don't want to run timer events
+            if string(bytes.Trim(sched[i].G.FuncInfo[:64],"\x00")[:]) != "runtime.timerproc" {
+                proc_event_map[sched[i].P] = append(proc_event_map[sched[i].P], sched[i])
+            }
+        }
+    }
+    return proc_event_map
+}
+
 func ConsumeAndPrint(ProcID int) []dara.Event{
 	cl := ConsumeLog(ProcID)
 
@@ -236,6 +250,17 @@ func getDaraProcs() []explorer.ProcThread {
 	return threads
 }
 
+func preload_replay_schedule(proc_schedules map[int][]dara.Event) {
+    for procID, events := range proc_schedules {
+        for i, e := range events {
+            procchan[procID].Log[i].Type = e.Type
+            procchan[procID].Log[i].P = e.P
+            procchan[procID].Log[i].G = e.G
+        }
+        procchan[procID].LogIndex = len(events)
+    }
+}
+
 func replay_sched() {
 	var i int
 	f, err := os.Open("Schedule.json")
@@ -251,7 +276,34 @@ func replay_sched() {
     level_print(dara.DEBUG, func () {l.Println("Replaying the following schedule : ", common.ConciseScheduleString(&schedule))})
     fast_replay := os.Getenv("FAST_REPLAY")
     if fast_replay == "true" {
+        proc_schedule_map := getSchedulingEvents(schedule)
+        preload_replay_schedule(proc_schedule_map)
         level_print(dara.INFO, func() {l.Println("Fast replay not implemented yet")})
+        for procID := range procchan {
+            if procchan[procID].Run == -1 && procchan[procID].LogIndex == 0 {
+                procchan[procID].Run = -100
+            } else {
+                level_print(dara.INFO, func() {l.Println("Enabling runtime for proc", procID)})
+                procchan[procID].Run = -5
+            }
+        }
+        all_procs_done := false
+        for !all_procs_done {
+            all_procs_done = true
+            for procID := range procchan {
+                if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[procID].Lock))), dara.UNLOCKED, dara.LOCKED) {
+                    if procchan[procID].Run != -100 {
+                        // We haven't reached the end of replay for this runtime. Give up control to this runtime.
+                        all_procs_done = false
+                        //level_print(dara.INFO, func() {l.Println("Not over for Proc", procID, "with value", procchan[procID].Run)})
+                    }
+                    atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[procID].Lock))), dara.UNLOCKED)
+                } else {
+                    all_procs_done = false
+                }
+            }
+        }
+        level_print(dara.INFO, func() {l.Println("Fast Replay done")})
     } else {
 	    for i<len(schedule) {
 	    	if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED,dara.LOCKED) {
@@ -420,6 +472,10 @@ func record_sched() {
 				l.Fatal(err)
 			}
 			enc := json.NewEncoder(f)
+            level_print(dara.INFO, func() {l.Println("Schedule has : ", len(schedule), "events")})
+            //for _, e := range(schedule) {
+            //    l.Println(common.EventString(&e))
+            //}
 			enc.Encode(schedule)
             if CheckAllGoRoutinesDead(ProcID) {
                 break
