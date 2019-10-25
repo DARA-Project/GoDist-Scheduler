@@ -45,14 +45,24 @@ func ConciseRoutineInfoString(prefix string, ri dara.RoutineInfo) string {
 //Printing Functions
 
 func EventString(e *dara.Event) string{
+    typeString := EventTypeString((*e).Type)
+    proc := (*e).P
+    routineInfoString := RoutineInfoString(&((*e).G))
+    epoch := (*e).Epoch
+    LE := LogEntryString(&((*e).LE))
+    syscallString := ""
+    if typeString == "SYSCALL" {
+        syscallString = GeneralSyscallString(&((*e)).SyscallInfo)
+    }
+    msgString := (MessageString(&((*e)).Msg))
 	return fmt.Sprintf("Event [Type: %s, P: %d, G: %s, Epoch: %d, LE: %s, SyscallInfo: %s,M: %s]",
-		fmt.Sprintf("%d",(*e).Type),	//TODO replace with an array to string
-		(*e).P,
-		RoutineInfoString(&((*e).G)),
-		(*e).Epoch,
-		LogEntryString(&((*e).LE)),
-		GeneralSyscallString(&((*e)).SyscallInfo),
-		MessageString(&((*e)).Msg),
+		typeString,	//TODO replace with an array to string
+		proc,
+		routineInfoString,
+		epoch,
+		LE,
+		syscallString,
+		msgString,
 	)
 }
 
@@ -226,9 +236,10 @@ func GeneralTypeString(gt *dara.GeneralType) string {
 func GeneralSyscallString(gs *dara.GeneralSyscall) string {
 	var syscallstring string
 	syscallstring += "func "
-	syscallstring += fmt.Sprintf("%d",(*gs).SyscallNum) // TODO use the func name lookup insted
+	syscallstring += SyscallNameString((*gs).SyscallNum) // TODO use the func name lookup insted
 	syscallstring += "("
 	for i := 0;i<(*gs).NumArgs;i++ {
+        println(GeneralTypeString(&(gs.Args[i])))
 		syscallstring += GeneralTypeString(&(*gs).Args[i])
 		if i < (*gs).NumArgs -1 {
 			syscallstring += ","
