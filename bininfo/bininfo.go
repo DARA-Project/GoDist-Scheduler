@@ -4,7 +4,9 @@ import (
     "debug/dwarf"
     "fmt"
     "github.com/go-delve/delve/pkg/proc"
+    "github.com/go-delve/delve/pkg/dwarf/op"
     "strings"
+    "encoding/binary"
 )
 
 var DefaultPackages = map[string]bool{
@@ -226,6 +228,7 @@ func PrintBinaryInfo(exePath string, debugDirectories []string) error {
     //locals, err := scope.Locals()
     //fmt.Println("Got", len(locals), "locals")
     reader := bi.DwarfReader()
+    currentSubProgram := ""
     for {
         entry, err := reader.Next()
         if err != nil {
@@ -253,19 +256,31 @@ func PrintBinaryInfo(exePath string, debugDirectories []string) error {
         if entry.Tag == dwarf.TagSubprogram {
             name, ok := entry.Val(dwarf.AttrName).(string)
             if ok {
-                fmt.Println("\t", name)
+                currentSubProgram = name
             }
         }
         if entry.Tag == dwarf.TagFormalParameter {
             name, ok := entry.Val(dwarf.AttrName).(string)
             if ok {
-                fmt.Println("\t\t Param :", name)
+                fmt.Println("Param :", currentSubProgram + "." + name)
             }
         }
         if entry.Tag == dwarf.TagVariable {
             name, ok := entry.Val(dwarf.AttrName).(string)
             if ok {
-                fmt.Println("\t\t Variable :", name)
+                fmt.Println("Variable :", currentSubProgram + "." + name)
+            }
+            instructions, ok := entry.Val(dwarf.AttrLocation).([]byte)
+            if ok {
+                num, _ := binary.Varint(instructions)
+                fmt.Printf("%d\n", num)
+                addr, _, err := op.ExecuteStackProgram(op.DwarfRegisters{StaticBase: 842351190048}, instructions)
+                if err != nil {
+                    fmt.Println("Error while executing stack program")
+                }
+                fmt.Printf("0x%x\n", uint64(addr))
+            } else {
+                fmt.Println("Error while reading AttrLocation")
             }
         }
     }
