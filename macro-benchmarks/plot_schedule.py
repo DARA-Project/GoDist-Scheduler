@@ -117,6 +117,31 @@ def main():
         data += [record_vals]
         data += [replay_vals]
         plot_vertical_bars("Sched_Replay", data, names, ['Go v1.10.4', 'Record', 'Replay'], 'Slowdown factor', (8,4), "Number of iterations for sharedIntegerChannelIterative")
+    elif option == "sched_fast":
+        events_file = sys.argv[2]
+        go_vals = []
+        record_vals = []
+        replay_vals = []
+        fast_replay_vals = []
+        names = []
+        for f in sys.argv[2:]:
+            name = os.path.splitext(os.path.basename(f))[0]
+            names += [name.split('-')[1]]
+            go_val = get_value(f, "Normal")
+            record_val = get_value(f, "Record")
+            replay_val = get_value(f, "Replay")
+            fast_replay_val = get_value(f, "Fast_Replay")
+            go_vals += [go_val/go_val]
+            record_vals += [record_val/go_val]
+            replay_vals += [replay_val/go_val]
+            fast_replay_vals += [fast_replay_val/go_val]
+        data = []
+        data += [go_vals]
+        data += [record_vals]
+        data += [replay_vals]
+        data += [fast_replay_vals]
+        print(data)
+        plot_vertical_bars("Sched_Fast_Replay", data, names, ['Go v1.10.4', 'Record', 'Replay', 'Fast Replay'], 'Slowdown factor', (8,4), "Number of iterations for sharedIntegerChannelIterative")
     else :
         print("Invalid option selected")
         sys.exit(1)
