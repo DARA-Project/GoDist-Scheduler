@@ -403,6 +403,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
     normal_vals := make([]float64, NUM_ITERATIONS)
     record_vals := make([]float64, NUM_ITERATIONS)
     replay_vals := make([]float64, NUM_ITERATIONS)
+    fast_replay_vals := make([]float64, NUM_ITERATIONS)
     cwd, err := os.Getwd()
     if err != nil {
         return err
@@ -482,12 +483,40 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
             return err
         }
     }
+    if options.PreloadReplay {
+        for i := 0; i < NUM_ITERATIONS; i++ {
+            err = os.Chdir(cwd)
+            if err != nil {
+                return err
+            }
+            err = setup(options, "replay")
+            if err != nil {
+                return err
+            }
+            set_fast_replay()
+            fmt.Println("Fast Replay Iteration #",i)
+            start := time.Now()
+            cmd, err := start_global_scheduler("replay")
+            if err != nil {
+                return err
+            }
+            err = cmd.Wait()
+            fast_replay_vals[i] = time.Since(start).Seconds()
+            if err != nil {
+                return err
+            }
+        }
+    }
     f, err := os.Create(bOptions.Outfile)
     if err != nil {
         return err
     }
     defer f.Close()
-    _, err = f.WriteString("Normal,Record,Replay\n")
+    header_string := "Normal,Record,Replay"
+    if options.PreloadReplay {
+        header_string += ",Fast_Replay"
+    }
+    _, err = f.WriteString(header_string + "\n")
     if err != nil {
         return err
     }
@@ -495,8 +524,12 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
         val0 := normal_vals[i]
         val1 := record_vals[i]
         val2 := replay_vals[i]
-        s := fmt.Sprintf("%f,%f,%f\n",val0, val1, val2)
-        _, err = f.WriteString(s)
+        s := fmt.Sprintf("%f,%f,%f",val0, val1, val2)
+        if options.PreloadReplay {
+            val3 := fast_replay_vals[i]
+            s = fmt.Sprintf("%s,%f",s,val3)
+        }
+        _, err = f.WriteString(s + "\n")
         if err != nil {
             return err
         }
