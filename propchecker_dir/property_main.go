@@ -4,10 +4,14 @@ import (
     "github.com/DARA-Project/GoDist-Scheduler/propchecker"
     "os"
     "log"
+    "time"
 )
 
 func main() {
+    start := time.Now()
     checker, err := propchecker.NewChecker(os.Args[1])
+    elapsed := time.Since(start)
+    log.Printf("Parsing and Building took %s", elapsed)
     if err != nil {
         log.Fatal(err)
     }
@@ -16,16 +20,24 @@ func main() {
     context["main.a"] = 15
     context["main.b"] = 20
 
+    start = time.Now()
     result, err := checker.Check(context)
+    elapsed = time.Since(start)
+    log.Printf("Checking Properties took %s", elapsed)
     if err != nil {
         log.Fatal(err)
     }
     log.Println(result)
 
     context["main.b"] = 15
-    result2, err := checker.Check(context)
-    if err != nil {
-        log.Fatal(err)
+    for i := 0; i < 100; i++ {
+        context["main.b"] = i
+        start = time.Now()
+        _, err := checker.Check(context)
+        elapsed = time.Since(start)
+        log.Printf("Checking properties took %s", elapsed)
+        if err != nil {
+            log.Fatal(err)
+        }
     }
-    log.Println(result2)
 }
