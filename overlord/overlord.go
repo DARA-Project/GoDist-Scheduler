@@ -40,6 +40,7 @@ type ExecOptions struct {
     LogLevel string  `json:"loglevel"`
     Build BuildOptions `json:"build"`
     PreloadReplay bool `json:"fast_replay"`
+    PropertyFile string `json:"property_file"`
 }
 
 //Options specific for benchmarking
@@ -105,6 +106,12 @@ func set_environment(program string) {
 func set_env_run_script(script string) {
     // Set the run script as RUN_SCRIPT
     os.Setenv("RUN_SCRIPT", script)
+}
+
+//Sets the $PROP_FILE variable to the value provided in config file
+func set_env_property_file(filepath string) {
+    // Set the property file as PROP_FILE
+    os.Setenv("PROP_FILE", filepath)
 }
 
 //Sets the Fast replay option where the replay works from a loaded schedule
@@ -349,6 +356,7 @@ func setup(options ExecOptions, mode string) error {
         set_env_run_script(options.Build.RunScript)
     }
     set_environment(filepath.Base(dir))
+    set_env_prop_file(options.PropertyFile)
     return nil
 }
 
