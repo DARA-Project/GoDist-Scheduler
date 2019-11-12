@@ -4,12 +4,10 @@ import (
     "bytes"
 	"dara"
 	"encoding/json"
-	"net/rpc"
 	"flag"
 	"github.com/DARA-Project/GoDist-Scheduler/common"
 	"github.com/DARA-Project/GoDist-Scheduler/explorer"
 	"log"
-	"net"
 	"os"
 	"runtime"
 	"sync/atomic"
@@ -24,9 +22,6 @@ var (
 	record = flag.Bool("record", false, "Record an execution")
 	replay = flag.Bool("replay", false, "Replay an execution")
 	explore = flag.Bool("explore", false, "Explore a recorded execution")
-	manual = flag.Bool("m", false, "Manually step through an execution using a udp connection into the scheduler")
-	remoteLogging = flag.Bool("rl", false, "Log program state to remote dara log server")
-	projectName = flag.String("project", "","Project name to associate with log server")
 )
 
 const(
@@ -60,16 +55,6 @@ var (
 
 var (
 	l *log.Logger
-	//dupl connects with a terminal for manual stepping through an
-	//execution
-	udpl net.PacketConn
-	//overloard server structure
-	//buffer for reading from the manual event stepper, the values
-	//read into the buffer really don't matter yet
-	//TODO allow users to specifcy scheduling decisions based on udp
-	//stepping
-	udpb []byte
-	rpcClient *rpc.Client
 )
 
 func checkargs() {
@@ -98,12 +83,7 @@ func checkargs() {
 }
 
 func forward() {
-	if *manual {
-		udpl.ReadFrom(udpb)
-		l.Print(udpb)
-	} else {
-		time.Sleep(1 *time.Millisecond)
-	}
+    time.Sleep(1 *time.Millisecond)
 }
 
 func level_print(level int, pfunc func()) {
@@ -580,17 +560,6 @@ func main() {
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
 	level_print(dara.INFO, func(){l.Println("Starting the Scheduler")})
-
-	//If manual step forward in time by reading udp packets
-	if *manual {
-		var errudp error
-		udpl, errudp = net.ListenPacket("udp", "localhost:6666")
-		udpb = make([]byte,128)
-		if errudp !=nil {
-			l.Fatal(errudp)
-		}
-	}
-
 
 	//Init MMAP (this should be moved to the init function
 	p , err = runtime.Mmap(nil,
