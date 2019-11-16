@@ -1,0 +1,12 @@
+package property
+
+// This is an example of a property
+// that is not always true
+// for this program. So, it should
+// result in some failure.
+
+//GreaterThanZero
+//main.SharedVariable
+func greaterThanZero(A int) {
+    return A > 0
+}
