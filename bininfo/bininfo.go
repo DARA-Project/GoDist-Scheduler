@@ -4,9 +4,9 @@ import (
     "debug/dwarf"
     "fmt"
     "github.com/go-delve/delve/pkg/proc"
-    "github.com/go-delve/delve/pkg/dwarf/op"
+//    "github.com/go-delve/delve/pkg/dwarf/op"
     "strings"
-    "encoding/binary"
+ //   "encoding/binary"
 )
 
 var DefaultPackages = map[string]bool{
@@ -151,6 +151,7 @@ var DefaultPackages = map[string]bool{
     "runtime"                   : true,
     "runtime/cgo"               : true,
     "runtime/debug"             : true,
+    "runtime/internal/sys"      : true,
     "runtime/msan"              : true,
     "runtime/pprof"             : true,
     "runtime/race"              : true,
@@ -159,7 +160,7 @@ var DefaultPackages = map[string]bool{
     "strconv"                   : true,
     "strings"                   : true,
     "sync"                      : true,
-    "sync/atomic"               : true,
+    "sync/atomic"               : false, //sync/atomic seems to hold global variables
     "syscall"                   : true,
     "syscall/js"                : true,
     "testing"                   : true,
@@ -171,6 +172,7 @@ var DefaultPackages = map[string]bool{
     "text/template"             : true,
     "text/template/parse"       : true,
     "time"                      : true,
+    "type"                      : true,
     "unicode"                   : true,
     "unciode/utf16"             : true,
     "unicode/utf8"              : true,
@@ -192,15 +194,53 @@ func IsUserCompileUnit(name string) bool {
         return false
     }
 
-    if _, ok := DefaultPackages[name]; ok {
+    if v, ok := DefaultPackages[name]; ok {
+        return !v
+    }
+
+    if v, ok := OtherPackages[name]; ok {
+        return !v
+    }
+
+    return true
+}
+
+func IsUserVariable(name string) bool {
+    tokens := strings.Split(name, ".")
+    if strings.Contains(tokens[0], "vendor") {
         return false
     }
 
-    if _, ok := OtherPackages[name]; ok {
+    if tokens[0] == "dara" {
+        return false
+    }
+
+    if _, ok := DefaultPackages[tokens[0]]; ok {
+        return false
+    }
+
+    if _, ok := OtherPackages[tokens[0]]; ok {
+        return false
+    }
+
+    if strings.Contains(name, "statictmp") || strings.Contains(name, "_cgo_") || strings.Contains(name, "initdone"){
+        return false
+    }
+
+    if strings.Contains(name, "$f64") || strings.Contains(name, "$f32") {
+        return false
+    }
+
+    if name == "masks" || name == "shifts" {
         return false
     }
 
     return true
+}
+
+func IsUserSubProgram(name string) bool {
+    cond := name != "type..hash.[2]interface {}" && name != "type..hash.[4]interface {}" && name != "type..eq.[2]interface {}" && name != "type..eq.[4]interface {}"
+    return cond
 }
 
 func PrintBinaryInfo(exePath string, debugDirectories []string) error {
@@ -228,7 +268,9 @@ func PrintBinaryInfo(exePath string, debugDirectories []string) error {
     //locals, err := scope.Locals()
     //fmt.Println("Got", len(locals), "locals")
     reader := bi.DwarfReader()
+    level := 0
     currentSubProgram := ""
+    isSyncAtomic := false
     for {
         entry, err := reader.Next()
         if err != nil {
@@ -236,6 +278,10 @@ func PrintBinaryInfo(exePath string, debugDirectories []string) error {
         }
         if entry == nil {
             break
+        }
+        prefix := ""
+        for i := 0; i < level; i++ {
+            prefix += "  "
         }
         //entry2, name, typ, err := proc.ReadVarEntry(entry, bi)
         //if err != nil {
@@ -247,7 +293,14 @@ func PrintBinaryInfo(exePath string, debugDirectories []string) error {
             name, ok := entry.Val(dwarf.AttrName).(string)
             if ok {
                 if IsUserCompileUnit(name) {
-                    fmt.Println("Compile Unit :",name)
+                    level += 1
+                    if name == "sync/atomic" {
+                        fmt.Println("Printing Global Variables")
+                        isSyncAtomic = true
+                    } else {
+                        fmt.Println(prefix + "Compile Unit :",name)
+                        isSyncAtomic = false
+                    }
                 } else {
                     reader.SkipChildren()
                 }
@@ -255,21 +308,39 @@ func PrintBinaryInfo(exePath string, debugDirectories []string) error {
         }
         if entry.Tag == dwarf.TagSubprogram {
             name, ok := entry.Val(dwarf.AttrName).(string)
-            if ok {
+            if ok && IsUserSubProgram(name) && !isSyncAtomic {
                 currentSubProgram = name
+                fmt.Println(prefix + "Function:", name)
+                level += 1
+            } else {
+                reader.SkipChildren()
+            }
+        }
+        if entry.Tag == dwarf.TagConstant {
+            name, ok := entry.Val(dwarf.AttrName).(string)
+            if ok {
+                fmt.Println(prefix + "Constant :", name)
             }
         }
         if entry.Tag == dwarf.TagFormalParameter {
             name, ok := entry.Val(dwarf.AttrName).(string)
             if ok {
-                fmt.Println("Param :", currentSubProgram + "." + name)
+                fmt.Println(prefix + "Param :", currentSubProgram + "." + name)
             }
         }
         if entry.Tag == dwarf.TagVariable {
             name, ok := entry.Val(dwarf.AttrName).(string)
             if ok {
-                fmt.Println("Variable :", currentSubProgram + "." + name)
+                if !isSyncAtomic {
+                    fmt.Println(prefix + "Variable :", currentSubProgram + "." + name)
+                } else {
+                    if IsUserVariable(name) {
+                        // Only print out variables that are within main
+                        fmt.Println(prefix + "Variable :", name)
+                    }
+                }
             }
+            /* Comment out location grabbing code
             instructions, ok := entry.Val(dwarf.AttrLocation).([]byte)
             if ok {
                 num, _ := binary.Varint(instructions)
@@ -278,9 +349,14 @@ func PrintBinaryInfo(exePath string, debugDirectories []string) error {
                 if err != nil {
                     fmt.Println("Error while executing stack program")
                 }
-                fmt.Printf("0x%x\n", uint64(addr))
             } else {
                 fmt.Println("Error while reading AttrLocation")
+            }
+            */
+        }
+        if entry.Tag == 0 {
+            if level >= 1 {
+                level -= 1
             }
         }
     }
