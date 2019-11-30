@@ -356,7 +356,7 @@ func setup(options ExecOptions, mode string) error {
         set_env_run_script(options.Build.RunScript)
     }
     set_environment(filepath.Base(dir))
-    set_env_prop_file(options.PropertyFile)
+    set_env_property_file(options.PropertyFile)
     return nil
 }
 

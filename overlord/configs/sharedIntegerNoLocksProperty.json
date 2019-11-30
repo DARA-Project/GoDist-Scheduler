@@ -1,0 +1,18 @@
+{
+    "exec" : {
+        "path" : "../examples/SharedIntegerNoLocksProperty/sharedIntegerNoLocks.go",
+        "size" : "400M",
+        "processes" : "1",
+        "sched" : "file_read.json",
+        "loglevel" : "INFO",
+        "property_file" : "/home/vaastav/go-path/src/github.com/DARA-Project/GoDist-Scheduler/examples/SharedIntegerNoLocksProperty/sharedIntegerNoLocksProperty.prop"
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 10
+    }
+}

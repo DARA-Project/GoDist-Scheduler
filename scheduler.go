@@ -7,6 +7,7 @@ import (
 	"flag"
 	"github.com/DARA-Project/GoDist-Scheduler/common"
 	"github.com/DARA-Project/GoDist-Scheduler/explorer"
+    "github.com/DARA-Project/GoDist-Scheduler/propchecker"
 	"log"
 	"os"
 	"runtime"
@@ -51,6 +52,8 @@ var (
 	//next scheduling decision when in record mode
 	LastProc int
     LogLevel int
+    //Variable to hold propertychecker
+    checker *propchecker.Checker
 )
 
 var (
@@ -555,13 +558,19 @@ func explore_sched() {
     }
 }
 
-func main() {
+func init_global_scheduler() {
 	//Set up logger
 	l = log.New(os.Stdout,"[Scheduler]",log.Lshortfile)
 	checkargs()
-	level_print(dara.INFO, func(){l.Println("Starting the Scheduler")})
-
-	//Init MMAP (this should be moved to the init function
+    var err2 error
+    prop_file := os.Getenv("PROP_FILE")
+    if prop_file != "" {
+	    level_print(dara.INFO, func(){l.Println("Using property file", prop_file)})
+        checker, err2 = propchecker.NewChecker(prop_file)
+        if err2 != nil {
+            l.Fatal(err2)
+        }
+    }
 	p , err = runtime.Mmap(nil,
 			       dara.CHANNELS*dara.DARAPROCSIZE,
                                dara.PROT_READ|dara.PROT_WRITE ,dara.MAP_SHARED,dara.DARAFD,0)
@@ -581,7 +590,12 @@ func main() {
 		procchan[i].Run = -1
 		procchan[i].Syscall = -1
 	}
-	//State = RECORD
+	level_print(dara.INFO, func(){l.Println("Starting the Scheduler")})
+
+}
+
+func main() {
+    init_global_scheduler()
 	if *replay {
 		level_print(dara.INFO, func(){l.Println("Started replaying")})
 		replay_sched()

@@ -111,8 +111,18 @@ func (c* Checker) Check(context map[string]interface{}) (bool, error) {
     result := true
     for _, property := range c.Properties {
         execVar := eek.ExecVar{}
+        allVarsFound := true
         for _, variable := range property.Variables {
-            execVar[variable.PropName] = context[variable.Name]
+            if val, ok := context[variable.Name]; ok {
+                execVar[variable.PropName] = val
+            } else {
+                // Can't check this property if the variable needed is not present in the context.
+                allVarsFound = false
+                break
+            }
+        }
+        if !allVarsFound {
+            continue
         }
         temp_res, err := property.PropObj.Evaluate(execVar)
         if err != nil {
