@@ -8,7 +8,7 @@ import (
     "go/printer"
     "bytes"
     "errors"
-//    "log"
+    "log"
 )
 
 type Variable struct {
@@ -110,6 +110,7 @@ func NewChecker(property_file string) (*Checker, error) {
 func (c* Checker) Check(context map[string]interface{}) (bool, error) {
     result := true
     for _, property := range c.Properties {
+        log.Println("[PropertyChecker]Checking property", property.Name)
         execVar := eek.ExecVar{}
         allVarsFound := true
         for _, variable := range property.Variables {
@@ -117,6 +118,7 @@ func (c* Checker) Check(context map[string]interface{}) (bool, error) {
                 execVar[variable.PropName] = val
             } else {
                 // Can't check this property if the variable needed is not present in the context.
+                log.Println("[PropertyChecker]", variable.Name ,"not found in context", context, context["main.SharedVariable"])
                 allVarsFound = false
                 break
             }
@@ -132,6 +134,7 @@ func (c* Checker) Check(context map[string]interface{}) (bool, error) {
         if !found {
             return result, errors.New("Property doesn't return a bool value")
         }
+        log.Println("[PropertyChecker]Property checking result", temp_res_val)
         result = result && temp_res_val
     }
     return result, nil

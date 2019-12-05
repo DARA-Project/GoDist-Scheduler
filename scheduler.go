@@ -123,13 +123,13 @@ func getSchedulingEvents(sched dara.Schedule) map[int][]dara.Event {
     return proc_event_map
 }
 
-func ConsumeAndPrint(ProcID int) []dara.Event{
-	cl := ConsumeLog(ProcID)
+func ConsumeAndPrint(ProcID int, context * map[string]interface{}) []dara.Event{
+	cl := ConsumeLog(ProcID, context)
 
 	return cl
 }
 
-func ConsumeLog(ProcID int) []dara.Event {
+func ConsumeLog(ProcID int, context * map[string]interface{}) []dara.Event {
     // The 2 print statements somehow have different values for SimpleFileRead. How the fuck.....
     level_print(dara.INFO, func() { l.Println("Current log event index is", procchan[ProcID].LogIndex) })
 	logsize := procchan[ProcID].LogIndex
@@ -142,12 +142,14 @@ func ConsumeLog(ProcID int) []dara.Event {
 		(*e).P = (*ee).P
 		(*e).G = (*ee).G
 		(*e).Epoch = (*ee).Epoch
-		(*e).LE.LogID = string((*ee).ELE.LogID[:])
+		(*e).LE.LogID = string(bytes.Trim((*ee).ELE.LogID[:dara.VARBUFLEN], "\x00")[:])
 		(*e).LE.Vars = make([]dara.NameValuePair,(*ee).ELE.Length)
 		for j:=0;j<len((*e).LE.Vars);j++{
-			(*e).LE.Vars[j].VarName = string((*ee).ELE.Vars[j].VarName[:])
+			(*e).LE.Vars[j].VarName = string(bytes.Trim((*ee).ELE.Vars[j].VarName[:dara.VARBUFLEN], "\x00")[:])
 			(*e).LE.Vars[j].Value = runtime.DecodeValue((*ee).ELE.Vars[j].Type,(*ee).ELE.Vars[j].Value)
-			(*e).LE.Vars[j].Type = string((*ee).ELE.Vars[j].Type[:])
+			(*e).LE.Vars[j].Type = string(bytes.Trim((*ee).ELE.Vars[j].Type[:dara.VARBUFLEN], "\x00")[:])
+            // Build Up context for property checking
+            (*context)[e.LE.Vars[j].VarName] = e.LE.Vars[j].Value
 		}
 		(*e).SyscallInfo = (*ee).SyscallInfo
 		//(*e).Msg = (*ee).EM //TODO complete messages
@@ -255,13 +257,13 @@ func replay_sched() {
 	if err != nil {
 		l.Fatal(err)
 	}
+    context := make(map[string]interface{})
 	level_print(dara.DEBUG, func () {l.Println("Num Events : ", len(schedule))})
     level_print(dara.DEBUG, func () {l.Println("Replaying the following schedule : ", common.ConciseScheduleString(&schedule))})
     fast_replay := os.Getenv("FAST_REPLAY")
     if fast_replay == "true" {
         proc_schedule_map := getSchedulingEvents(schedule)
         preload_replay_schedule(proc_schedule_map)
-        level_print(dara.INFO, func() {l.Println("Fast replay not implemented yet")})
         for procID := range procchan {
             if procchan[procID].Run == -1 && procchan[procID].LogIndex == 0 {
                 procchan[procID].Run = -100
@@ -336,7 +338,7 @@ func replay_sched() {
                             currentDaraProc := schedule[i].P
 	    					if procchan[schedule[i].P].Run == -1 {
 	    						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))),dara.UNLOCKED)
-                                events := ConsumeAndPrint(currentDaraProc)
+                                events := ConsumeAndPrint(currentDaraProc, &context)
                                 level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(events), "events")})
                                 for _, e := range events {
                                     same_event := CompareEvents(e, schedule[i])
@@ -356,7 +358,7 @@ func replay_sched() {
 	    						break
 	    					} else if procchan[schedule[i].P].Run == -100 {
                                 // This means that the local runtime finished and that we can move on
-                                events := ConsumeAndPrint(currentDaraProc)
+                                events := ConsumeAndPrint(currentDaraProc, &context)
                                 level_print(dara.DEBUG, func() {l.Println("Replay Consumed", len(events), "events")})
                                 for _, e := range events {
                                     same_event := CompareEvents(e, schedule[i])
@@ -383,13 +385,22 @@ func record_sched() {
 	LastProc = -1
 	ProcID := roundRobin()
 	var i int
+    // Context for property checking
+    context := make(map[string]interface{})
 	for i<RECORDLEN {
 		//else busy wait
         //l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
             level_print(dara.DEBUG, func(){l.Println("Obtained Lock")})
             if procchan[ProcID].Run == -100 {
-			    events := ConsumeAndPrint(ProcID)
+			    events := ConsumeAndPrint(ProcID, &context)
+                result, err := checker.Check(context)
+                if err != nil {
+                    level_print(dara.INFO, func() {l.Println(err)})
+                }
+                if !result {
+                    level_print(dara.INFO, func(){l.Println("Property check failed")})
+                }
 			    schedule = append(schedule,events...)
                 break
             }
@@ -404,7 +415,14 @@ func record_sched() {
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
                         if procchan[ProcID].Run == -100 {
                             level_print(dara.DEBUG, func() {l.Printf("Ending discovered")})
-                            events := ConsumeAndPrint(ProcID)
+                            events := ConsumeAndPrint(ProcID, &context)
+                            result, err := checker.Check(context)
+                            if err != nil {
+                                level_print(dara.INFO, func() {l.Println(err)})
+                            }
+                            if !result {
+                                level_print(dara.INFO, func(){l.Println("Property check failed")})
+                            }
                             schedule = append(schedule,events...)
                             flag = false
                             continue
@@ -414,7 +432,14 @@ func record_sched() {
 							level_print(dara.DEBUG, func() {l.Printf("Recording Event on Process/Node %d\n",ProcID)})
 							//Update the last running routine
 							level_print(dara.DEBUG, func() {l.Printf("Recording Event Number %d",i)})
-							events := ConsumeAndPrint(ProcID)
+							events := ConsumeAndPrint(ProcID, &context)
+                            result, err := checker.Check(context)
+                            if err != nil {
+                                level_print(dara.INFO, func() {l.Println(err)})
+                            }
+                            if !result {
+                                level_print(dara.INFO, func(){l.Println("Property check failed")})
+                            }
 							schedule = append(schedule,events...)
 							//Set the status of the routine that just
 							//ran
@@ -433,7 +458,14 @@ func record_sched() {
 						}
 						if procchan[ProcID].LogIndex > 0 {
 							level_print(dara.DEBUG, func() {l.Printf("Procchan %d\n", procchan[ProcID].Run)})
-							events := ConsumeAndPrint(ProcID)
+							events := ConsumeAndPrint(ProcID, &context)
+                            result, err := checker.Check(context)
+                            if err != nil {
+                                level_print(dara.INFO, func() {l.Println(err)})
+                            }
+                            if !result {
+                                level_print(dara.INFO, func(){l.Println("Property check failed")})
+                            }
 							schedule = append(schedule,events...)
 							f, erros := os.Create("Schedule.json")
 							if erros != nil {
@@ -485,6 +517,7 @@ func explore_sched() {
 	LastProc = -1
 	ProcID := roundRobin()
     explore_end := false
+    context := make(map[string]interface{})
 	var i int
 	for i < EXPLORELEN {
         if explore_end {
@@ -492,7 +525,7 @@ func explore_sched() {
         }
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
             if procchan[ProcID].Run == -100 {
-				events := ConsumeAndPrint(ProcID)
+				events := ConsumeAndPrint(ProcID, &context)
 				schedule = append(schedule,events...)
 				i += len(events)
                 // Check if one of them is a crash or end event. If so, exploration should be over.
@@ -515,7 +548,7 @@ func explore_sched() {
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run == -1 {
-							events := ConsumeAndPrint(ProcID)
+							events := ConsumeAndPrint(ProcID, &context)
 							schedule = append(schedule,events...)
 							i += len(events)
                             // Check if one of them is a crash or end event. If so, exploration should be over.

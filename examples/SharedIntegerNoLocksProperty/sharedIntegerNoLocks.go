@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+    "runtime" // Import for DaraLog to report names of variables + values of events
 )
 
 const LOOPS = 50
@@ -32,6 +33,7 @@ func op(oper func(int, int)) {
 func add(n int, i int) {
 	SharedVariable += n
 	fmt.Println("--------Iteration", i," Add value is :", SharedVariable)
+    runtime.DaraLog("Add", "main.SharedVariable", SharedVariable)
 	time.Sleep(time.Millisecond)
 }
 
@@ -39,6 +41,7 @@ func add(n int, i int) {
 func sub(n int, i int) {
 	SharedVariable -= n
 	fmt.Println("--------Iteration", i, " Sub value is :", SharedVariable)
+    runtime.DaraLog("Sub", "main.SharedVariable", SharedVariable)
 	time.Sleep(time.Millisecond)
 }
 
@@ -46,6 +49,7 @@ func sub(n int, i int) {
 func mult(n int, i int) {
 	SharedVariable *= n
     fmt.Println("--------Iteration", i, " Mult value is :", SharedVariable)
+    runtime.DaraLog("Mult", "main.SharedVariable", SharedVariable)
 	time.Sleep(time.Millisecond)
 }
 
