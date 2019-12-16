@@ -246,6 +246,13 @@ func preload_replay_schedule(proc_schedules map[int][]dara.Event) {
     }
 }
 
+func check_properties(context map[string]interface{}) (bool, error) {
+    if checker != nil {
+        return checker.Check(context)
+    }
+    return true, nil
+}
+
 func replay_sched() {
 	var i int
 	f, err := os.Open("Schedule.json")
@@ -394,7 +401,7 @@ func record_sched() {
             level_print(dara.DEBUG, func(){l.Println("Obtained Lock")})
             if procchan[ProcID].Run == -100 {
 			    events := ConsumeAndPrint(ProcID, &context)
-                result, err := checker.Check(context)
+                result, err := check_properties(context)
                 if err != nil {
                     level_print(dara.INFO, func() {l.Println(err)})
                 }
@@ -416,7 +423,7 @@ func record_sched() {
                         if procchan[ProcID].Run == -100 {
                             level_print(dara.DEBUG, func() {l.Printf("Ending discovered")})
                             events := ConsumeAndPrint(ProcID, &context)
-                            result, err := checker.Check(context)
+                            result, err := check_properties(context)
                             if err != nil {
                                 level_print(dara.INFO, func() {l.Println(err)})
                             }
@@ -433,7 +440,7 @@ func record_sched() {
 							//Update the last running routine
 							level_print(dara.DEBUG, func() {l.Printf("Recording Event Number %d",i)})
 							events := ConsumeAndPrint(ProcID, &context)
-                            result, err := checker.Check(context)
+                            result, err := check_properties(context)
                             if err != nil {
                                 level_print(dara.INFO, func() {l.Println(err)})
                             }
@@ -459,7 +466,7 @@ func record_sched() {
 						if procchan[ProcID].LogIndex > 0 {
 							level_print(dara.DEBUG, func() {l.Printf("Procchan %d\n", procchan[ProcID].Run)})
 							events := ConsumeAndPrint(ProcID, &context)
-                            result, err := checker.Check(context)
+                            result, err := check_properties(context)
                             if err != nil {
                                 level_print(dara.INFO, func() {l.Println(err)})
                             }
