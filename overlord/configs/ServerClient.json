@@ -1,12 +1,12 @@
 {
     "exec" : {
-        "path" : "../../../../go.etcd.io/etcd/dgo_build",
+        "path" : "../examples/ServerClient/build.sh",
         "size" : "400M",
-        "processes" : 1,
+        "processes" : 2,
         "sched" : "file_read.json",
         "loglevel" : "FATAL",
         "build" : {
-            "build_path" : "../../../../go.etcd.io/etcd/dgo_build",
+            "build_path" : "../examples/ServerClient/build.sh",
             "run_path" : "run.sh"
         }
     },

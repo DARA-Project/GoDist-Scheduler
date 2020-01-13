@@ -2,7 +2,7 @@
     "exec" : {
         "path" : "../examples/SimpleMutex_test/SimpleMutex.go",
         "size" : "400M",
-        "processes" : "1",
+        "processes" : 1,
         "sched" : "file_read.json",
         "loglevel" : "INFO"
     },

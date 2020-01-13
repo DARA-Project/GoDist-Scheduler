@@ -13,7 +13,7 @@ import (
     "bitbucket.org/bestchai/dinv/capture"
     "time"
     "log"
-//    "strconv"
+    "strconv"
 //    "strings"
 )
 
@@ -179,8 +179,8 @@ func install_global_scheduler() error {
 }
 
 //Launches the global scheduler and the run script to run the system
-func launch_global_scheduler(mode string) (*exec.Cmd, error) {
-    arg := "--" + mode + "=true"
+func launch_global_scheduler(mode string, numProcs int) (*exec.Cmd, error) {
+    arg := "--" + mode + "=true --procs=" + strconv.Itoa(numProcs)
     cmd := exec.Command("/bin/bash", "./exec_script.sh", arg)
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
@@ -198,12 +198,12 @@ func start_go_benchmark() (*exec.Cmd, error) {
 }
 
 //Starts the global scheduler for this dara run
-func start_global_scheduler(mode string) (*exec.Cmd, error) {
+func start_global_scheduler(mode string, numProcs int) (*exec.Cmd, error) {
     err := install_global_scheduler()
     if err != nil {
         return nil, err
     }
-    cmd, err := launch_global_scheduler(mode)
+    cmd, err := launch_global_scheduler(mode, numProcs)
     if err != nil {
         return nil, err
     }
@@ -366,7 +366,7 @@ func record(options ExecOptions) error {
     if err != nil {
         return err
     }
-    cmd, err := start_global_scheduler("record")
+    cmd, err := start_global_scheduler("record", options.NumProcesses)
     if err != nil {
         return err
     }
@@ -383,7 +383,7 @@ func replay(options ExecOptions) error {
     if options.PreloadReplay {
         set_fast_replay()
     }
-    cmd, err := start_global_scheduler("replay")
+    cmd, err := start_global_scheduler("replay", options.NumProcesses)
     if err != nil {
         return err
     }
@@ -397,7 +397,7 @@ func explore(options ExecOptions) error {
     if err != nil {
         return err
     }
-    cmd, err := start_global_scheduler("explore")
+    cmd, err := start_global_scheduler("explore", options.NumProcesses)
     if err != nil {
         return err
     }
@@ -446,7 +446,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
         }
         fmt.Println("Record Iteration #",i)
         start := time.Now()
-        cmd, err := start_global_scheduler("record")
+        cmd, err := start_global_scheduler("record", options.NumProcesses)
         if err != nil {
             return err
         }
@@ -481,7 +481,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
         }
         fmt.Println("Replay Iteration #",i)
         start := time.Now()
-        cmd, err := start_global_scheduler("replay")
+        cmd, err := start_global_scheduler("replay", options.NumProcesses)
         if err != nil {
             return err
         }
@@ -504,7 +504,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
             set_fast_replay()
             fmt.Println("Fast Replay Iteration #",i)
             start := time.Now()
-            cmd, err := start_global_scheduler("replay")
+            cmd, err := start_global_scheduler("replay", options.NumProcesses)
             if err != nil {
                 return err
             }

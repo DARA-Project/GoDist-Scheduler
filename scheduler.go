@@ -102,7 +102,8 @@ func level_print(level int, pfunc func()) {
 var schedule dara.Schedule
 
 func roundRobin() int {
-	LastProc = (LastProc + 1) % (*procs+1)
+	LastProc = (LastProc + 1) % (*procs + 1)
+    // Dara doesn't have ProcID 0
 	if LastProc == 0 {
 		LastProc++
 	}
@@ -389,12 +390,13 @@ func replay_sched() {
 
 
 func record_sched() {
-	LastProc = -1
-	ProcID := roundRobin()
+	LastProc = 0
 	var i int
     // Context for property checking
     context := make(map[string]interface{})
 	for i<RECORDLEN {
+	    ProcID := roundRobin()
+        l.Println("Checking process", ProcID)
 		//else busy wait
         //l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
@@ -521,12 +523,12 @@ func record_sched() {
 func explore_sched() {
 	explore_unit := explore_init()
 	level_print(dara.INFO, func() {l.Println("Dora the Explorer begins")})
-	LastProc = -1
-	ProcID := roundRobin()
+	LastProc = 0
     explore_end := false
     context := make(map[string]interface{})
 	var i int
 	for i < EXPLORELEN {
+	    ProcID := roundRobin()
         if explore_end {
             break
         }
