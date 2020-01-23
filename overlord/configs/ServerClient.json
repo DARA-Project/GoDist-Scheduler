@@ -3,7 +3,7 @@
         "path" : "../examples/ServerClient/build.sh",
         "size" : "400M",
         "processes" : 2,
-        "sched" : "file_read.json",
+        "sched" : "Schedule.json",
         "loglevel" : "FATAL",
         "build" : {
             "build_path" : "../examples/ServerClient/build.sh",

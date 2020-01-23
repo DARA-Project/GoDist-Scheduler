@@ -23,6 +23,7 @@ var (
 	record = flag.Bool("record", false, "Record an execution")
 	replay = flag.Bool("replay", false, "Replay an execution")
 	explore = flag.Bool("explore", false, "Explore a recorded execution")
+    sched_file = flag.String("schedule", "", "The schedule file where the schedule will be stored/loaded from")
 )
 
 const(
@@ -256,7 +257,7 @@ func check_properties(context map[string]interface{}) (bool, error) {
 
 func replay_sched() {
 	var i int
-	f, err := os.Open("Schedule.json")
+	f, err := os.Open(*sched_file)
 	if err != nil {
 		l.Fatal(err)
 	}
@@ -476,7 +477,7 @@ func record_sched() {
                                 level_print(dara.INFO, func(){l.Println("Property check failed")})
                             }
 							schedule = append(schedule,events...)
-							f, erros := os.Create("Schedule.json")
+							f, erros := os.Create(*sched_file)
 							if erros != nil {
 								l.Fatal(err)
 							}
@@ -491,7 +492,7 @@ func record_sched() {
 					time.Sleep(time.Microsecond)
 				}
 			}
-			f, erros := os.Create("Schedule.json")
+			f, erros := os.Create(*sched_file)
 			if erros != nil {
 				l.Fatal(err)
 			}

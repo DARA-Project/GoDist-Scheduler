@@ -3,7 +3,7 @@
         "path" : "../examples/SimpleWaitGroup/SimpleWaitGroup.go",
         "size" : "400M",
         "processes" : 1,
-        "sched" : "file_read.json",
+        "sched" : "Schedule.json",
         "loglevel" : "INFO"
     },
     "instr" : {
