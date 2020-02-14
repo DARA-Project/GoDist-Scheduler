@@ -397,11 +397,11 @@ func record_sched() {
     context := make(map[string]interface{})
 	for i<RECORDLEN {
 	    ProcID := roundRobin()
-        l.Println("Checking process", ProcID)
+        level_print(dara.DEBUG, func(){l.Println("Chosen process for running is", ProcID)})
 		//else busy wait
         //l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))),dara.UNLOCKED,dara.LOCKED) {
-            level_print(dara.DEBUG, func(){l.Println("Obtained Lock")})
+            level_print(dara.DEBUG, func(){l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID)})
             if procchan[ProcID].Run == -100 {
 			    events := ConsumeAndPrint(ProcID, &context)
                 result, err := check_properties(context)
@@ -413,6 +413,13 @@ func record_sched() {
                 }
 			    schedule = append(schedule,events...)
                 break
+            }
+            if procchan[ProcID].Run == -6 {
+                //Process was blocked on network, hopefully it is unblocked after a full cycle of process scheduling!
+                //If not, the process will eventually grab the lock whenever it wakes up, until then scheduler will continue
+                //to own the lock.
+                level_print(dara.DEBUG, func() {l.Println("Releasing the lock after block back to", ProcID)})
+                atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
             }
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 				forward()
@@ -457,11 +464,11 @@ func record_sched() {
 								//mark the processes for death
 								level_print(dara.DEBUG, func() {l.Printf("Ending Execution!")})
 								procchan[ProcID].Run = -4 //mark process for death
-							} else {
+							} else if procchan[ProcID].Run != -6 {
+                                //Only reset if the process is not blocked on network IO
 								procchan[ProcID].Run = -1	//lock process
 							}
 
-							ProcID = roundRobin()
                             level_print(dara.DEBUG, func() {l.Printf("Found %d log events", len(events))})
 							i += len(events)
 							flag = false
@@ -510,7 +517,7 @@ func record_sched() {
 	//l.Printf(common.ScheduleString(&schedule))
 	//l.Printf("%+v\n",schedule)
     //level_print(dara.INFO, func() {l.Println("Recorded schedule is as follows : \n",common.ConciseScheduleString(&schedule))})
-    f, err := os.Create("Schedule_condensed.txt")
+    f, err := os.Create(*sched_file)
     if err != nil {
         l.Fatal(err)
     }

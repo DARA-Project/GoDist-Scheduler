@@ -4,7 +4,7 @@
         "size" : "400M",
         "processes" : 2,
         "sched" : "Schedule.json",
-        "loglevel" : "FATAL",
+        "loglevel" : "INFO",
         "build" : {
             "build_path" : "../examples/ServerClient/build.sh",
             "run_path" : "run.sh"
