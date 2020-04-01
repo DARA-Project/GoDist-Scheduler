@@ -52,6 +52,10 @@ as include configurable options for exploration strategies and depth.
             "sched" : "file_read.json",
             "loglevel" : "INFO",
             "property_file" : "/path/to/property/file.prop"
+            "build" : {
+                "build_path" : "../examples/ServerClient/build.sh",
+                "run_path" : "run.sh"
+            }
         }
     }
 ```
@@ -65,6 +69,9 @@ The details of every field for all the execution options is presented as follows
 + `sched` : The name of the schedule file that will be used to write to/read from for doing record/replay or exploration.
 + `loglevel` : The level of the logging that needs to be printed out to console. Supported levels are : DEBUG, INFO, WARN, FATAL
 + `property_file` : The path to the property file that contains the properties!
++ `build`: This is to allow for complicated build and run scripts.
++ `build_path`: Path to build script
++ `run_path`: Path to run script
 
 ### Property File
 
