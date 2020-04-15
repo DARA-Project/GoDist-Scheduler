@@ -9,6 +9,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+    "net"
+    "net/rpc"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -53,6 +55,10 @@ type BenchOptions struct {
 type InstrumentOptions struct {
 	Dir  string `json:"dir"`
 	File string `json:"file"`
+}
+
+type DaraRpcServer struct {
+    Options ExecOptions
 }
 
 //Returns the directory from the path
@@ -311,6 +317,95 @@ func instrument(options InstrumentOptions) error {
 	return nil
 }
 
+func (d * DaraRpcServer) killprogram() error {
+	dir := get_directory_from_path(d.Options.Path)
+    program := filepath.Base(dir)
+    if d.Options.Build.RunScript == "" {
+        cmd := exec.Command("pkill", "-f", program)
+        err := cmd.Run()
+        if err != nil {
+            log.Println("[Overlord-RpcServer] Error while killing program", err)
+            return err
+        }
+    } else {
+        cmd := exec.Command("pkill", "-f", d.Options.Build.RunScript)
+        err := cmd.Run()
+        if err != nil {
+            log.Println("[Overlord-RpcServer] Error while killing program", err)
+            return err
+        }
+    }
+    return nil
+}
+
+func (d * DaraRpcServer) KillExecution(int unused_arg, ack *bool) error {
+    // Issue a kill command for killing the program under test
+    err = d.killprogram()
+    if err != nil {
+        log.Println("[Overlord-RpcServer] Failed to kill program")
+        return err
+    }
+    *ack = true
+    return nil
+}
+
+func (d * DaraRpcServer) FinishExecution(int unused_arg, ack *bool) error {
+    // Issue a finish command to the exec script somehow
+	cwd, err := os.Getwd()
+    if err != nil {
+        log.Println("[Overlord-RpcServer] Error while getting current directory", err)
+        return err
+    }
+	dir := get_directory_from_path(options.Path)
+    err = os.Chdir(dir)
+    if err != nil {
+        log.Println("[Overlord-RpcServer] Error while changing directory")
+        return err
+    }
+    // Just create a file that is called explore_finish to signify end of exploration and the exec script can just stat if the file exists
+    f, err := os.Create("./explore_finish")
+    if err != nil {
+        log.Println("[Overlord-RpcServer] Failed to finish exploration")
+        return err
+    }
+    f.Close()
+    err = os.Chdir(cwd)
+    if err != nil {
+        log.Println("[Overlord-RpcServer] Error whilce changing directory")
+        return err
+    }
+    // Now we are ready to kill the program!
+    err = d.killprogram()
+    if err != nil {
+        log.Println("[Overlord-RpcServer] Failed to kill program")
+        return err
+    }
+    *ack = true
+    return nil
+}
+
+func init_rpc_server(options ExecOptions) *DaraRpcServer{
+    server := DaraRpcServer{options}
+    return &server
+}
+
+func start_rpc_server(options ExecOptions) {
+    addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:45000")
+    if err != nil {
+        log.Println("[Overlord-RpcServer] Failed to resolve TCP address")
+        return
+    }
+    inbound, err := net.ListenTCP("tcp", addr)
+    if err != nil {
+        log.Println("[Overlord-RpcServer] Failed to initialize inbound listener")
+        return
+    }
+
+    server := init_rpc_server(options)
+    rpc.Register(server)
+    rpc.Accept(inbound)
+}
+
 //Sets up the environment and scripts for benchmarking go programs
 func go_setup(options ExecOptions) error {
 	dir := get_directory_from_path(options.Path)
@@ -397,6 +492,7 @@ func explore(options ExecOptions) error {
 	if err != nil {
 		return err
 	}
+    go start_rpc_server(options)
 	cmd, err := start_global_scheduler("explore", options.NumProcesses, options.SchedFile)
 	if err != nil {
 		return err

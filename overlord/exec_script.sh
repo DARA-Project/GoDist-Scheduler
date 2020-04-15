@@ -20,12 +20,24 @@ launch_program() {
     fi
 }
 
+start_program() {
+    if [ "$DARA_MODE" = "explore" ]
+    then
+        while [ ! -f ./explore_finish ]
+        do
+            launch_program
+        done    
+    else
+        launch_program
+    fi
+}
+
 if [ -z "$BENCH_RECORD" ]
 then
-	launch_program
+	start_program
 else
     date +"%s%6N" > record.tmp
-    launch_program
+    start_program
     date +"%s%6N" >> record.tmp
 fi
 # Bring back GoDist-Scheduler to foreground
