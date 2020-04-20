@@ -338,9 +338,9 @@ func (d * DaraRpcServer) killprogram() error {
     return nil
 }
 
-func (d * DaraRpcServer) KillExecution(int unused_arg, ack *bool) error {
+func (d * DaraRpcServer) KillExecution(unused_arg int, ack *bool) error {
     // Issue a kill command for killing the program under test
-    err = d.killprogram()
+    err := d.killprogram()
     if err != nil {
         log.Println("[Overlord-RpcServer] Failed to kill program")
         return err
@@ -349,14 +349,14 @@ func (d * DaraRpcServer) KillExecution(int unused_arg, ack *bool) error {
     return nil
 }
 
-func (d * DaraRpcServer) FinishExecution(int unused_arg, ack *bool) error {
+func (d * DaraRpcServer) FinishExecution(unused_arg int, ack *bool) error {
     // Issue a finish command to the exec script somehow
 	cwd, err := os.Getwd()
     if err != nil {
         log.Println("[Overlord-RpcServer] Error while getting current directory", err)
         return err
     }
-	dir := get_directory_from_path(options.Path)
+	dir := get_directory_from_path(d.Options.Path)
     err = os.Chdir(dir)
     if err != nil {
         log.Println("[Overlord-RpcServer] Error while changing directory")

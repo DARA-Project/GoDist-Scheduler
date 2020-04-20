@@ -9,6 +9,7 @@ import (
 	"github.com/DARA-Project/GoDist-Scheduler/explorer"
 	"github.com/DARA-Project/GoDist-Scheduler/propchecker"
 	"log"
+    "net/rpc"
 	"os"
 	"runtime"
 	"strconv"
@@ -33,6 +34,8 @@ const (
 	EXPLORELEN            = 100
 	EXPLORATION_LOG_FILE  = "visitedLog.txt"
 	MAX_EXPLORATION_DEPTH = 10
+    // TODO: Make this an option
+    OVERLORD_RPC_SERVER = "0.0.0.0:45000"
 )
 
 //*****************************************************************/
@@ -532,7 +535,39 @@ func record_sched() {
 	level_print(dara.DEBUG, func() { l.Println("The End") })
 }
 
+func dara_rpc_client(command chan string) {
+    client, err := rpc.Dial("tcp", OVERLORD_RPC_SERVER)
+    if err != nil {
+        l.Fatal(err)
+    }
+
+    var isFinished bool
+
+    for ;!isFinished;{
+        select {
+            case op := <-command:
+                switch op {
+                    case "finish":
+                        var reply bool
+                        err = client.Call("DaraRpcServer.FinishExecution", 0, &reply)
+                        if err != nil {
+                            l.Fatal(err)
+                        }
+                        isFinished = true
+                    case "kill":
+                        var reply bool
+                        err = client.Call("DaraRpcServer.KillExecution", 0, &reply)
+                        if err != nil {
+                            l.Fatal(err)
+                        }
+                }
+        }
+    }
+}
+
 func explore_sched() {
+    command_chan := make(chan string)
+    go dara_rpc_client(command_chan)
 	explore_unit := explore_init()
 	level_print(dara.INFO, func() { l.Println("Dora the Explorer begins") })
 	LastProc = 0
