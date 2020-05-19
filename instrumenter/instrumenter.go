@@ -231,6 +231,10 @@ func daraCounterStmt(f *File, counter ast.Expr) ast.Stmt {
     }
 }
 
+func getBlockID(fname string, start int, end int) string {
+    return fname + ":" + strconv.Itoa(start) + ":" + strconv.Itoa(end)
+}
+
 // newCounter creates a new counter expression of the appropriate form.
 func (f *File) newCounter(start, end token.Pos, numStmt int) ast.Stmt {
     startLine := f.fset.Position(start)
@@ -240,10 +244,9 @@ func (f *File) newCounter(start, end token.Pos, numStmt int) ast.Stmt {
                 X:   &ast.Ident{Name: "runtime"},
                 Sel: &ast.Ident{Name: "ReportBlockCoverage"},
         },
+        //Generate Block ID here instead of doing it at runtime
         Args: []ast.Expr{
-            f.stringLiteral(f.name),
-            f.intLiteral(startLine.Line),
-            f.intLiteral(endLine.Line),
+            f.stringLiteral(getBlockID(f.name, startLine.Line, endLine.Line)),
         },
     }
     stmt := daraCounterStmt(f, counter)
