@@ -1,0 +1,17 @@
+{
+    "exec" : {
+        "path" : "../examples/SimpleInstrument/file_read.go",
+        "size" : "400M",
+        "processes" : 1,
+        "sched" : "Schedule.json",
+        "loglevel" : "INFO"
+    },
+    "instr" : {
+        "dir" : "",
+        "file" : "../examples/SimpleInstrument/file_read.go"
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}

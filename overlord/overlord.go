@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bitbucket.org/bestchai/dinv/capture"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/DARA-Project/GoDist-Scheduler/instrumenter"
 	"io"
 	"io/ioutil"
 	"log"
@@ -16,7 +16,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
-	//    "strings"
 )
 
 //Options struct which configures the Dara run
@@ -66,31 +65,15 @@ func get_directory_from_path(path string) string {
 	return filepath.Dir(path)
 }
 
-//Writes the instrumented file
-func write_instrumented_file(filename string, source_code string) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	file.WriteString(source_code)
-	return nil
-}
-
 //Instruments a given file using Dinv's capture module
 func instrument_file(filename string) error {
-	options := make(map[string]string)
-	options["file"] = filename
-	output := capture.InsturmentComm(options)
-	new_source := output[filename]
-	return write_instrumented_file(filename, new_source)
+    return instrumenter.Annotate(filename, filename)
 }
 
 //Instruments all go files in a directory
 func instrument_dir(directory string) error {
 	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println("Prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 		if !info.IsDir() && filepath.Ext(path) == ".go" {
