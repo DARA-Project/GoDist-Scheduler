@@ -134,6 +134,8 @@ func ConsumeCoverage(ProcID int) map[string]uint64 {
         count := procchan[ProcID].Coverage[i].Count
         coverage[blockID] = count
     }
+    // Reset the CoverageIndex
+    procchan[ProcID].Coverage = 0
     return coverage
 }
 
