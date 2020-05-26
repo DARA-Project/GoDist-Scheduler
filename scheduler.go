@@ -127,6 +127,16 @@ func getSchedulingEvents(sched dara.Schedule) map[int][]dara.Event {
 	return proc_event_map
 }
 
+func ConsumeCoverage(ProcID int) map[string]uint64 {
+    coverage := make(map[string]uint64)
+    for i := 0; i < procchan[ProcID].CoverageIndex; i++ {
+        blockID := string(bytes.Trim(procchan[ProcID].Coverage[i].BlockID[:dara.BLOCKIDLEN], "\x00")[:])
+        count := procchan[ProcID].Coverage[i].Count
+        coverage[blockID] = count
+    }
+    return coverage
+}
+
 func ConsumeAndPrint(ProcID int, context *map[string]interface{}) []dara.Event {
 	cl := ConsumeLog(ProcID, context)
 
@@ -134,7 +144,6 @@ func ConsumeAndPrint(ProcID int, context *map[string]interface{}) []dara.Event {
 }
 
 func ConsumeLog(ProcID int, context *map[string]interface{}) []dara.Event {
-	// The 2 print statements somehow have different values for SimpleFileRead. How the fuck.....
 	level_print(dara.INFO, func() { l.Println("Current log event index is", procchan[ProcID].LogIndex) })
 	logsize := procchan[ProcID].LogIndex
 	level_print(dara.INFO, func() { l.Println("Current log event index is", logsize) })
@@ -352,7 +361,9 @@ func replay_sched() {
 							if procchan[schedule[i].P].Run == -1 {
 								atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[schedule[i].P].Lock))), dara.UNLOCKED)
 								events := ConsumeAndPrint(currentDaraProc, &context)
+                                coverage := ConsumeCoverage(currentDaraProc)
 								level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(events), "events") })
+                                level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(coverage), "blocks") })
 								for _, e := range events {
 									same_event := CompareEvents(e, schedule[i])
 									if !same_event {
@@ -374,6 +385,8 @@ func replay_sched() {
 							} else if procchan[schedule[i].P].Run == -100 {
 								// This means that the local runtime finished and that we can move on
 								events := ConsumeAndPrint(currentDaraProc, &context)
+                                coverage := ConsumeCoverage(currentDaraProc)
+                                level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(coverage), "blocks") })
 								level_print(dara.DEBUG, func() { l.Println("Replay Consumed", len(events), "events") })
 								for _, e := range events {
 									same_event := CompareEvents(e, schedule[i])
@@ -411,6 +424,8 @@ func record_sched() {
 			level_print(dara.DEBUG, func() { l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID) })
 			if procchan[ProcID].Run == -100 {
 				events := ConsumeAndPrint(ProcID, &context)
+                coverage := ConsumeCoverage(ProcID)
+                level_print(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
 				result, err := check_properties(context)
 				if err != nil {
 					level_print(dara.INFO, func() { l.Println(err) })
@@ -440,6 +455,8 @@ func record_sched() {
 						if procchan[ProcID].Run == -100 {
 							level_print(dara.DEBUG, func() { l.Printf("Ending discovered") })
 							events := ConsumeAndPrint(ProcID, &context)
+                            coverage := ConsumeCoverage(ProcID)
+                            level_print(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
 							result, err := check_properties(context)
 							if err != nil {
 								level_print(dara.INFO, func() { l.Println(err) })
@@ -457,6 +474,8 @@ func record_sched() {
 							//Update the last running routine
 							level_print(dara.DEBUG, func() { l.Printf("Recording Event Number %d", i) })
 							events := ConsumeAndPrint(ProcID, &context)
+                            coverage := ConsumeCoverage(ProcID)
+                            level_print(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
 							result, err := check_properties(context)
 							if err != nil {
 								level_print(dara.INFO, func() { l.Println(err) })
@@ -483,6 +502,8 @@ func record_sched() {
 						if procchan[ProcID].LogIndex > 0 {
 							level_print(dara.DEBUG, func() { l.Printf("Procchan %d\n", procchan[ProcID].Run) })
 							events := ConsumeAndPrint(ProcID, &context)
+                            coverage := ConsumeCoverage(ProcID)
+                            level_print(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
 							result, err := check_properties(context)
 							if err != nil {
 								level_print(dara.INFO, func() { l.Println(err) })
@@ -582,6 +603,8 @@ func explore_sched() {
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED, dara.LOCKED) {
 			if procchan[ProcID].Run == -100 {
 				events := ConsumeAndPrint(ProcID, &context)
+                coverage := ConsumeCoverage(ProcID)
+                level_print(dara.DEBUG, func() { l.Println("Explore Consumed ", len(coverage), "blocks") })
 				schedule = append(schedule, events...)
 				i += len(events)
 				// Check if one of them is a crash or end event. If so, exploration should be over.
@@ -605,6 +628,8 @@ func explore_sched() {
 						//l.Printf("procchan[schedule[%d]].Run = %d",i,procchan[schedule[i]].Run)
 						if procchan[ProcID].Run == -1 {
 							events := ConsumeAndPrint(ProcID, &context)
+                            coverage := ConsumeCoverage(ProcID)
+                            level_print(dara.DEBUG, func() { l.Println("Explore Consumed ", len(coverage), "blocks") })
 							schedule = append(schedule, events...)
 							i += len(events)
 							// Check if one of them is a crash or end event. If so, exploration should be over.
