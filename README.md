@@ -56,6 +56,10 @@ as include configurable options for exploration strategies and depth.
                 "build_path" : "../examples/ServerClient/build.sh",
                 "run_path" : "run.sh"
             }
+        },
+        "instr" : {
+            "dir" : "",
+            "file" : "../examples/SimpleInstrument/file_read.go"
         }
     }
 ```
@@ -72,6 +76,13 @@ The details of every field for all the execution options is presented as follows
 + `build`: This is to allow for complicated build and run scripts.
 + `build_path`: Path to build script
 + `run_path`: Path to run script
+
+The instr block in the configuration file refers to the instrumentation options of the system.
+Currently either a single file can be instrumented or the whole directory can be instrumented.
+The details of each field are as follows:
+
++ `dir` : The full path to the directory to be instrumented
++ `file` : The full path to the file to be instrumented
 
 ### Property File
 
@@ -130,7 +141,12 @@ The steps for exploration using the overlord is as follows:
 
 ### Instrument
 
-Currently under development; The steps will be available once completed
+To instrument a system so that it reports coverage information, use the overlord program as follows:
+
+```
+    > cd $GOPATH/src/github.com/DARA-Project/GoDist-Scheduler/overlord
+    > go run overlord.go -mode=instrument -optFile=system_config.json
+```
 
 ## Auxiliary Tools
 
