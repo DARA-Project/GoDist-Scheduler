@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -54,6 +55,8 @@ type BenchOptions struct {
 type InstrumentOptions struct {
 	Dir  string `json:"dir"`
 	File string `json:"file"`
+	OutDir string `json:"outdir"`
+	OutFile string `json:"outfile"`
 }
 
 type DaraRpcServer struct {
@@ -66,18 +69,35 @@ func get_directory_from_path(path string) string {
 }
 
 //Instruments a given file using Dinv's capture module
-func instrument_file(filename string) error {
-    return instrumenter.Annotate(filename, filename)
+func instrument_file(filename string, outfile string) error {
+	f, err := instrumenter.Annotate(filename)
+	if err != nil {
+		return err
+	}
+	if outfile == "" {
+		log.Println("[Overlord]Output file not provided; overwriting original file")
+		outfile = filename
+	}
+	return f.WriteAnnotatedFile(outfile)
 }
 
 //Instruments all go files in a directory
-func instrument_dir(directory string) error {
+func instrument_dir(directory string, outdir string) error {
+	if outdir == "" {
+		log.Println("[Overlord]Output directory not provided; overwriting original directory")
+		outdir = directory
+	}
 	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if !info.IsDir() && filepath.Ext(path) == ".go" {
-			err = instrument_file(path)
+			outpath := strings.Replace(path, directory, outdir, -1)
+			err = os.MkdirAll(filepath.Dir(outpath), 0777)
+			if err != nil {
+				return err
+			}
+			err = instrument_file(path, outpath)
 			return err
 		}
 		return nil
@@ -290,11 +310,11 @@ func instrument(options InstrumentOptions) error {
 	}
 
 	if options.File != "" {
-		return instrument_file(options.File)
+		return instrument_file(options.File, options.OutFile)
 	}
 
 	if options.Dir != "" {
-		return instrument_dir(options.Dir)
+		return instrument_dir(options.Dir, options.OutDir)
 	}
 
 	return nil

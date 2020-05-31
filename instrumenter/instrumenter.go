@@ -38,6 +38,7 @@ type File struct {
     name      string // Name of file.
     astFile   *ast.File
     blocks    []Block
+    initialComments []byte
 }
 
 // Visit implements the ast.Visitor interface.
@@ -447,15 +448,25 @@ func (f *funcLitFinder) found() bool {
     return token.Pos(*f) != token.NoPos
 }
 
-func Annotate(name string, outfile string) error {
-    fset := token.NewFileSet()
-    content, err := ioutil.ReadFile(name)
+func (f *File) WriteAnnotatedFile(outfile string) error {
+    fd, err := os.Create(outfile)
     if err != nil {
         return err
     }
+    fd.Write(f.initialComments)
+    f.print(fd)
+    return nil
+}
+
+func Annotate(name string) (*File, error) {
+    fset := token.NewFileSet()
+    content, err := ioutil.ReadFile(name)
+    if err != nil {
+        return nil, err
+    }
     parsedFile, err := parser.ParseFile(fset, name, content, parser.ParseComments)
     if err != nil {
-        return err
+        return nil, err
     }
     parsedFile.Comments = trimComments(parsedFile, fset)
 
@@ -466,16 +477,7 @@ func Annotate(name string, outfile string) error {
     }
     ast.Walk(file, file.astFile)
     file.addImport("runtime")
-    fd := os.Stdout
-    if outfile != "" {
-        var err error
-        fd, err = os.Create(outfile)
-        if err != nil {
-            return err
-        }
-    }
-    fd.Write(initialComments(content)) // Retain '// +build' directives.
-    file.print(fd)
-    return nil
+    file.initialComments = initialComments(content)
+    return file, nil
 }
 

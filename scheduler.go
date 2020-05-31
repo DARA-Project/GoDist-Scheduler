@@ -726,5 +726,3 @@ func main() {
 	}
 	level_print(dara.INFO, func() { l.Println("Exiting scheduler") })
 }
-
-//Printing Functions
