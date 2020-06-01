@@ -7,6 +7,7 @@ import (
 	"github.com/DistributedClocks/GoVector/govec/vclock"
 	"log"
 	"os"
+	"strconv"
 )
 
 func initialize_shiviz_file(filename string) (*os.File, error) {
@@ -23,35 +24,40 @@ func initialize_shiviz_file(filename string) (*os.File, error) {
 	return f, nil
 }
 
+func uniqueThreadID(procID int, goid int) string {
+	return strconv.Itoa(procID) + ":" + strconv.Itoa(goid)
+}
+
 func parse_schedule(schedule *dara.Schedule, filename string) error {
 	f, err := initialize_shiviz_file(filename)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	clocks := make(map[int]*vclock.VClock)
-	routine_names := make(map[int]string)
+	clocks := make(map[string]*vclock.VClock)
+	routine_names := make(map[string]string)
 	coverage_map := make(map[int]string)
 	for _, covEvent := range schedule.CovEvents {
 		coverage_map[covEvent.EventIndex] = common.CoverageString(&covEvent)
 	}
-	curr_running_routine := 1
+	curr_running_routine := uniqueThreadID(1, 1)
 	for idx, event := range schedule.LogEvents {
 		var coverage string
 		if v, ok := coverage_map[idx]; ok {
 			coverage = v
 		}
 		goroutine_string := common.GoRoutineNameString(event.P, event.G)
-		if _, ok := routine_names[event.G.Gid]; !ok {
-			routine_names[event.G.Gid] = goroutine_string
+		uniqueID := uniqueThreadID(event.P, event.G.Gid)
+		if _, ok := routine_names[uniqueID]; !ok {
+			routine_names[uniqueID] = goroutine_string
 		}
-		if vc, ok := clocks[event.G.Gid]; !ok {
+		if vc, ok := clocks[uniqueID]; !ok {
 			clock := vclock.New()
-			clocks[event.G.Gid] = &clock
+			clocks[uniqueID] = &clock
 			clock.Tick(goroutine_string)
 			// Tick the goroutine that is getting off and merge the vector
 			// clock of the old goroutine with the newly launched goroutine
-			if event.Type == dara.SCHED_EVENT && curr_running_routine != event.G.Gid {
+			if event.Type == dara.SCHED_EVENT && curr_running_routine != uniqueID {
 				prev_routine_clock := clocks[curr_running_routine]
 				prev_routine_name := routine_names[curr_running_routine]
 				prev_routine_clock.Tick(prev_routine_name)
@@ -81,7 +87,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 			vc.Tick(goroutine_string)
 			// Tick the goroutine that is getting off and merge the vector
 			// clock of the old goroutine with the newly launched goroutine
-			if event.Type == dara.SCHED_EVENT && curr_running_routine != event.G.Gid {
+			if event.Type == dara.SCHED_EVENT && curr_running_routine != uniqueID {
 				prev_routine_clock := clocks[curr_running_routine]
 				prev_routine_name := routine_names[curr_running_routine]
 				prev_routine_clock.Tick(prev_routine_name)
@@ -109,7 +115,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 			log.Printf("Wrote %d bytes\n", n)
 		}
 		if event.Type != dara.THREAD_EVENT {
-			curr_running_routine = event.G.Gid
+			curr_running_routine = uniqueID
 		}
 	}
 	return nil
