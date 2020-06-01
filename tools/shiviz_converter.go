@@ -32,7 +32,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 	clocks := make(map[int]*vclock.VClock)
 	routine_names := make(map[int]string)
 	curr_running_routine := 1
-	for _, event := range *schedule {
+	for _, event := range schedule.LogEvents {
 		goroutine_string := common.GoRoutineNameString(event.P, event.G)
 		if _, ok := routine_names[event.G.Gid]; !ok {
 			routine_names[event.G.Gid] = goroutine_string
@@ -115,7 +115,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Length of the schedule is ", len(*schedule))
+	log.Println("Length of the schedule is ", len(schedule.LogEvents))
 	err = parse_schedule(schedule, shiviz_filename)
 	if err != nil {
 		log.Fatal(err)

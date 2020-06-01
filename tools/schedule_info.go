@@ -11,7 +11,7 @@ import (
 
 func stats(schedule *dara.Schedule) {
 	event_stats := make(map[int]int)
-	for _, event := range *schedule {
+	for _, event := range schedule.LogEvents {
 		event_stats[event.Type] = event_stats[event.Type] + 1
 	}
 	for k, v := range event_stats {
@@ -21,7 +21,7 @@ func stats(schedule *dara.Schedule) {
 
 func get_num_schedule(schedule *dara.Schedule) int {
 	event_stats := make(map[int]int)
-	for _, event := range *schedule {
+	for _, event := range schedule.LogEvents {
 		event_stats[event.Type] = event_stats[event.Type] + 1
 	}
 	return event_stats[dara.SCHED_EVENT]
@@ -52,9 +52,9 @@ func main() {
 	}
 	if len(os.Args) > 2 && os.Args[2] == "scale" {
 		num_schedule := get_num_schedule(schedule)
-		fmt.Printf("%d,%d\n", len(*schedule), num_schedule)
+		fmt.Printf("%d,%d\n", len(schedule.LogEvents), num_schedule)
 	} else {
-		log.Println("SCHEDULE LENGTH :", len(*schedule))
+		log.Println("SCHEDULE LENGTH :", len(schedule.LogEvents))
 		stats(schedule)
 	}
 }
