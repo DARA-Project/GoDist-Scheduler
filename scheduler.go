@@ -519,7 +519,11 @@ func record_sched() {
 								l.Fatal(err)
 							}
 							enc := json.NewEncoder(f)
-							enc.Encode(schedule)
+							enc.SetIndent("", "\t")
+							err = enc.Encode(schedule)
+							if err != nil {
+								l.Fatal(err)
+							}
 						}
 						//l.Print("Still running")
 						//l.Printf("Status is %d\n",procchan[ProcID].RunningRoutine.Status)
@@ -552,7 +556,11 @@ func record_sched() {
 		l.Fatal(err)
 	}
 	enc := json.NewEncoder(f)
-	enc.Encode(schedule)
+	enc.SetIndent("", "\t")
+	err = enc.Encode(schedule)
+	if err != nil {
+		l.Fatal(err)
+	}
 	level_print(dara.DEBUG, func() { l.Println("The End") })
 }
 
