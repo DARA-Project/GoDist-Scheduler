@@ -29,6 +29,7 @@ type Block struct {
     startByte token.Pos
     endByte   token.Pos
     numStmt   int
+    ID        string
 }
 
 // File is a wrapper for the state of a file used in the parser.
@@ -240,6 +241,7 @@ func getBlockID(fname string, start int, end int) string {
 func (f *File) newCounter(start, end token.Pos, numStmt int) ast.Stmt {
     startLine := f.fset.Position(start)
     endLine := f.fset.Position(end)
+    blockID := getBlockID(f.name, startLine.Line, endLine.Line)
     counter := &ast.CallExpr{
         Fun: &ast.SelectorExpr{
                 X:   &ast.Ident{Name: "runtime"},
@@ -247,11 +249,11 @@ func (f *File) newCounter(start, end token.Pos, numStmt int) ast.Stmt {
         },
         //Generate Block ID here instead of doing it at runtime
         Args: []ast.Expr{
-            f.stringLiteral(getBlockID(f.name, startLine.Line, endLine.Line)),
+            f.stringLiteral(blockID),
         },
     }
     stmt := daraCounterStmt(f, counter)
-    f.blocks = append(f.blocks, Block{start, end, numStmt})
+    f.blocks = append(f.blocks, Block{start, end, numStmt,blockID})
     return stmt
 }
 
@@ -448,16 +450,32 @@ func (f *funcLitFinder) found() bool {
     return token.Pos(*f) != token.NoPos
 }
 
+//WriteAnnotatedFile writes the annotated source code to the specified outfile
 func (f *File) WriteAnnotatedFile(outfile string) error {
     fd, err := os.Create(outfile)
     if err != nil {
         return err
     }
+    defer fd.Close()
     fd.Write(f.initialComments)
     f.print(fd)
     return nil
 }
 
+//WriteBlocksFile writes the list of blockIDs to the specified outfile
+func (f *File) WriteBlocksFile(outfile string) error {
+    fd, err := os.Create(outfile)
+    if err != nil {
+        return err
+    }
+    defer fd.Close()
+    for _, block := range f.blocks {
+        fd.WriteString(block.ID + "\n")
+    }
+    return nil
+}
+
+//Annotate annotates the source code with Dara instrumentation for source code coverage
 func Annotate(name string) (*File, error) {
     fset := token.NewFileSet()
     content, err := ioutil.ReadFile(name)

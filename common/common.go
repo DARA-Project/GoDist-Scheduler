@@ -15,18 +15,18 @@ func GoRoutineNameString(ProcID int, ri dara.RoutineInfo) string {
     return name
 }
 
-func ScheduleString(s *dara.Schedule) string {
+func ScheduleString(events *[]dara.Event) string {
 	var output string
-	for i := range *s {
-		output += EventString(&(*s)[i])
+	for _, e := range *events {
+		output += EventString(&e)
 	}
 	return output
 }
 
-func ConciseScheduleString(s *dara.Schedule) string {
+func ConciseScheduleString(events *[]dara.Event) string {
     var output string
-    for i := range *s {
-        output = output + ConciseEventString(&(*s)[i]) + "\n"
+    for _, e := range *events {
+        output += ConciseEventString(&e) + "\n"
     }
     return output
 }
