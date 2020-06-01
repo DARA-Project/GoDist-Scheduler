@@ -135,7 +135,7 @@ func ConsumeCoverage(ProcID int) map[string]uint64 {
         coverage[blockID] = count
     }
     // Reset the CoverageIndex
-    procchan[ProcID].Coverage = 0
+    procchan[ProcID].CoverageIndex = 0
     return coverage
 }
 
@@ -551,10 +551,8 @@ func record_sched() {
 	if err != nil {
 		l.Fatal(err)
 	}
-	_, err = f.WriteString(common.ConciseScheduleString(&schedule))
-	if err != nil {
-		l.Fatal(err)
-	}
+	enc := json.NewEncoder(f)
+	enc.Encode(schedule)
 	level_print(dara.DEBUG, func() { l.Println("The End") })
 }
 
