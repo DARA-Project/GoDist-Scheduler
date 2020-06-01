@@ -436,6 +436,8 @@ func record_sched() {
 					level_print(dara.INFO, func() { l.Println("Property check failed") })
 				}
 				schedule.LogEvents = append(schedule.LogEvents, events...)
+				coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
+				schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
 				break
 			}
 			if procchan[ProcID].Run == -6 {
@@ -467,6 +469,8 @@ func record_sched() {
 								level_print(dara.INFO, func() { l.Println("Property check failed") })
 							}
 							schedule.LogEvents = append(schedule.LogEvents, events...)
+							coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
+							schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
 							flag = false
 							continue
 						}
@@ -485,7 +489,9 @@ func record_sched() {
 							if !result {
 								level_print(dara.INFO, func() { l.Println("Property check failed") })
 							}
-							schedule.LogEvents = append(schedule.LogEvents, events...)
+							schedule.LogEvents = append(schedule.LogEvents, events...)							
+							coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
+							schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
 							//Set the status of the routine that just
 							//ran
 							if i >= RECORDLEN-*procs {
@@ -514,6 +520,8 @@ func record_sched() {
 								level_print(dara.INFO, func() { l.Println("Property check failed") })
 							}
 							schedule.LogEvents = append(schedule.LogEvents, events...)
+							coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
+							schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
 							f, erros := os.Create(*sched_file)
 							if erros != nil {
 								l.Fatal(err)
@@ -614,6 +622,8 @@ func explore_sched() {
                 coverage := ConsumeCoverage(ProcID)
                 level_print(dara.DEBUG, func() { l.Println("Explore Consumed ", len(coverage), "blocks") })
 				schedule.LogEvents = append(schedule.LogEvents, events...)
+				coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
+				schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
 				i += len(events)
 				// Check if one of them is a crash or end event. If so, exploration should be over.
 				// As they both are ending events, we only need to check the last event in the schedule
@@ -639,6 +649,8 @@ func explore_sched() {
                             coverage := ConsumeCoverage(ProcID)
                             level_print(dara.DEBUG, func() { l.Println("Explore Consumed ", len(coverage), "blocks") })
 							schedule.LogEvents = append(schedule.LogEvents, events...)
+							coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
+							schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
 							i += len(events)
 							// Check if one of them is a crash or end event. If so, exploration should be over.
 							// As they both are ending events, we only need to check the last event in the schedule
