@@ -35,6 +35,16 @@ func RoutineInfoString(ri *dara.RoutineInfo) string {
 	return fmt.Sprintf("[Status: %s Gid: %d Gpc: %d Rc: %d F: %s]",dara.GStatusStrings[(*ri).Status],(*ri).Gid,(*ri).Gpc,(*ri).RoutineCount, string((*ri).FuncInfo[:64]))
 }
 
+func CoverageString(event *dara.CoverageEvent) string {
+	var retString string
+	var allStrings []string
+	for key, val := range event.CoverageInfo {
+		allStrings = append(allStrings, key + " - " + strconv.FormatUint(val, 10))
+	}
+	retString = strings.Join(allStrings, ",")
+	return retString
+}
+
 func ConciseRoutineInfoString(prefix string, ri dara.RoutineInfo) string {
     retString := prefix
     retString += " GoID " + fmt.Sprintf("%d",ri.Gid)

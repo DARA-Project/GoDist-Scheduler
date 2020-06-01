@@ -31,8 +31,16 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 	defer f.Close()
 	clocks := make(map[int]*vclock.VClock)
 	routine_names := make(map[int]string)
+	coverage_map := make(map[int]string)
+	for _, covEvent := range schedule.CovEvents {
+		coverage_map[covEvent.EventIndex] = common.CoverageString(&covEvent)
+	}
 	curr_running_routine := 1
-	for _, event := range schedule.LogEvents {
+	for idx, event := range schedule.LogEvents {
+		var coverage string
+		if v, ok := coverage_map[idx]; ok {
+			coverage = v
+		}
 		goroutine_string := common.GoRoutineNameString(event.P, event.G)
 		if _, ok := routine_names[event.G.Gid]; !ok {
 			routine_names[event.G.Gid] = goroutine_string
@@ -47,16 +55,24 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 				prev_routine_clock := clocks[curr_running_routine]
 				prev_routine_name := routine_names[curr_running_routine]
 				prev_routine_clock.Tick(prev_routine_name)
+				eventString := common.ConciseEventString(&event)
+				if coverage != "" {
+					eventString += "; Coverage: " + coverage
+				}
 				n, err := f.WriteString(prev_routine_name + " " + prev_routine_clock.ReturnVCString() + "\n" +
-					common.ConciseEventString(&event) + "\n")
+					eventString + "\n")
 				if err != nil {
 					return err
 				}
 				clock.Merge(*clocks[curr_running_routine])
 				log.Printf("Wrote %d bytes\n", n)
 			}
+			eventString := common.ConciseEventString(&event)
+			if coverage != "" {
+				eventString += "; Coverage: " + coverage
+			}
 			n, err := f.WriteString(goroutine_string + " " + clock.ReturnVCString() + "\n" +
-				common.ConciseEventString(&event) + "\n")
+				eventString + "\n")
 			if err != nil {
 				return err
 			}
@@ -69,16 +85,24 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 				prev_routine_clock := clocks[curr_running_routine]
 				prev_routine_name := routine_names[curr_running_routine]
 				prev_routine_clock.Tick(prev_routine_name)
+				eventString := common.ConciseEventString(&event)
+				if coverage != "" {
+					eventString += "; Coverage: " + coverage
+				}
 				n, err := f.WriteString(prev_routine_name + " " + prev_routine_clock.ReturnVCString() + "\n" +
-					common.ConciseEventString(&event) + "\n")
+					eventString + "\n")
 				if err != nil {
 					return err
 				}
 				vc.Merge(*clocks[curr_running_routine])
 				log.Printf("Wrote %d bytes\n", n)
 			}
+			eventString := common.ConciseEventString(&event)
+			if coverage != "" {
+				eventString += "; Coverage: " + coverage
+			}
 			n, err := f.WriteString(goroutine_string + " " + vc.ReturnVCString() + "\n" +
-				common.ConciseEventString(&event) + "\n")
+				eventString + "\n")
 			if err != nil {
 				return err
 			}
