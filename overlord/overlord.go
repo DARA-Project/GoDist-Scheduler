@@ -43,6 +43,7 @@ type ExecOptions struct {
 	Build         BuildOptions `json:"build"`
 	PreloadReplay bool         `json:"fast_replay"`
 	PropertyFile  string       `json:"property_file"`
+	BlocksFile    string       `json:"blocks_file"`
 }
 
 //Options specific for benchmarking
@@ -57,6 +58,7 @@ type InstrumentOptions struct {
 	File string `json:"file"`
 	OutDir string `json:"outdir"`
 	OutFile string `json:"outfile"`
+	BlocksFile string `json:"blocks_file"`
 }
 
 type DaraRpcServer struct {
@@ -68,25 +70,41 @@ func get_directory_from_path(path string) string {
 	return filepath.Dir(path)
 }
 
-//Instruments a given file using Dinv's capture module
-func instrument_file(filename string, outfile string) error {
-	f, err := instrumenter.Annotate(filename)
+func write_blocks_file(filename string, blocks []string) error {
+	f, err := os.Create(filename)
 	if err != nil {
 		return err
+	}
+	defer f.Close()
+	for _, block := range blocks {
+		_, err = f.WriteString(block + "\n")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//Instruments a given file using Dinv's capture module
+func instrument_file(filename string, outfile string) ([]string, error) {
+	f, err := instrumenter.Annotate(filename)
+	if err != nil {
+		return []string{}, err
 	}
 	if outfile == "" {
 		log.Println("[Overlord]Output file not provided; overwriting original file")
 		outfile = filename
 	}
-	return f.WriteAnnotatedFile(outfile)
+	return f.GetBlockIDs(), f.WriteAnnotatedFile(outfile)
 }
 
 //Instruments all go files in a directory
-func instrument_dir(directory string, outdir string) error {
+func instrument_dir(directory string, outdir string, blocks_file string) error {
 	if outdir == "" {
 		log.Println("[Overlord]Output directory not provided; overwriting original directory")
 		outdir = directory
 	}
+	var allBlocks []string
 	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -97,11 +115,16 @@ func instrument_dir(directory string, outdir string) error {
 			if err != nil {
 				return err
 			}
-			err = instrument_file(path, outpath)
+			blocks, err := instrument_file(path, outpath)
+			allBlocks = append(allBlocks, blocks...)
 			return err
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+	err = write_blocks_file(blocks_file, allBlocks)
 	return err
 }
 
@@ -309,12 +332,22 @@ func instrument(options InstrumentOptions) error {
 		return errors.New("Instrument must have only one option(file or dir) selected.")
 	}
 
+	if options.BlocksFile == "" {
+		return errors.New("Argument not provided for filename for the list of blocks")
+	}
+
 	if options.File != "" {
-		return instrument_file(options.File, options.OutFile)
+		blocks, err := instrument_file(options.File, options.OutFile)
+		// Write blocks to the blocks file
+		if err != nil {
+			return err
+		}
+		err = write_blocks_file(options.BlocksFile,blocks)
+		return err
 	}
 
 	if options.Dir != "" {
-		return instrument_dir(options.Dir, options.OutDir)
+		return instrument_dir(options.Dir, options.OutDir, options.BlocksFile)
 	}
 
 	return nil

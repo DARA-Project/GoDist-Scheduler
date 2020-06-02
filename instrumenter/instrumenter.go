@@ -475,6 +475,14 @@ func (f *File) WriteBlocksFile(outfile string) error {
     return nil
 }
 
+func (f *File) GetBlockIDs() []string {
+    var ids []string
+    for _, block := range f.blocks {
+        ids = append(ids, block.ID)
+    }    
+    return ids
+}
+
 //Annotate annotates the source code with Dara instrumentation for source code coverage
 func Annotate(name string) (*File, error) {
     fset := token.NewFileSet()

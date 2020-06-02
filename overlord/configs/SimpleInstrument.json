@@ -4,11 +4,13 @@
         "size" : "400M",
         "processes" : 1,
         "sched" : "Schedule.json",
-        "loglevel" : "INFO"
+        "loglevel" : "INFO",
+        "blocks_file" : "../examples/SimpleInstrument/blocks"
     },
     "instr" : {
         "dir" : "",
-        "file" : "../examples/SimpleInstrument/file_read.go"
+        "file" : "../examples/SimpleInstrument/file_read.go",
+        "blocks_file" : "../examples/SimpleInstrument/blocks"
     },
     "bench" : {
         "path" : "stats.csv",
