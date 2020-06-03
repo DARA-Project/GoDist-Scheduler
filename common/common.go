@@ -3,11 +3,27 @@ package common
 import (
     "bytes"
 	"dara"
+	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
     "strconv"
 )
+
+func ReadSchedule(filename string) (*dara.Schedule, error) {
+	var schedule dara.Schedule
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	dec := json.NewDecoder(f)
+	err = dec.Decode(&schedule)
+	if err != nil {
+		return nil, err
+	}
+	return &schedule, nil
+}
 
 func GoRoutineNameString(ProcID int, ri dara.RoutineInfo) string {
     func_name := string(bytes.Trim(ri.FuncInfo[:64], "\x00")[:])

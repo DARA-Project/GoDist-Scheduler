@@ -2,7 +2,6 @@ package main
 
 import (
 	"dara"
-	"encoding/json"
 	"fmt"
 	"github.com/DARA-Project/GoDist-Scheduler/common"
 	"log"
@@ -27,26 +26,12 @@ func get_num_schedule(schedule *dara.Schedule) int {
 	return event_stats[dara.SCHED_EVENT]
 }
 
-func read_schedule(filename string) (*dara.Schedule, error) {
-	var schedule dara.Schedule
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	dec := json.NewDecoder(f)
-	err = dec.Decode(&schedule)
-	if err != nil {
-		return nil, err
-	}
-	return &schedule, nil
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: go run schedule_info.go <schedule_filename>")
 	}
 	filename := os.Args[1]
-	schedule, err := read_schedule(filename)
+	schedule, err := common.ReadSchedule(filename)
 	if err != nil {
 		log.Fatal(err)
 	}

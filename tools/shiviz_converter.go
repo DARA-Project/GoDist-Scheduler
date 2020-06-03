@@ -2,7 +2,6 @@ package main
 
 import (
 	"dara"
-	"encoding/json"
 	"github.com/DARA-Project/GoDist-Scheduler/common"
 	"github.com/DistributedClocks/GoVector/govec/vclock"
 	"log"
@@ -121,27 +120,13 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 	return nil
 }
 
-func read_schedule(filename string) (*dara.Schedule, error) {
-	var schedule dara.Schedule
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	dec := json.NewDecoder(f)
-	err = dec.Decode(&schedule)
-	if err != nil {
-		return nil, err
-	}
-	return &schedule, nil
-}
-
 func main() {
 	if len(os.Args) != 3 {
 		log.Fatal("Usage: go run shiviz_converter.go <schedule_filename> <shiviz_filename>")
 	}
 	filename := os.Args[1]
 	shiviz_filename := os.Args[2]
-	schedule, err := read_schedule(filename)
+	schedule, err := common.ReadSchedule(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
