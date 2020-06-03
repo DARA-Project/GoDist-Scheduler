@@ -168,7 +168,7 @@ To run the info tool, execute the following steps
 
 ```
     > cd $GOPATH/src/github.com/DARA-Project/GoDist-Scheduler/tools
-    > go run schedule_info.go <schedule_filename>
+    > dgo run schedule_info.go <schedule_filename>
 ```
 
 Sample output from running the schedule info is shown below
@@ -184,7 +184,7 @@ To run the converter tool, execute the following steps
 
 ```
     > cd $GOPATH/src/github.com/DARA-Project/GoDist-Scheduler/tools
-    > go run shiviz_converter.go <schedule_filename> <shiviz_filename>
+    > dgo run shiviz_converter.go <schedule_filename> <shiviz_filename>
 ```
 
 A snapshot of the ShiViz visualization of the generated log from the recorded schedule
@@ -201,7 +201,7 @@ To run the report tool, execute the following steps
 
 ```
     > cd $GOPATH/src/github.com/DARA-Project/GoDist-Scheduler/tools
-    > go run cov_report.go <schedule_filename> <blocks_filename>
+    > dgo run cov_report.go <schedule_filename> <blocks_filename>
 ```
 
 Sample output is as follows:
