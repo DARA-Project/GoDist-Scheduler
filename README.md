@@ -60,6 +60,9 @@ as include configurable options for exploration strategies and depth.
         "instr" : {
             "dir" : "",
             "file" : "../examples/SimpleInstrument/file_read.go"
+            "out_dir" : "",
+            "out_file" : "../examples/SimpleInstrument/file_read_instrumented.go",
+            "blocks_file" : "../examples/SimpleInstrument/blocks"
         }
     }
 ```
@@ -83,6 +86,9 @@ The details of each field are as follows:
 
 + `dir` : The full path to the directory to be instrumented
 + `file` : The full path to the file to be instrumented
++ `out_dir` : The full path to the output directory where the instrumented source code will be written. If not provided then all go files in the directory are modified.
++ `out_file` : The full path the output file where the instrumend file will be written. If not provided then the input file will be modified.
++ `blocks_file`: The full path to the filename where list of all blockIDs will be written. This is a required argument. This file is used by cov_report auxiliary tool to generate a coverage report.
 
 ### Property File
 
@@ -185,6 +191,34 @@ A snapshot of the ShiViz visualization of the generated log from the recorded sc
 is shown below:
 
 ![shiviz](img/shiviz.png?raw=true)
+
+### Coverage Report Tool
+
+The Coverage Report tool produces a coverage report indicating which blocks in the source code were
+covered and which blocks were not uncovered.
+
+To run the report tool, execute the following steps
+
+```
+    > cd $GOPATH/src/github.com/DARA-Project/GoDist-Scheduler/tools
+    > go run cov_report.go <schedule_filename> <blocks_filename>
+```
+
+Sample output is as follows:
+
+```
+Total # of blocks in source code: 6
+Total # of blocks covered: 3
+Total # of blocks uncovered: 3
+Covered Block    Frequency
+../examples/SimpleInstrument/file_read.go:10:12          1
+../examples/SimpleInstrument/file_read.go:12:14          1
+../examples/SimpleInstrument/file_read.go:24:26          1
+Uncovered Blocks:
+../examples/SimpleInstrument/file_read.go:16:18
+../examples/SimpleInstrument/file_read.go:21:21
+../examples/SimpleInstrument/file_read.go:18:20
+```
 
 
 ### Variable Info Tool
