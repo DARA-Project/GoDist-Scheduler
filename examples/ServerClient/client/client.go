@@ -16,8 +16,14 @@ func main() {
     text := "Hello World\n"
     // send to socket
     fmt.Println("[SampleClient]Writing to conenction")
-    fmt.Fprintf(conn, text)
+    _, err = fmt.Fprintf(conn, text)
+    if err != nil {
+        log.Fatal(err)
+    }
     // listen for reply
-    bufio.NewReader(conn).ReadString('\n')
+    _, err = bufio.NewReader(conn).ReadString('\n')
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println("[SampleClient]Received response from server")
 }

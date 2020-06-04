@@ -18,6 +18,13 @@ import (
 	"unsafe"
 )
 
+type ProcStatus int
+
+const (
+	ALIVE ProcStatus = iota
+	DEAD
+)
+
 //Command line arguments
 var (
 	procs      = flag.Int("procs", 1, "The number of processes to model check")
@@ -38,10 +45,6 @@ const (
     OVERLORD_RPC_SERVER = "0.0.0.0:45000"
 )
 
-//*****************************************************************/
-// 					END SHARED VARIABLES
-//*****************************************************************/
-
 //Global variables specific to shared memory
 var (
 	//pointer to shared memory, unsafe so that it can be casted
@@ -57,10 +60,10 @@ var (
 	LogLevel int
 	//Variable to hold propertychecker
 	checker *propchecker.Checker
-)
-
-var (
 	l *log.Logger
+	schedule dara.Schedule
+
+	procStatus map[int]ProcStatus
 )
 
 func checkargs() {
@@ -102,13 +105,19 @@ func level_print(level int, pfunc func()) {
 	}
 }
 
-var schedule dara.Schedule
-
 func roundRobin() int {
-	LastProc = (LastProc + 1) % (*procs + 1)
-	// Dara doesn't have ProcID 0
-	if LastProc == 0 {
-		LastProc++
+	flag := false
+	for !flag {
+		LastProc = (LastProc + 1) % (*procs + 1)
+		// Dara doesn't have ProcID 0
+		if LastProc == 0 {
+			LastProc++
+		}
+		level_print(dara.DEBUG, func() {l.Println("Checking status of", LastProc, "which is", procStatus[LastProc])})
+		if procStatus[LastProc] == ALIVE {
+			level_print(dara.DEBUG, func() {l.Println("Next process should be", LastProc)})
+			flag = true
+		}
 	}
 	return LastProc
 }
@@ -146,9 +155,9 @@ func ConsumeAndPrint(ProcID int, context *map[string]interface{}) []dara.Event {
 }
 
 func ConsumeLog(ProcID int, context *map[string]interface{}) []dara.Event {
-	level_print(dara.INFO, func() { l.Println("Current log event index is", procchan[ProcID].LogIndex) })
+	level_print(dara.INFO, func() { l.Println("Current log event index is", procchan[ProcID].LogIndex, "for Process", ProcID) })
 	logsize := procchan[ProcID].LogIndex
-	level_print(dara.INFO, func() { l.Println("Current log event index is", logsize) })
+	level_print(dara.INFO, func() { l.Println("Current log event index is", logsize, "for Process", ProcID) })
 	log := make([]dara.Event, logsize)
 	for i := 0; i < logsize; i++ {
 		ee := &(procchan[ProcID].Log[i])
@@ -178,6 +187,15 @@ func ConsumeLog(ProcID int, context *map[string]interface{}) []dara.Event {
 	return log
 }
 
+func CheckAllProcsDead() bool {
+	for _, status := range procStatus {
+		if status != DEAD {
+			return false
+		}
+	}
+	return true
+}
+
 func CheckAllGoRoutinesDead(ProcID int) bool {
 	allDead := true
 	level_print(dara.DEBUG, func() { l.Printf("Checking if all goroutines are dead yet for Process %d\n", ProcID) })
@@ -188,6 +206,10 @@ func CheckAllGoRoutinesDead(ProcID int) bool {
 			status := dara.GetDaraProcStatus(routine.Status)
 			level_print(dara.DEBUG, func() { l.Printf("Status of GoRoutine %d is %s\n", routine.Gid, dara.GStatusStrings[status]) })
 			allDead = allDead && (status == dara.Dead)
+            if status != dara.Dead {
+                //level_print(dara.INFO, func() { l.Printf("GoRoutine %d Proc %d is not dead yet\n", routine.Gid, ProcID)})
+                return false
+            }
 		}
 	}
 	return allDead
@@ -423,7 +445,7 @@ func record_sched() {
 		//else busy wait
 		//l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED, dara.LOCKED) {
-			level_print(dara.DEBUG, func() { l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID) })
+			level_print(dara.INFO, func() { l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID) })
 			if procchan[ProcID].Run == -100 {
 				events := ConsumeAndPrint(ProcID, &context)
                 coverage := ConsumeCoverage(ProcID)
@@ -446,6 +468,14 @@ func record_sched() {
 				//to own the lock.
 				level_print(dara.DEBUG, func() { l.Println("Releasing the lock after block back to", ProcID) })
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
+				//time.Sleep(time.Millisecond)
+
+				// Process hasn't unblocked yet so no point trying to schedule it. Move on.
+			}
+			if procchan[ProcID].Run == -7 {
+				level_print(dara.INFO, func() { l.Println("Process", ProcID, " has become unblocked from network wait") })
+				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
+				procchan[ProcID].Run = -3
 			}
 			if procchan[ProcID].Run == -1 { //TODO check predicates on goroutines + schedule
 				forward()
@@ -454,7 +484,7 @@ func record_sched() {
 				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
 				flag := true
 				for flag {
-					//                    l.Printf("Stuck in inner loop")
+					//level_print(dara.DEBUG, func(){ l.Printf("Stuck in inner loop")})
 					if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED, dara.LOCKED) {
 						if procchan[ProcID].Run == -100 {
 							level_print(dara.DEBUG, func() { l.Printf("Ending discovered") })
@@ -475,7 +505,7 @@ func record_sched() {
 							continue
 						}
 						if procchan[ProcID].Run != -3 {
-							level_print(dara.DEBUG, func() { l.Printf("Procchan Run status inside is %d\n", procchan[ProcID].Run) })
+							level_print(dara.INFO, func() { l.Printf("Procchan Run status inside is %d for Process %d\n", procchan[ProcID].Run, ProcID) })
 							level_print(dara.DEBUG, func() { l.Printf("Recording Event on Process/Node %d\n", ProcID) })
 							//Update the last running routine
 							level_print(dara.DEBUG, func() { l.Printf("Recording Event Number %d", i) })
@@ -543,16 +573,23 @@ func record_sched() {
 			}
 			f, erros := os.Create(*sched_file)
 			if erros != nil {
-				l.Fatal(err)
+				l.Fatal(erros)
 			}
 			enc := json.NewEncoder(f)
-			level_print(dara.INFO, func() { l.Println("Schedule has : ", len(schedule.LogEvents), "events") })
+			level_print(dara.DEBUG, func() { l.Println("Schedule has : ", len(schedule.LogEvents), "events") })
 			//for _, e := range(schedule) {
 			//    l.Println(common.EventString(&e))
 			//}
 			enc.Encode(schedule)
+			f.Close()
 			if CheckAllGoRoutinesDead(ProcID) {
-				break
+				procStatus[ProcID] = DEAD
+				level_print(dara.INFO, func() { l.Println("Process ", ProcID, " has finished")})
+				// Only quit the recording if all Processes are dead
+				//time.Sleep(5 * time.Second)
+				if CheckAllProcsDead() {
+					break
+				}
 			}
 		}
 	}
@@ -563,6 +600,7 @@ func record_sched() {
 	if err != nil {
 		l.Fatal(err)
 	}
+	defer f.Close()
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "\t")
 	err = enc.Encode(schedule)
@@ -723,6 +761,10 @@ func init_global_scheduler() {
 		procchan[i].SyscallLock = dara.UNLOCKED
 		procchan[i].Run = -1
 		procchan[i].Syscall = -1
+	}
+	procStatus = make(map[int]ProcStatus)
+	for i := 1; i <= *procs; i++ {
+		procStatus[i] = ALIVE
 	}
 	level_print(dara.INFO, func() { l.Println("Starting the Scheduler") })
 

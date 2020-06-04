@@ -17,14 +17,23 @@ func main() {
   defer ln.Close()
   fmt.Println("[SampleServer]Listening now...")
   // accept connection on port
-  conn, _ := ln.Accept()
+  conn, err := ln.Accept()
+  if err != nil {
+    log.Fatal(err)
+  }
   fmt.Println("[SampleServer]Accepted connection")
   // will listen for message to process ending in newline (\n)
-  message, _ := bufio.NewReader(conn).ReadString('\n')
+  message, err := bufio.NewReader(conn).ReadString('\n')
+  if err != nil {
+    log.Fatal(err)
+  }
   fmt.Println("[SampleServer]Received Message from client")
   // output message received
   // sample process for string received
   // send new string back to client
-  conn.Write([]byte(message + "\n"))
+  _, err = conn.Write([]byte(message + "\n"))
+  if err != nil {
+    log.Fatal(err)
+  }
   fmt.Println("[SampleServer]Wrote reply to client", message)
 }
