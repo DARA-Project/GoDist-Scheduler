@@ -445,7 +445,7 @@ func record_sched() {
 		//else busy wait
 		//l.Printf("Procchan Run status is %d\n", procchan[ProcID].Run)
 		if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED, dara.LOCKED) {
-			level_print(dara.INFO, func() { l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID) })
+			level_print(dara.DEBUG, func() { l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID) })
 			if procchan[ProcID].Run == -100 {
 				events := ConsumeAndPrint(ProcID, &context)
                 coverage := ConsumeCoverage(ProcID)
@@ -505,7 +505,7 @@ func record_sched() {
 							continue
 						}
 						if procchan[ProcID].Run != -3 {
-							level_print(dara.INFO, func() { l.Printf("Procchan Run status inside is %d for Process %d\n", procchan[ProcID].Run, ProcID) })
+							level_print(dara.DEBUG, func() { l.Printf("Procchan Run status inside is %d for Process %d\n", procchan[ProcID].Run, ProcID) })
 							level_print(dara.DEBUG, func() { l.Printf("Recording Event on Process/Node %d\n", ProcID) })
 							//Update the last running routine
 							level_print(dara.DEBUG, func() { l.Printf("Recording Event Number %d", i) })
@@ -584,9 +584,8 @@ func record_sched() {
 			f.Close()
 			if CheckAllGoRoutinesDead(ProcID) {
 				procStatus[ProcID] = DEAD
-				level_print(dara.INFO, func() { l.Println("Process ", ProcID, " has finished")})
+				level_print(dara.DEBUG, func() { l.Println("Process ", ProcID, " has finished")})
 				// Only quit the recording if all Processes are dead
-				//time.Sleep(5 * time.Second)
 				if CheckAllProcsDead() {
 					break
 				}
@@ -644,7 +643,7 @@ func explore_sched() {
     command_chan := make(chan string)
     go dara_rpc_client(command_chan)
 	explore_unit := explore_init()
-	level_print(dara.INFO, func() { l.Println("Dora the Explorer begins") })
+	level_print(dara.INFO, func() { l.Println("Dara the Explorer begins") })
 	LastProc = 0
 	explore_end := false
 	context := make(map[string]interface{})

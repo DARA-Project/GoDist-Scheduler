@@ -19,6 +19,10 @@ import (
 	"time"
 )
 
+var (
+	l* log.Logger
+)
+
 //Options struct which configures the Dara run
 //This stores the parsed config results
 type Options struct {
@@ -62,7 +66,8 @@ type InstrumentOptions struct {
 }
 
 type DaraRpcServer struct {
-    Options ExecOptions
+	Options ExecOptions
+	logger *log.Logger
 }
 
 //Returns the directory from the path
@@ -92,7 +97,7 @@ func instrument_file(filename string, outfile string) ([]string, error) {
 		return []string{}, err
 	}
 	if outfile == "" {
-		log.Println("[Overlord]Output file not provided; overwriting original file")
+		l.Println("Output file not provided; overwriting original file")
 		outfile = filename
 	}
 	return f.GetBlockIDs(), f.WriteAnnotatedFile(outfile)
@@ -101,7 +106,7 @@ func instrument_file(filename string, outfile string) ([]string, error) {
 //Instruments all go files in a directory
 func instrument_dir(directory string, outdir string, blocks_file string) error {
 	if outdir == "" {
-		log.Println("[Overlord]Output directory not provided; overwriting original directory")
+		l.Println("Output directory not provided; overwriting original directory")
 		outdir = directory
 	}
 	var allBlocks []string
@@ -275,7 +280,7 @@ func execute_build_script(script string, execution_dir string) error {
 	if err != nil {
 		return err
 	}
-	log.Println("[Overlord]Finished building using build script")
+	l.Println("Finished building using build script")
 	err = os.Chdir(execution_dir)
 	return err
 }
@@ -360,14 +365,14 @@ func (d * DaraRpcServer) killprogram() error {
         cmd := exec.Command("pkill", "-f", program)
         err := cmd.Run()
         if err != nil {
-            log.Println("[Overlord-RpcServer] Error while killing program", err)
+            d.logger.Println("Error while killing program", err)
             return err
         }
     } else {
         cmd := exec.Command("pkill", "-f", d.Options.Build.RunScript)
         err := cmd.Run()
         if err != nil {
-            log.Println("[Overlord-RpcServer] Error while killing program", err)
+            d.logger.Println("Error while killing program", err)
             return err
         }
     }
@@ -378,7 +383,7 @@ func (d * DaraRpcServer) KillExecution(unused_arg int, ack *bool) error {
     // Issue a kill command for killing the program under test
     err := d.killprogram()
     if err != nil {
-        log.Println("[Overlord-RpcServer] Failed to kill program")
+        d.logger.Println("Failed to kill program")
         return err
     }
     *ack = true
@@ -389,31 +394,31 @@ func (d * DaraRpcServer) FinishExecution(unused_arg int, ack *bool) error {
     // Issue a finish command to the exec script somehow
 	cwd, err := os.Getwd()
     if err != nil {
-        log.Println("[Overlord-RpcServer] Error while getting current directory", err)
+        d.logger.Println("Error while getting current directory", err)
         return err
     }
 	dir := get_directory_from_path(d.Options.Path)
     err = os.Chdir(dir)
     if err != nil {
-        log.Println("[Overlord-RpcServer] Error while changing directory")
+        d.logger.Println("Error while changing directory")
         return err
     }
     // Just create a file that is called explore_finish to signify end of exploration and the exec script can just stat if the file exists
     f, err := os.Create("./explore_finish")
     if err != nil {
-        log.Println("[Overlord-RpcServer] Failed to finish exploration")
+        d.logger.Println("Failed to finish exploration")
         return err
     }
     f.Close()
     err = os.Chdir(cwd)
     if err != nil {
-        log.Println("[Overlord-RpcServer] Error whilce changing directory")
+        d.logger.Println("Error whilce changing directory")
         return err
     }
     // Now we are ready to kill the program!
     err = d.killprogram()
     if err != nil {
-        log.Println("[Overlord-RpcServer] Failed to kill program")
+        l.Println("[Overlord-RpcServer] Failed to kill program")
         return err
     }
     *ack = true
@@ -421,19 +426,20 @@ func (d * DaraRpcServer) FinishExecution(unused_arg int, ack *bool) error {
 }
 
 func init_rpc_server(options ExecOptions) *DaraRpcServer{
-    server := DaraRpcServer{options}
+    server := DaraRpcServer{options, log.New(os.Stdout, "[Overlord-RpcServer]", log.Lshortfile)}
     return &server
 }
 
 func start_rpc_server(options ExecOptions) {
-    addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:45000")
+	addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:45000")
+	// TODO: Maybe these errors should really be fatal errors
     if err != nil {
-        log.Println("[Overlord-RpcServer] Failed to resolve TCP address")
+        l.Println("[Overlord] Failed to resolve TCP address for RPC Server")
         return
     }
     inbound, err := net.ListenTCP("tcp", addr)
     if err != nil {
-        log.Println("[Overlord-RpcServer] Failed to initialize inbound listener")
+        l.Println("[Overlord] Failed to initialize inbound listener for RPC Server")
         return
     }
 
@@ -698,49 +704,43 @@ func main() {
 
 	flag.Parse()
 
+	l = log.New(os.Stdout, "[Overlord]", log.Lshortfile)
+
 	if *modePtr == "" || *filePtr == "" {
-		fmt.Println("Usage : go run overlord.go -mode=[record,replay,explore,instrument] -optFile=<path_to_options_file>")
-		os.Exit(1)
+		l.Fatal("Usage : go run overlord.go -mode=[record,replay,explore,instrument] -optFile=<path_to_options_file>")
 	}
 
 	options, err := parse_options(*filePtr)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		l.Fatal(err)
 	}
 
 	if *modePtr == "instrument" {
 		err := instrument(options.Instr)
 		if err != nil {
-			fmt.Println("Failed to instrument file : ", err)
-			os.Exit(1)
+			l.Fatal("Failed to instrument file : ", err)
 		}
 	} else if *modePtr == "record" {
 		err := record(options.Exec)
 		if err != nil {
-			fmt.Println("Failed to record execution : ", err)
-			os.Exit(1)
+			l.Fatal("Failed to record execution : ", err)
 		}
 	} else if *modePtr == "replay" {
 		err := replay(options.Exec)
 		if err != nil {
-			fmt.Println("Failed to replay execution : ", err)
-			os.Exit(1)
+			l.Fatal("Failed to replay execution : ", err)
 		}
 	} else if *modePtr == "explore" {
 		err := explore(options.Exec)
 		if err != nil {
-			fmt.Println("Failed to explore : ", err)
-			os.Exit(1)
+			l.Fatal("Failed to explore : ", err)
 		}
 	} else if *modePtr == "bench" {
 		err := bench(options.Exec, options.Bench)
 		if err != nil {
-			fmt.Println("Failed to bench : ", err)
-			os.Exit(1)
+			l.Fatal("Failed to bench : ", err)
 		}
 	} else {
-		fmt.Println("Invalid mode")
-		os.Exit(1)
+		l.Fatal("Invalid mode")
 	}
 }
