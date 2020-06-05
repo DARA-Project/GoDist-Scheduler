@@ -497,7 +497,7 @@ func record_sched() {
 				}
 				if procchan[ProcID].Run == -6 {
 					//Process is blocked on network, hopefully it is unblocked after a full cycle of process scheduling!
-					// If this is the first time the process has been scheduled after getting blocked then we need
+					// If this is the first time we chose this Process to run after getting blocked then we need
 					// to consume the events and the coverage
 					if procchan[ProcID].LogIndex > 0 {
 						events := ConsumeAndPrint(ProcID, &context)
@@ -517,8 +517,8 @@ func record_sched() {
 					break
 				}
 				if procchan[ProcID].Run == -7 {
-					// Process has woken up from the Network and wants the lock back.
-					level_print(dara.INFO, func() { l.Println("Process", ProcID, " has become unblocked from network wait") })
+					// Process has woken up from the Network poll and wants the lock back.
+					level_print(dara.DEBUG, func() { l.Println("Process", ProcID, " has become unblocked from network wait") })
 					atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
 					procchan[ProcID].Run = -3
 					lockStatus[ProcID] = false
@@ -526,7 +526,7 @@ func record_sched() {
 				}
 				if procchan[ProcID].Run > 0 {
 					// Process scheduled a goroutine which means we have events to add to the schedule.
-					level_print(dara.INFO, func() { l.Printf("Procchan Run status inside is %d for Process %d\n", procchan[ProcID].Run, ProcID) })
+					level_print(dara.DEBUG, func() { l.Printf("Procchan Run status inside is %d for Process %d\n", procchan[ProcID].Run, ProcID) })
 					level_print(dara.DEBUG, func() { l.Printf("Recording Event on Process/Node %d\n", ProcID) })
 					events := ConsumeAndPrint(ProcID, &context)
 					coverage := ConsumeCoverage(ProcID)
@@ -541,17 +541,16 @@ func record_sched() {
 					schedule.LogEvents = append(schedule.LogEvents, events...)							
 					coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
 					schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
-					//Set the status of the routine that just
-					//ran
 					if i >= RECORDLEN-*procs {
 						//mark the processes for death
 						level_print(dara.DEBUG, func() { l.Printf("Ending Execution!") })
 						procchan[ProcID].Run = -4 //mark process for death
+					} else {
+						//Reset the local scheduler to continue with its wizardry.
+						procchan[ProcID].Run = -3
 					}
-					//Reset the local scheduler to continue with its wizardry.
-					procchan[ProcID].Run = -3
 
-					level_print(dara.INFO, func() { l.Printf("Found %d log events", len(events)) })
+					level_print(dara.DEBUG, func() { l.Printf("Found %d log events", len(events)) })
 					i += len(events)
 					// We got some events so now we should run some other process.
 					break
@@ -574,9 +573,6 @@ func record_sched() {
 	err = enc.Encode(schedule)
 	if err != nil {
 		l.Fatal(err)
-	}
-	for _, event := range schedule.LogEvents {
-		l.Println("Process", event.P, " Event:", common.ConciseEventString(&event))
 	}
 }
 

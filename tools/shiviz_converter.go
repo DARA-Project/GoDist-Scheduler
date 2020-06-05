@@ -40,6 +40,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 		coverage_map[covEvent.EventIndex] = common.CoverageString(&covEvent)
 	}
 	curr_running_routine := uniqueThreadID(1, 1)
+	current_process := 1
 	for idx, event := range schedule.LogEvents {
 		var coverage string
 		if v, ok := coverage_map[idx]; ok {
@@ -56,7 +57,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 			clock.Tick(goroutine_string)
 			// Tick the goroutine that is getting off and merge the vector
 			// clock of the old goroutine with the newly launched goroutine
-			if event.Type == dara.SCHED_EVENT && curr_running_routine != uniqueID {
+			if (event.Type == dara.SCHED_EVENT && curr_running_routine != uniqueID) || (current_process != event.P) {
 				prev_routine_clock := clocks[curr_running_routine]
 				prev_routine_name := routine_names[curr_running_routine]
 				prev_routine_clock.Tick(prev_routine_name)
@@ -65,7 +66,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 					eventString += "; Coverage: " + coverage
 				}
 				n, err := f.WriteString(prev_routine_name + " " + prev_routine_clock.ReturnVCString() + "\n" +
-					eventString + "\n")
+					"Switching routines" + "\n")
 				if err != nil {
 					return err
 				}
@@ -86,7 +87,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 			vc.Tick(goroutine_string)
 			// Tick the goroutine that is getting off and merge the vector
 			// clock of the old goroutine with the newly launched goroutine
-			if event.Type == dara.SCHED_EVENT && curr_running_routine != uniqueID {
+			if (event.Type == dara.SCHED_EVENT && curr_running_routine != uniqueID) || (current_process != event.P) {
 				prev_routine_clock := clocks[curr_running_routine]
 				prev_routine_name := routine_names[curr_running_routine]
 				prev_routine_clock.Tick(prev_routine_name)
@@ -95,7 +96,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 					eventString += "; Coverage: " + coverage
 				}
 				n, err := f.WriteString(prev_routine_name + " " + prev_routine_clock.ReturnVCString() + "\n" +
-					eventString + "\n")
+					"Switching routines" + "\n")
 				if err != nil {
 					return err
 				}
@@ -116,6 +117,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 		if event.Type != dara.THREAD_EVENT {
 			curr_running_routine = uniqueID
 		}
+		current_process = event.P
 	}
 	return nil
 }
