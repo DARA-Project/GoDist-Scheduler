@@ -20,10 +20,10 @@ func NewConsumer(msgs *chan int) *Consumer {
 
 // consume reads the msgs channel
 func (c *Consumer) consume() {
-	fmt.Println("consume: Started")
+	fmt.Println("[consume]: Started")
 	for {
 		msg := <-*c.msgs
-		fmt.Println("consume: Received:", msg)
+		fmt.Println("[consume]: Received:", msg)
 	}
 }
 
@@ -40,13 +40,13 @@ func NewProducer(msgs *chan int, done *chan bool) *Producer {
 
 // produce creates and sends the message through msgs channel
 func (p *Producer) produce(max int) {
-	fmt.Println("produce: Started")
+	fmt.Println("[produce]: Started")
 	for i := 0; i < max; i++ {
-		fmt.Println("produce: Sending ", i)
+		fmt.Println("[produce]: Sending ", i)
 		*p.msgs <- i
 	}
 	*p.done <- true // signal when done
-	fmt.Println("produce: Done")
+	fmt.Println("[produce]: Done")
 }
 
 func main() {
@@ -60,7 +60,7 @@ func main() {
 	flag.Parse()
 
 	// utilize the max num of cores available
-//	runtime.GOMAXPROCS(runtime.NumCPU())
+	// runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// CPU Profile
 	if *cpuprofile != "" {
