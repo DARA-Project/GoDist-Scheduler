@@ -9,6 +9,7 @@ import (
     "bytes"
     "errors"
     "log"
+    "dara"
 )
 
 type Variable struct {
@@ -107,37 +108,45 @@ func NewChecker(property_file string) (*Checker, error) {
     return &Checker{Properties: properties, ImpVariables: impVariables}, nil
 }
 
-func (c* Checker) Check(context map[string]interface{}) (bool, error) {
+func (c* Checker) Check(context map[string]interface{}, index int) (bool, *[]dara.FailedPropertyEvent, error) {
     result := true
+    var failures []dara.FailedPropertyEvent
     for _, property := range c.Properties {
         log.Println("[PropertyChecker]Checking property", property.Name)
         execVar := eek.ExecVar{}
+        currentPropContext := make(map[string]interface{})
         allVarsFound := true
         for _, variable := range property.Variables {
             if val, ok := context[variable.Name]; ok {
                 execVar[variable.PropName] = val
+                currentPropContext[variable.Name] = val
             } else {
                 // Can't check this property if the variable needed is not present in the context.
-                log.Println("[PropertyChecker]", variable.Name ,"not found in context", context, context["main.SharedVariable"])
                 allVarsFound = false
                 break
             }
         }
         if !allVarsFound {
+            // If all the variables are not in the context then we don't have enough information
+            // to check this property. Move to the next property.
             continue
         }
         temp_res, err := property.PropObj.Evaluate(execVar)
         if err != nil {
-            return result, err
+            return result, &failures, err
         }
         temp_res_val, found := temp_res.(bool)
         if !found {
-            return result, errors.New("Property doesn't return a bool value")
+            return result, &failures, errors.New("Property doesn't return a bool value")
         }
         log.Println("[PropertyChecker]Property checking result", temp_res_val)
+        if !temp_res_val {
+            failure := dara.FailedPropertyEvent{Name: property.Name, Context: currentPropContext, EventIndex: index}
+            failures = append(failures, failure)
+        }
         result = result && temp_res_val
     }
-    return result, nil
+    return result, &failures, nil
 }
 
 func (c* Checker) GetImportantVariables() []string {

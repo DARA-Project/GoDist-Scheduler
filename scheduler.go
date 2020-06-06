@@ -287,11 +287,11 @@ func preload_replay_schedule(proc_schedules map[int][]dara.Event) {
 	}
 }
 
-func check_properties(context map[string]interface{}) (bool, error) {
+func check_properties(context map[string]interface{}, index int) (bool, *[]dara.FailedPropertyEvent, error) {
 	if checker != nil {
-		return checker.Check(context)
+		return checker.Check(context, index)
 	}
-	return true, nil
+	return true, &[]dara.FailedPropertyEvent{}, nil
 }
 
 func replay_sched() {
@@ -484,12 +484,17 @@ func record_sched() {
 					events := ConsumeAndPrint(ProcID, &context)
 					coverage := ConsumeCoverage(ProcID)
 					level_print(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
-					result, err := check_properties(context)
+					result, propevents, err := check_properties(context, i + len(events) - 1)
 					if err != nil {
 						level_print(dara.INFO, func() { l.Println(err) })
 					}
 					if !result {
-						level_print(dara.INFO, func() { l.Println("Property check failed") })
+						level_print(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
+						// Proprety check failed that means we possibly have some property failures to log!
+						if len(*propevents) > 0 {
+							level_print(dara.INFO, func() {l.Println("Adding properties")})
+							schedule.PropEvents = append(schedule.PropEvents, *propevents...)
+						} 
 					}
 					schedule.LogEvents = append(schedule.LogEvents, events...)
 					coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
@@ -502,12 +507,17 @@ func record_sched() {
 					if procchan[ProcID].LogIndex > 0 {
 						events := ConsumeAndPrint(ProcID, &context)
 						coverage := ConsumeCoverage(ProcID)
-						result, err := check_properties(context)
+						result, propevents, err := check_properties(context, i + len(events) - 1)
 						if err != nil {
 							level_print(dara.INFO, func() {l.Println(err)})
 						}
 						if !result {
-							level_print(dara.INFO, func() {l.Println("Property check failed")})
+							level_print(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
+							// Proprety check failed that means we possibly have some property failures to log!
+							if len(*propevents) > 0 {
+								level_print(dara.INFO, func() {l.Println("Adding properties")})
+								schedule.PropEvents = append(schedule.PropEvents, *propevents...)
+							} 
 						}
 						schedule.LogEvents = append(schedule.LogEvents, events...)
 						coverageEvent := dara.CoverageEvent{CoverageInfo: coverage, EventIndex: i + len(events) - 1}
@@ -531,12 +541,17 @@ func record_sched() {
 					events := ConsumeAndPrint(ProcID, &context)
 					coverage := ConsumeCoverage(ProcID)
 					level_print(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
-					result, err := check_properties(context)
+					result, propevents, err := check_properties(context, i + len(events) - 1)
 					if err != nil {
 						level_print(dara.INFO, func() { l.Println(err) })
 					}
 					if !result {
-						level_print(dara.INFO, func() { l.Println("Property check failed") })
+						level_print(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
+						// Proprety check failed that means we possibly have some property failures to log!
+						if len(*propevents) > 0 {
+							level_print(dara.INFO, func() {l.Println("Adding properties")})
+							schedule.PropEvents = append(schedule.PropEvents, *propevents...)
+						} 
 					}
 					schedule.LogEvents = append(schedule.LogEvents, events...)							
 					coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
