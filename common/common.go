@@ -61,6 +61,10 @@ func CoverageString(event *dara.CoverageEvent) string {
 	return retString
 }
 
+func PropFailureString(event *dara.FailedPropertyEvent) string {
+	return fmt.Sprintf("%s %v", event.Name, event.Context)
+}
+
 func ConciseRoutineInfoString(prefix string, ri dara.RoutineInfo) string {
     retString := prefix
     retString += " GoID " + fmt.Sprintf("%d",ri.Gid)

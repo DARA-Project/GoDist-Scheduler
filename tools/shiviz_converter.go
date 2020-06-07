@@ -36,8 +36,17 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 	clocks := make(map[string]*vclock.VClock)
 	routine_names := make(map[string]string)
 	coverage_map := make(map[int]string)
+	prop_failure_map := make(map[int]string)
 	for _, covEvent := range schedule.CovEvents {
 		coverage_map[covEvent.EventIndex] = common.CoverageString(&covEvent)
+	}
+	for _, propEvent := range schedule.PropEvents {
+		if v, ok := prop_failure_map[propEvent.EventIndex]; !ok {
+			prop_failure_map[propEvent.EventIndex] = common.PropFailureString(&propEvent)
+		} else {
+			// We can have multiple property failures at the same place!
+			prop_failure_map[propEvent.EventIndex] = v + ";" + common.PropFailureString(&propEvent)
+		}
 	}
 	curr_running_routine := uniqueThreadID(1, 1)
 	current_process := 1
@@ -45,6 +54,10 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 		var coverage string
 		if v, ok := coverage_map[idx]; ok {
 			coverage = v
+		}
+		var propfailures string
+		if v, ok := prop_failure_map[idx]; ok {
+			propfailures = v
 		}
 		goroutine_string := common.GoRoutineNameString(event.P, event.G)
 		uniqueID := uniqueThreadID(event.P, event.G.Gid)
@@ -65,6 +78,9 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 				if coverage != "" {
 					eventString += "; Coverage: " + coverage
 				}
+				if propfailures != "" {
+					eventString += "; PropFailures: " + propfailures
+				}
 				n, err := f.WriteString(prev_routine_name + " " + prev_routine_clock.ReturnVCString() + "\n" +
 					"Switching routines" + "\n")
 				if err != nil {
@@ -76,6 +92,9 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 			eventString := common.ConciseEventString(&event)
 			if coverage != "" {
 				eventString += "; Coverage: " + coverage
+			}
+			if propfailures != "" {
+				eventString += "; PropFailures: " + propfailures
 			}
 			n, err := f.WriteString(goroutine_string + " " + clock.ReturnVCString() + "\n" +
 				eventString + "\n")
@@ -95,6 +114,9 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 				if coverage != "" {
 					eventString += "; Coverage: " + coverage
 				}
+				if propfailures != "" {
+					eventString += "; PropFailures: " + propfailures
+				}
 				n, err := f.WriteString(prev_routine_name + " " + prev_routine_clock.ReturnVCString() + "\n" +
 					"Switching routines" + "\n")
 				if err != nil {
@@ -106,6 +128,9 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 			eventString := common.ConciseEventString(&event)
 			if coverage != "" {
 				eventString += "; Coverage: " + coverage
+			}
+			if propfailures != "" {
+				eventString += "; PropFailures: " + propfailures
 			}
 			n, err := f.WriteString(goroutine_string + " " + vc.ReturnVCString() + "\n" +
 				eventString + "\n")
