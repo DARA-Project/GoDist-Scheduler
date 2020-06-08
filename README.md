@@ -122,12 +122,12 @@ This requires the user to appropriately instrument the code to report values of 
 The function call used to report values of variables for the property above is as follows:
 
 ```
-runtime.DaraLogEvent("LogID", "main.a, main.b", a, b)
+runtime.DaraLog("LogID", "main.a, main.b", a, b)
 ```
 Here the first argument is a LogID that is used to identify the unique location where this function call is made from.
 The second argument is a string containing the names of the variables whose values are being reported
 as part of the function call. The names of the variables are joined using a comma. The values of the variables
-follow as the final arguments. As you might have guessed, runtime.DaraLogEvent accepts variadic arguments to allow
+follow as the final arguments. As you might have guessed, runtime.DaraLog accepts variadic number of arguments to allow
 for any number of varibles to be reported.
 
 NOTE: The names of the variables do have to match the names of the variables used in property file
