@@ -65,6 +65,19 @@ func PropFailureString(event *dara.FailedPropertyEvent) string {
 	return fmt.Sprintf("%s %v", event.Name, event.Context)
 }
 
+func PropCheckString(event *dara.PropCheckEvent) string {
+	retString := fmt.Sprintf("Property Failures:%d", len(event.PropFailures))
+
+	if len(event.PropFailures) > 0 {
+		retString += ": "
+	}
+	for _, event := range event.PropFailures {
+		retString += PropFailureString(&event)
+	}
+
+	return retString
+}
+
 func ConciseRoutineInfoString(prefix string, ri dara.RoutineInfo) string {
     retString := prefix
     retString += " GoID " + fmt.Sprintf("%d",ri.Gid)

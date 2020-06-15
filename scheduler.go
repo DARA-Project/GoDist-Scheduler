@@ -490,12 +490,8 @@ func record_sched() {
 					}
 					if !result {
 						level_print(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
-						// Proprety check failed that means we possibly have some property failures to log!
-						if len(*propevents) > 0 {
-							level_print(dara.INFO, func() {l.Println("Adding properties")})
-							schedule.PropEvents = append(schedule.PropEvents, *propevents...)
-						} 
 					}
+					schedule.PropEvents = append(schedule.PropEvents, dara.CreatePropCheckEvent(*propevents, i + len(events) - 1))
 					schedule.LogEvents = append(schedule.LogEvents, events...)
 					coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
 					schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
@@ -513,12 +509,8 @@ func record_sched() {
 						}
 						if !result {
 							level_print(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
-							// Proprety check failed that means we possibly have some property failures to log!
-							if len(*propevents) > 0 {
-								level_print(dara.INFO, func() {l.Println("Adding properties")})
-								schedule.PropEvents = append(schedule.PropEvents, *propevents...)
-							} 
 						}
+						schedule.PropEvents = append(schedule.PropEvents, dara.CreatePropCheckEvent(*propevents, i + len(events) - 1))
 						schedule.LogEvents = append(schedule.LogEvents, events...)
 						coverageEvent := dara.CoverageEvent{CoverageInfo: coverage, EventIndex: i + len(events) - 1}
 						schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
@@ -547,12 +539,8 @@ func record_sched() {
 					}
 					if !result {
 						level_print(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
-						// Proprety check failed that means we possibly have some property failures to log!
-						if len(*propevents) > 0 {
-							level_print(dara.INFO, func() {l.Println("Adding properties")})
-							schedule.PropEvents = append(schedule.PropEvents, *propevents...)
-						} 
 					}
+					schedule.PropEvents = append(schedule.PropEvents, dara.CreatePropCheckEvent(*propevents, i + len(events) - 1))
 					schedule.LogEvents = append(schedule.LogEvents, events...)							
 					coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
 					schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
@@ -737,7 +725,8 @@ func init_global_scheduler() {
 	procchan = (*[dara.CHANNELS]dara.DaraProc)(p)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
-	for i := range procchan {
+    level_print(dara.DEBUG, func() { l.Println("Size of DaraProc struct is", unsafe.Sizeof(procchan[0]))})
+	for i := 0; i <= *procs; i++ {
         level_print(dara.INFO, func() {l.Println("Initializing", i) })
 		procchan[i].Lock = dara.LOCKED
 		procchan[i].SyscallLock = dara.UNLOCKED
@@ -751,7 +740,6 @@ func init_global_scheduler() {
 		procStatus[i] = ALIVE
 		lockStatus[i] = true // By default, global scheduler owns the locks on every local scheduler
 	}
-    level_print(dara.INFO, func() { l.Println("Size of DaraProc struct is", unsafe.Sizeof(procchan[0]))})
 	level_print(dara.INFO, func() { l.Println("Starting the Scheduler") })
 
 }

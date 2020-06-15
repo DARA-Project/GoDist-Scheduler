@@ -41,12 +41,7 @@ func parse_schedule(schedule *dara.Schedule, filename string) error {
 		coverage_map[covEvent.EventIndex] = common.CoverageString(&covEvent)
 	}
 	for _, propEvent := range schedule.PropEvents {
-		if v, ok := prop_failure_map[propEvent.EventIndex]; !ok {
-			prop_failure_map[propEvent.EventIndex] = common.PropFailureString(&propEvent)
-		} else {
-			// We can have multiple property failures at the same place!
-			prop_failure_map[propEvent.EventIndex] = v + ";" + common.PropFailureString(&propEvent)
-		}
+		prop_failure_map[propEvent.EventIndex] = common.PropCheckString(&propEvent)
 	}
 	curr_running_routine := uniqueThreadID(1, 1)
 	current_process := 1
