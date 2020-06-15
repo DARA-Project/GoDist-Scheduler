@@ -21,9 +21,10 @@ func main() {
     context["main.b"] = 20
 
     start = time.Now()
-    result, err := checker.Check(context)
+    result, failures, err := checker.Check(context)
     elapsed = time.Since(start)
-    log.Printf("Checking Properties took %s", elapsed)
+    log.Printf("Checking Properties took %s\n", elapsed)
+    log.Println("Num failures", failures)
     if err != nil {
         log.Fatal(err)
     }
@@ -33,9 +34,9 @@ func main() {
     for i := 0; i < 100; i++ {
         context["main.b"] = i
         start = time.Now()
-        _, err := checker.Check(context)
+        _, _, err := checker.Check(context)
         elapsed = time.Since(start)
-        log.Printf("Checking properties took %s", elapsed)
+        log.Printf("Checking properties took %s\n", elapsed)
         if err != nil {
             log.Fatal(err)
         }

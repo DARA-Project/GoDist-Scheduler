@@ -287,9 +287,9 @@ func preload_replay_schedule(proc_schedules map[int][]dara.Event) {
 	}
 }
 
-func check_properties(context map[string]interface{}, index int) (bool, *[]dara.FailedPropertyEvent, error) {
+func check_properties(context map[string]interface{}) (bool, *[]dara.FailedPropertyEvent, error) {
 	if checker != nil {
-		return checker.Check(context, index)
+		return checker.Check(context)
 	}
 	return true, &[]dara.FailedPropertyEvent{}, nil
 }
@@ -484,7 +484,7 @@ func record_sched() {
 					events := ConsumeAndPrint(ProcID, &context)
 					coverage := ConsumeCoverage(ProcID)
 					level_print(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
-					result, propevents, err := check_properties(context, i + len(events) - 1)
+					result, propevents, err := check_properties(context)
 					if err != nil {
 						level_print(dara.INFO, func() { l.Println(err) })
 					}
@@ -507,7 +507,7 @@ func record_sched() {
 					if procchan[ProcID].LogIndex > 0 {
 						events := ConsumeAndPrint(ProcID, &context)
 						coverage := ConsumeCoverage(ProcID)
-						result, propevents, err := check_properties(context, i + len(events) - 1)
+						result, propevents, err := check_properties(context)
 						if err != nil {
 							level_print(dara.INFO, func() {l.Println(err)})
 						}
@@ -541,7 +541,7 @@ func record_sched() {
 					events := ConsumeAndPrint(ProcID, &context)
 					coverage := ConsumeCoverage(ProcID)
 					level_print(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
-					result, propevents, err := check_properties(context, i + len(events) - 1)
+					result, propevents, err := check_properties(context)
 					if err != nil {
 						level_print(dara.INFO, func() { l.Println(err) })
 					}
@@ -738,10 +738,12 @@ func init_global_scheduler() {
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
 	for i := range procchan {
+        level_print(dara.INFO, func() {l.Println("Initializing", i) })
 		procchan[i].Lock = dara.LOCKED
 		procchan[i].SyscallLock = dara.UNLOCKED
 		procchan[i].Run = -1
 		procchan[i].Syscall = -1
+        procchan[i].CoverageIndex = 0
 	}
 	procStatus = make(map[int]ProcStatus)
 	lockStatus = make(map[int]bool)
@@ -749,6 +751,7 @@ func init_global_scheduler() {
 		procStatus[i] = ALIVE
 		lockStatus[i] = true // By default, global scheduler owns the locks on every local scheduler
 	}
+    level_print(dara.INFO, func() { l.Println("Size of DaraProc struct is", unsafe.Sizeof(procchan[0]))})
 	level_print(dara.INFO, func() { l.Println("Starting the Scheduler") })
 
 }

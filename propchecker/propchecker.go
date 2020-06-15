@@ -108,7 +108,7 @@ func NewChecker(property_file string) (*Checker, error) {
     return &Checker{Properties: properties, ImpVariables: impVariables}, nil
 }
 
-func (c* Checker) Check(context map[string]interface{}, index int) (bool, *[]dara.FailedPropertyEvent, error) {
+func (c* Checker) Check(context map[string]interface{}) (bool, *[]dara.FailedPropertyEvent, error) {
     result := true
     var failures []dara.FailedPropertyEvent
     for _, property := range c.Properties {
@@ -141,7 +141,7 @@ func (c* Checker) Check(context map[string]interface{}, index int) (bool, *[]dar
         }
         log.Println("[PropertyChecker]Property checking result", temp_res_val)
         if !temp_res_val {
-            failure := dara.FailedPropertyEvent{Name: property.Name, Context: currentPropContext, EventIndex: index}
+            failure := dara.FailedPropertyEvent{Name: property.Name, Context: currentPropContext}
             failures = append(failures, failure)
         }
         result = result && temp_res_val
