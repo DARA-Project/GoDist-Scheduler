@@ -24,9 +24,15 @@ type Property struct {
     PropObj *eek.Eek
 }
 
+type PropertyStats struct {
+    NumExecutions int
+    NumFailures int
+}
+
 type Checker struct {
     Properties []Property // List of Properties to be checked
     ImpVariables []string // Names of the Variables need to be tracked for Property Checking
+    Stats map[string]*PropertyStats // Statistics about the property executed
 }
 
 func parsePropertyFile(file string) ([]Property, []string, error) {
@@ -105,7 +111,9 @@ func NewChecker(property_file string) (*Checker, error) {
         return nil, err
     }
 
-    return &Checker{Properties: properties, ImpVariables: impVariables}, nil
+    stats := make(map[string]*PropertyStats)
+
+    return &Checker{Properties: properties, ImpVariables: impVariables, Stats: stats}, nil
 }
 
 func (c* Checker) Check(context map[string]interface{}) (bool, *[]dara.FailedPropertyEvent, error) {
@@ -144,6 +152,18 @@ func (c* Checker) Check(context map[string]interface{}) (bool, *[]dara.FailedPro
             failure := dara.FailedPropertyEvent{Name: property.Name, Context: currentPropContext}
             failures = append(failures, failure)
         }
+        if v, ok := c.Stats[property.Name]; !ok {
+            propStats := PropertyStats{NumExecutions: 1, NumFailures: 1}
+            if !temp_res_val {
+                propStats.NumFailures = 1
+            }
+            c.Stats[property.Name] = &propStats
+        } else {
+            v.NumExecutions += 1
+            if !temp_res_val {
+                v.NumFailures += 1
+            }
+        }
         result = result && temp_res_val
     }
     return result, &failures, nil
@@ -151,4 +171,8 @@ func (c* Checker) Check(context map[string]interface{}) (bool, *[]dara.FailedPro
 
 func (c* Checker) GetImportantVariables() []string {
     return c.ImpVariables
+}
+
+func (c* Checker) GetPropertyStatistics() map[string]*PropertyStats {
+    return c.Stats
 }
