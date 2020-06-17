@@ -54,19 +54,29 @@ var (
 	err int
 	//Procchan is the communication channel laid over shared memory
 	procchan *[dara.CHANNELS]dara.DaraProc
+)
+
+// Global variables for managing the state of Dara processes
+var (
 	//Used to determine which process (runtime) will be run on the
 	//next scheduling decision when in record mode
 	LastProc int
 	LogLevel int
 	//Variable to hold propertychecker
 	checker *propchecker.Checker
+	// Variable to hold the logger
 	l *log.Logger
+	// Variable where the schedule is stored
+	// This might be the input scheduler for replay/explore or the output schedule for record
 	schedule dara.Schedule
 
+	// Map that maps the Dara Process ID to its status
 	procStatus map[int]ProcStatus
+	// Map that maps the Dara Process ID to whether we own the procchan lock for that process
 	lockStatus map[int]bool
 )
 
+// checkargs checks and parses the command line arguments
 func checkargs() {
 	flag.Parse()
 	//Set exactly one arg for record or replay
@@ -96,6 +106,7 @@ func forward() {
 	time.Sleep(1 * time.Millisecond)
 }
 
+// level_print is a log level print function for the Global Scheduler
 func level_print(level int, pfunc func()) {
 	if LogLevel == dara.OFF {
 		return
@@ -106,6 +117,8 @@ func level_print(level int, pfunc func()) {
 	}
 }
 
+// roundRobin selects the next DaraProcess to be run.
+// Currently, it follows a round robin strategy (well no shit)
 func roundRobin() int {
 	flag := false
 	for !flag {
@@ -123,6 +136,7 @@ func roundRobin() int {
 	return LastProc
 }
 
+// getSchedulingEvents returns all the scheduling events in a schedule
 func getSchedulingEvents(sched dara.Schedule) map[int][]dara.Event {
 	proc_event_map := make(map[int][]dara.Event)
 	for i := 0; i < len(sched.LogEvents); i++ {
@@ -137,6 +151,7 @@ func getSchedulingEvents(sched dara.Schedule) map[int][]dara.Event {
 	return proc_event_map
 }
 
+// ConsumeCoverage consumes the coverage information for this run
 func ConsumeCoverage(ProcID int) map[string]uint64 {
     coverage := make(map[string]uint64)
     for i := 0; i < procchan[ProcID].CoverageIndex; i++ {
@@ -149,12 +164,16 @@ func ConsumeCoverage(ProcID int) map[string]uint64 {
     return coverage
 }
 
+// ConsumeAndPrint calls ConsumeLog
+// TODO: Maybe we can delete this function and call ConsumeLog directly
 func ConsumeAndPrint(ProcID int, context *map[string]interface{}) []dara.Event {
 	cl := ConsumeLog(ProcID, context)
-
+	level_print(dara.DEBUG, func() {l.Println("Consumed", len(cl), "events")})
 	return cl
 }
 
+// ConsumeLog consumes all the events from the shared memory and produces
+// a list of events for further use
 func ConsumeLog(ProcID int, context *map[string]interface{}) []dara.Event {
 	level_print(dara.DEBUG, func() { l.Println("Current log event index is", procchan[ProcID].LogIndex, "for Process", ProcID) })
 	logsize := procchan[ProcID].LogIndex
@@ -171,10 +190,17 @@ func ConsumeLog(ProcID int, context *map[string]interface{}) []dara.Event {
 		(*e).LE.Vars = make([]dara.NameValuePair, (*ee).ELE.Length)
 		for j := 0; j < len((*e).LE.Vars); j++ {
 			(*e).LE.Vars[j].VarName = string(bytes.Trim((*ee).ELE.Vars[j].VarName[:dara.VARBUFLEN], "\x00")[:])
-			(*e).LE.Vars[j].Value = runtime.DecodeValue((*ee).ELE.Vars[j].Type, (*ee).ELE.Vars[j].Value)
-			(*e).LE.Vars[j].Type = string(bytes.Trim((*ee).ELE.Vars[j].Type[:dara.VARBUFLEN], "\x00")[:])
-			// Build Up context for property checking
-			(*context)[e.LE.Vars[j].VarName] = e.LE.Vars[j].Value
+			if e.Type == dara.LOG_EVENT {
+				// This is a log event so we need to update the context with new variable:value pairs
+				(*e).LE.Vars[j].Value = runtime.DecodeValue((*ee).ELE.Vars[j].Type, (*ee).ELE.Vars[j].Value)
+				(*e).LE.Vars[j].Type = string(bytes.Trim((*ee).ELE.Vars[j].Type[:dara.VARBUFLEN], "\x00")[:])
+				// Build Up context for property checking
+				(*context)[e.LE.Vars[j].VarName] = e.LE.Vars[j].Value
+			} else if e.Type == dara.DELETEVAR_EVENT {
+				// Remove Variable from the context as the application asked for something to be deleted from
+				// the context
+				delete(*context, e.LE.Vars[j].VarName)
+			}
 		}
 		(*e).SyscallInfo = (*ee).SyscallInfo
 		//(*e).Msg = (*ee).EM //TODO complete messages
@@ -191,6 +217,7 @@ func ConsumeLog(ProcID int, context *map[string]interface{}) []dara.Event {
 	return log
 }
 
+// CheckAllProcsDead checks if all local runtime/processes have died/completed or not.
 func CheckAllProcsDead() bool {
 	for _, status := range procStatus {
 		if status != DEAD {
@@ -200,6 +227,7 @@ func CheckAllProcsDead() bool {
 	return true
 }
 
+// CheckAllGoRoutinesDead returns true if all the goroutines in local runtime have died or not.
 func CheckAllGoRoutinesDead(ProcID int) bool {
 	allDead := true
 	level_print(dara.DEBUG, func() { l.Printf("Checking if all goroutines are dead yet for Process %d\n", ProcID) })
@@ -219,6 +247,8 @@ func CheckAllGoRoutinesDead(ProcID int) bool {
 	return allDead
 }
 
+// GetAllRunnableRoutines returns all the goroutines that were runnable when
+// we switched back to the global scheduler
 func GetAllRunnableRoutines(event dara.Event) []int {
 	runnable := make([]int, 0)
 	for j, info := range procchan[event.P].Routines {
@@ -230,6 +260,8 @@ func GetAllRunnableRoutines(event dara.Event) []int {
 	return runnable
 }
 
+// Is_event_replayable checks if an event is replayable if the goid to be
+// scheduled for that event is one of the runnable routines.
 func Is_event_replayable(runnable []int, Gid int) bool {
 	for _, id := range runnable {
 		if Gid == id {
@@ -239,6 +271,9 @@ func Is_event_replayable(runnable []int, Gid int) bool {
 	return false
 }
 
+// CompareEvents compares if two events are the same or not.
+// This is used in checking if replay is correct or not
+// Note: Currently two events are the same if they are of the same type
 func CompareEvents(e1 dara.Event, e2 dara.Event) bool {
 	// TODO Make a more detailed comparison
 	if e1.Type != e2.Type {
@@ -247,6 +282,7 @@ func CompareEvents(e1 dara.Event, e2 dara.Event) bool {
 	return true
 }
 
+// CheckEndOrCrash checks if the event is a crash or an ending event
 func CheckEndOrCrash(e dara.Event) bool {
 	if e.Type == dara.END_EVENT || e.Type == dara.CRASH_EVENT {
 		return true
@@ -254,6 +290,8 @@ func CheckEndOrCrash(e dara.Event) bool {
 	return false
 }
 
+// Initializes the explorer
+// TODO: Add a seed schedule to the explorer
 func explore_init() *explorer.Explorer {
 	e, err := explorer.MountExplorer(EXPLORATION_LOG_FILE, explorer.RANDOM)
 	if err != nil {
@@ -263,6 +301,8 @@ func explore_init() *explorer.Explorer {
 	return e
 }
 
+// getDaraProcs returns the list of goroutines that explorer can choose from for scheduling
+// TODO: Maybe we should filter out dead goroutines here
 func getDaraProcs() []explorer.ProcThread {
 	threads := []explorer.ProcThread{}
 	for i := 1; i <= *procs; i++ {
@@ -276,6 +316,7 @@ func getDaraProcs() []explorer.ProcThread {
 	return threads
 }
 
+// preload_replay_schedule populates the shared memory with a pre-chosen schedule
 func preload_replay_schedule(proc_schedules map[int][]dara.Event) {
 	for procID, events := range proc_schedules {
 		for i, e := range events {
@@ -287,6 +328,8 @@ func preload_replay_schedule(proc_schedules map[int][]dara.Event) {
 	}
 }
 
+// check_properties checks the user-defined properties under a given context
+// that is collected using DaraLog calls in the local runtimes
 func check_properties(context map[string]interface{}) (bool, *[]dara.FailedPropertyEvent, error) {
 	if checker != nil {
 		return checker.Check(context)
@@ -294,6 +337,7 @@ func check_properties(context map[string]interface{}) (bool, *[]dara.FailedPrope
 	return true, &[]dara.FailedPropertyEvent{}, nil
 }
 
+// replay_sched replays a previously recorded/explored execution
 func replay_sched() {
 	var i int
 	f, err := os.Open(*sched_file)
@@ -397,7 +441,7 @@ func replay_sched() {
 								level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(events), "events") })
                                 level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(coverage), "blocks") })
 								for _, e := range events {
-									level_print(dara.INFO, func(){ l.Println(common.ConciseEventString(&e))})
+									level_print(dara.DEBUG, func(){ l.Println(common.ConciseEventString(&e))})
 									same_event := CompareEvents(e, schedule.LogEvents[i])
 									if !same_event {
 										level_print(dara.WARN, func() {
@@ -423,7 +467,7 @@ func replay_sched() {
                                 level_print(dara.DEBUG, func() { l.Println("Replay Consumed ", len(coverage), "blocks") })
 								level_print(dara.DEBUG, func() { l.Println("Replay Consumed", len(events), "events") })
 								for _, e := range events {
-									level_print(dara.INFO, func(){ l.Println(common.ConciseEventString(&e))})
+									level_print(dara.DEBUG, func(){ l.Println(common.ConciseEventString(&e))})
 									same_event := CompareEvents(e, schedule.LogEvents[i])
 									if !same_event {
 										level_print(dara.WARN, func() {
@@ -446,6 +490,7 @@ func replay_sched() {
 	level_print(dara.INFO, func() { l.Println("Replay is over") })
 }
 
+// record_sched records a new execution
 func record_sched() {
 	LastProc = 0
 	var i int
@@ -579,6 +624,7 @@ func record_sched() {
 	}
 }
 
+// dara_rpc_client launches the rpc client for communicating with the overlord
 func dara_rpc_client(command chan string) {
     client, err := rpc.Dial("tcp", OVERLORD_RPC_SERVER)
     if err != nil {
@@ -609,6 +655,7 @@ func dara_rpc_client(command chan string) {
     }
 }
 
+// explore_sched explores the schedule space
 func explore_sched() {
     command_chan := make(chan string)
     go dara_rpc_client(command_chan)
@@ -699,6 +746,8 @@ func explore_sched() {
 	}
 }
 
+// init_global_scheduler initializes the global scheduler
+// This includes setting up the shared memory, initialising the global variables
 func init_global_scheduler() {
 	//Set up logger
 	l = log.New(os.Stdout, "[Scheduler]", log.Lshortfile)
