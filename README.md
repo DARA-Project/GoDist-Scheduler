@@ -140,7 +140,7 @@ Channels are specific to Go and developers might want to write properties that c
 To support such properties, Dara provides two functions through the runtime package
 which report the number of sends and number of deliveries that have occurred on that channel.
 
-+ runtime.NumSends(chan interface{}) int: Returns the number of sends that has happened on channel chan
++ runtime.NumSendings(chan interface{}) int: Returns the number of sends that has happened on channel chan
 + runtime.NumDeliveries(chan interface{}) int: Returns the number of deliveries that has happened on channel chan
 
 ### Record
