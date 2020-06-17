@@ -1,0 +1,20 @@
+{
+    "exec" : {
+        "path" : "../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go",
+        "size" : "400M",
+        "processes" : 1,
+        "sched" : "Schedule.json",
+        "loglevel" : "INFO",
+        "blocks_file" : "../examples/ProducerConsumerInstrument/blocks",
+	"property_file" : "/home/vagrant/go/src/github.com/DARA-Project/GoDist-Scheduler/GoDist-Scheduler/examples/ProducerConsumerInstrument/property/example.prop"
+    },
+    "instr" : {
+        "dir" : "",
+        "file" : "../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go",
+        "blocks_file" : "../examples/ProducerConsumerInstrument/blocks"
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}
