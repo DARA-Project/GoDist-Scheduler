@@ -85,6 +85,8 @@ func parsePropertyFile(file string) ([]Property, []string, error) {
         }
         prop_obj := eek.New()
         prop_obj.SetName(name)
+        // We want to rewrite built plugin
+        prop_obj.UseCachedBuildForSameFormula = false
         vars := []Variable{}
         for i := 0; i < len(var_names); i++ {
             new_var := Variable{Name: var_names[i], PropName: prop_var_names[i], Type: types[i]}
