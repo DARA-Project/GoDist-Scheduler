@@ -74,6 +74,8 @@ var (
 	procStatus map[int]ProcStatus
 	// Map that maps the Dara Process ID to whether we own the procchan lock for that process
 	lockStatus map[int]bool
+	// Map that maps Dara Process ID to linux PID
+	linuxpids map[int]uint64
 )
 
 // checkargs checks and parses the command line arguments
@@ -507,6 +509,7 @@ func record_sched() {
 			// Initialize the local scheduler to record events
 			procchan[ProcID].Run = -3
 			level_print(dara.INFO, func() { l.Println("Setting up recording on Process", ProcID) })
+			level_print(dara.INFO, func() { l.Println("Linux PID for this process is", procchan[ProcID].PID)})
 			atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
 			lockStatus[ProcID] = false
 			forward() // Give the local scheduler a chance to grab the lock
@@ -514,6 +517,10 @@ func record_sched() {
 		// Loop until we get some recorded events
 		for {
 			if lockStatus[ProcID] || atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED, dara.LOCKED) {
+				if linuxpids[ProcID] == 0 && procchan[ProcID].PID != 0{
+					linuxpids[ProcID] = procchan[ProcID].PID
+					level_print(dara.INFO, func() { l.Println("Linux PID for this process is", procchan[ProcID].PID)})
+				}
 				// We own the lock now if we didn't before.
 				lockStatus[ProcID] = true
 				level_print(dara.DEBUG, func() { l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID) })
@@ -774,9 +781,9 @@ func init_global_scheduler() {
 	procchan = (*[dara.CHANNELS]dara.DaraProc)(p)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	//var count int
-    level_print(dara.DEBUG, func() { l.Println("Size of DaraProc struct is", unsafe.Sizeof(procchan[0]))})
+    level_print(dara.INFO, func() { l.Println("Size of DaraProc struct is", unsafe.Sizeof(procchan[0]))})
 	for i := 0; i <= *procs; i++ {
-        level_print(dara.INFO, func() {l.Println("Initializing", i) })
+        level_print(dara.DEBUG, func() {l.Println("Initializing", i) })
 		procchan[i].Lock = dara.LOCKED
 		procchan[i].SyscallLock = dara.UNLOCKED
 		procchan[i].Run = -1
@@ -785,9 +792,11 @@ func init_global_scheduler() {
 	}
 	procStatus = make(map[int]ProcStatus)
 	lockStatus = make(map[int]bool)
+	linuxpids = make(map[int]uint64)
 	for i := 1; i <= *procs; i++ {
 		procStatus[i] = ALIVE
 		lockStatus[i] = true // By default, global scheduler owns the locks on every local scheduler
+		linuxpids[i] = uint64(0)
 	}
 	level_print(dara.INFO, func() { l.Println("Starting the Scheduler") })
 
