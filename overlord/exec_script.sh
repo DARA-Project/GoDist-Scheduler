@@ -46,3 +46,4 @@ RC=$?
 if [ $RC != 0 ]; then
     exit 0
 fi
+rm ./DaraSharedMem

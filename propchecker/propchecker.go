@@ -12,29 +12,36 @@ import (
     "dara"
 )
 
+// Variable represents the variable mapping between the
+// name of the variable in the context and the name of the
+// variable in the Property
 type Variable struct {
     Name string // Fully qualified package name of the variable
     PropName string // Name Used in the Property
     Type string // Type of the Variable
 }
 
+// Property represents a property/go function that needs to be checked during execution
 type Property struct {
     Name string // Name of the property
     Variables []Variable // List of all variables used in this property
     PropObj *eek.Eek
 }
 
+// PropertyStats collects statistics about a property
 type PropertyStats struct {
     NumExecutions int
     NumFailures int
 }
 
+// Checker stores the state required for checking the properties
 type Checker struct {
     Properties []Property // List of Properties to be checked
     ImpVariables []string // Names of the Variables need to be tracked for Property Checking
     Stats map[string]*PropertyStats // Statistics about the property executed
 }
 
+// parsePropertyFile parses the property file and compiles the proeprties into go plugins.
 func parsePropertyFile(file string) ([]Property, []string, error) {
     fset := token.NewFileSet()
     node, err := parser.ParseFile(fset, file, nil, parser.ParseComments)
@@ -85,7 +92,10 @@ func parsePropertyFile(file string) ([]Property, []string, error) {
         }
         prop_obj := eek.New()
         prop_obj.SetName(name)
-        // We want to rewrite built plugin
+        // Rewrite the built plugin if it already exists
+        // Otherwise we could end up with an error where
+        // the plugin was built with a different version
+        // of a package we are currently using.
         prop_obj.UseCachedBuildForSameFormula = false
         vars := []Variable{}
         for i := 0; i < len(var_names); i++ {
@@ -107,6 +117,7 @@ func parsePropertyFile(file string) ([]Property, []string, error) {
     return properties, impVariables, nil
 }
 
+// NewChecker initailizes a new Checker
 func NewChecker(property_file string) (*Checker, error) {
     properties, impVariables, err := parsePropertyFile(property_file)
     if err != nil {
@@ -118,6 +129,7 @@ func NewChecker(property_file string) (*Checker, error) {
     return &Checker{Properties: properties, ImpVariables: impVariables, Stats: stats}, nil
 }
 
+// Check checks proeprties under a provided context and returns list of property failures
 func (c* Checker) Check(context map[string]interface{}) (bool, *[]dara.FailedPropertyEvent, error) {
     result := true
     var failures []dara.FailedPropertyEvent
@@ -171,10 +183,13 @@ func (c* Checker) Check(context map[string]interface{}) (bool, *[]dara.FailedPro
     return result, &failures, nil
 }
 
+// GetImportantVariables returns the list of all variables that are being used
+// by all the properties.
 func (c* Checker) GetImportantVariables() []string {
     return c.ImpVariables
 }
 
+// GetPropertyStatistics returns the collected statistics about all the properties
 func (c* Checker) GetPropertyStatistics() map[string]*PropertyStats {
     return c.Stats
 }

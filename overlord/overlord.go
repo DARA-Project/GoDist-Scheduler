@@ -362,14 +362,14 @@ func (d * DaraRpcServer) killprogram() error {
 	dir := get_directory_from_path(d.Options.Path)
     program := filepath.Base(dir)
     if d.Options.Build.RunScript == "" {
-        cmd := exec.Command("pkill", "-f", program)
+        cmd := exec.Command("pkill", program)
         err := cmd.Run()
         if err != nil {
             d.logger.Println("Error while killing program", err)
             return err
         }
     } else {
-        cmd := exec.Command("pkill", "-f", d.Options.Build.RunScript)
+        cmd := exec.Command("pkill", d.Options.Build.RunScript)
         err := cmd.Run()
         if err != nil {
             d.logger.Println("Error while killing program", err)
@@ -397,12 +397,7 @@ func (d * DaraRpcServer) FinishExecution(unused_arg int, ack *bool) error {
         d.logger.Println("Error while getting current directory", err)
         return err
     }
-	dir := get_directory_from_path(d.Options.Path)
-    err = os.Chdir(dir)
-    if err != nil {
-        d.logger.Println("Error while changing directory")
-        return err
-    }
+	d.logger.Println("Current Directory:", cwd)
     // Just create a file that is called explore_finish to signify end of exploration and the exec script can just stat if the file exists
     f, err := os.Create("./explore_finish")
     if err != nil {
@@ -412,7 +407,7 @@ func (d * DaraRpcServer) FinishExecution(unused_arg int, ack *bool) error {
     f.Close()
     err = os.Chdir(cwd)
     if err != nil {
-        d.logger.Println("Error whilce changing directory")
+        d.logger.Println("Error while changing directory")
         return err
     }
     // Now we are ready to kill the program!
@@ -528,6 +523,11 @@ func replay(options ExecOptions) error {
 	return err
 }
 
+func post_exploration_cleanup(options ExecOptions) error {
+	// Remove the explore_finish file which was used to terminate the exec_script
+    return os.Remove("./explore_finish")
+}
+
 //Handler for exploring state space of a program
 func explore(options ExecOptions) error {
 	err := setup(options, "explore")
@@ -540,6 +540,10 @@ func explore(options ExecOptions) error {
 		return err
 	}
 	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
+	err = post_exploration_cleanup(options)
 	return err
 }
 
