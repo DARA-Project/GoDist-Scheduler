@@ -6,7 +6,7 @@
         "sched" : "Schedule.json",
         "loglevel" : "INFO",
         "blocks_file" : "../examples/ProducerConsumerInstrument/blocks",
-	"property_file" : "/home/vagrant/go/src/github.com/DARA-Project/GoDist-Scheduler/GoDist-Scheduler/examples/ProducerConsumerInstrument/property/example.prop"
+	"property_file" : "/home/vagrant/go/src/github.com/DARA-Project/GoDist-Scheduler/GoDist-Scheduler/examples/ProducerConsumerInstrument/property/ProducerConsumerInstrument.prop"
     },
     "instr" : {
         "dir" : "",

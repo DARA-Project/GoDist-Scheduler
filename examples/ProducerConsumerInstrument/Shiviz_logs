@@ -4,391 +4,79 @@ PID-1-G-1-main.main {"PID-1-G-1-main.main":1}
 INIT
 PID-1-G-1-main.main {"PID-1-G-1-main.main":2}
 SCHEDULE GoID 1 Status running
-PID-1-G-1-main.main {"PID-1-G-1-main.main":3}
-SYSCALL OPEN
-PID-1-G-1-main.main {"PID-1-G-1-main.main":4}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":5}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":6}
-SYSCALL FSTAT
-PID-1-G-1-main.main {"PID-1-G-1-main.main":7}
-SYSCALL READ
-PID-1-G-1-main.main {"PID-1-G-1-main.main":8}
-SYSCALL READ
-PID-1-G-1-main.main {"PID-1-G-1-main.main":9}
-SYSCALL CLOSE
-PID-1-G-1-main.main {"PID-1-G-1-main.main":10}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":11}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":12}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":13}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":14}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":15}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":16}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":17}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":18}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":19}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":20}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":21}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":22}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":23}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":24}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":25}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":26}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":27}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":28}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":29}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":30}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":31}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":32}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":33}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":34}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":35}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":36}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":37}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":38}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":39}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":40}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":41}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":42}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":43}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":44}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":45}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":46}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":47}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":48}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":49}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":50}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":51}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":52}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":53}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":54}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":55}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":56}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":57}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":58}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":59}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":60}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":61}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":62}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":63}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":64}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":65}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":66}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":67}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":68}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":69}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":70}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":71}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":72}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":73}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":74}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":75}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":76}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":77}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":78}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":79}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":80}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":81}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":82}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":83}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":84}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":85}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":86}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":87}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":88}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":89}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":90}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":91}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":92}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":93}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":94}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":95}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":96}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":97}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":98}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":99}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":100}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":101}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":102}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":103}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":104}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":105}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":106}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":107}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":108}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":109}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":110}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":111}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":112}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":113}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":114}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":115}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":116}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":117}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":118}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":119}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":120}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":121}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":122}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":123}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":124}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":125}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":126}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":127}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":128}
-SYSCALL GETENV
-PID-1-G-1-main.main {"PID-1-G-1-main.main":129}
-SYSCALL STAT
-PID-1-G-1-main.main {"PID-1-G-1-main.main":130}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":131}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":132}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":133}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":134}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":135}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":136}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":137}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":138}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":139}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":140}
-SYSCALL STAT
 PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":1}
 THREAD GoID 4 Status runnable
 PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":1}
-THREAD GoID 5 Status runnable; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:59:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:94:105 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:18:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:41:103 - 1; PropFailures: Property Failures:0
-PID-1-G-1-main.main {"PID-1-G-1-main.main":141}
+THREAD GoID 5 Status runnable; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:19:21 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:42:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:61:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:91:105 - 1; PropFailures: Property Failures:0
+PID-1-G-1-main.main {"PID-1-G-1-main.main":3}
 Switching routines
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":2, "PID-1-G-1-main.main":141}
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":2, "PID-1-G-1-main.main":3}
 SCHEDULE GoID 5 Status runnable
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":3, "PID-1-G-1-main.main":141}
-SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:24:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:27:103 - 1; PropFailures: Property Failures:0
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":4, "PID-1-G-1-main.main":141}
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":3, "PID-1-G-1-main.main":3}
+SYSCALL LOCK
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":4, "PID-1-G-1-main.main":3}
+SYSCALL UNLOCK
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":5, "PID-1-G-1-main.main":3}
+SYSCALL LOCK
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-1-main.main":3, "PID-1-G-5-main.(*Consumer).consume":6}
+SYSCALL UNLOCK
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":7, "PID-1-G-1-main.main":3}
+SYSCALL LOCK
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":8, "PID-1-G-1-main.main":3}
+SYSCALL UNLOCK
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":9, "PID-1-G-1-main.main":3}
+SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:25:275 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:28:103 - 1; PropFailures: Property Failures:0
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":3}
 Switching routines
-PID-1-G-3-runtime.createfing {"PID-1-G-3-runtime.createfing":1, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":4}
+PID-1-G-3-runtime.createfing {"PID-1-G-3-runtime.createfing":1, "PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":3}
 SCHEDULE GoID 3 Status runnable; PropFailures: Property Failures:0
-PID-1-G-3-runtime.createfing {"PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":4}
+PID-1-G-3-runtime.createfing {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":3}
 Switching routines
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":2, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":4}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":2, "PID-1-G-3-runtime.createfing":2}
 SCHEDULE GoID 4 Status runnable
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":3, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":4}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":3, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":3}
 SYSCALL WRITE
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":4, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":4}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":4, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":3}
 SYSCALL WRITE
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-5-main.(*Consumer).consume":4, "PID-1-G-4-main.(*Producer).produce":5, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141}
-SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:47:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:50:103 - 2; PropFailures: Property Failures:0
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-5-main.(*Consumer).consume":4, "PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":5, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":3}
+SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:48:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:51:103 - 2; PropFailures: Property Failures:0
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":3}
 Switching routines
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":5, "PID-1-G-1-main.main":141, "PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2}
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":11, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2}
 SCHEDULE GoID 5 Status runnable
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":6, "PID-1-G-1-main.main":141, "PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2}
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2}
 SYSCALL WRITE
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-1-main.main":141, "PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":7}
-SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:27:103 - 2; PropFailures: Property Failures:0
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":8, "PID-1-G-1-main.main":141}
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":13, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2}
+SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:28:103 - 2; PropFailures: Property Failures:0
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":14, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":6, "PID-1-G-3-runtime.createfing":2}
 Switching routines
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":7, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":8}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":7, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":14}
 SCHEDULE GoID 4 Status runnable
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":8, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":8}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":8, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":14, "PID-1-G-1-main.main":3}
 SYSCALL WRITE
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":9, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":8}
-SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:50:103 - 2; PropFailures: Property Failures:0
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":8, "PID-1-G-4-main.(*Producer).produce":10}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":14, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":9}
+SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:51:103 - 2; PropFailures: Property Failures:0
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":14, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":10}
 Switching routines
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":9, "PID-1-G-1-main.main":141, "PID-1-G-4-main.(*Producer).produce":10, "PID-1-G-3-runtime.createfing":2}
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":15, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":10, "PID-1-G-3-runtime.createfing":2}
 SCHEDULE GoID 5 Status runnable
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":10, "PID-1-G-1-main.main":141, "PID-1-G-4-main.(*Producer).produce":10, "PID-1-G-3-runtime.createfing":2}
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":16, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":10, "PID-1-G-3-runtime.createfing":2}
 SYSCALL WRITE
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":11, "PID-1-G-1-main.main":141, "PID-1-G-4-main.(*Producer).produce":10, "PID-1-G-3-runtime.createfing":2}
-SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:27:103 - 2; PropFailures: Property Failures:0
-PID-1-G-5-main.(*Consumer).consume {"PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":141, "PID-1-G-4-main.(*Producer).produce":10, "PID-1-G-3-runtime.createfing":2}
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":10, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":17}
+SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:28:103 - 2; PropFailures: Property Failures:0
+PID-1-G-5-main.(*Consumer).consume {"PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":10, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":18}
 Switching routines
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":11, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":12}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":11, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":18, "PID-1-G-1-main.main":3}
 SCHEDULE GoID 4 Status runnable
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":12, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":12}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-5-main.(*Consumer).consume":18, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":12, "PID-1-G-3-runtime.createfing":2}
 SYSCALL WRITE
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":13, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:50:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:54:553 - 1; PropFailures: Property Failures:0
-PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-1-main.main":141, "PID-1-G-5-main.(*Consumer).consume":12}
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-4-main.(*Producer).produce":13, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":18, "PID-1-G-1-main.main":3}
+SYSCALL WRITE; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:51:103 - 1,../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:55:553 - 1; PropFailures: Property Failures:0
+PID-1-G-4-main.(*Producer).produce {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":18, "PID-1-G-1-main.main":3, "PID-1-G-4-main.(*Producer).produce":14}
 Switching routines
-PID-1-G-1-main.main {"PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":142}
+PID-1-G-1-main.main {"PID-1-G-1-main.main":4, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":18}
 SCHEDULE GoID 1 Status runnable
-PID-1-G-1-main.main {"PID-1-G-1-main.main":143, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL WRITE
-PID-1-G-1-main.main {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":144, "PID-1-G-4-main.(*Producer).produce":14}
-SYSCALL WRITE
-PID-1-G-1-main.main {"PID-1-G-1-main.main":145, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL WRITE
-PID-1-G-1-main.main {"PID-1-G-1-main.main":146, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":147, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL GETENV
-PID-1-G-1-main.main {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":148, "PID-1-G-4-main.(*Producer).produce":14}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":149, "PID-1-G-4-main.(*Producer).produce":14}
-SYSCALL TIMENOW
-PID-1-G-1-main.main {"PID-1-G-1-main.main":150, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":151, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL WRITE
-PID-1-G-1-main.main {"PID-1-G-1-main.main":152, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":153, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL STAT
-PID-1-G-1-main.main {"PID-1-G-1-main.main":154, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":155, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":156, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2}
-SYSCALL TIMENOW
-PID-1-G-1-main.main {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":157, "PID-1-G-4-main.(*Producer).produce":14}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":158, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL WRITE
-PID-1-G-1-main.main {"PID-1-G-1-main.main":159, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":160, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL TIMENOW
-PID-1-G-1-main.main {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":161, "PID-1-G-4-main.(*Producer).produce":14}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":162, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL WRITE
-PID-1-G-1-main.main {"PID-1-G-1-main.main":163, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":164, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL TIMENOW
-PID-1-G-1-main.main {"PID-1-G-1-main.main":165, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL LOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":166, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-SYSCALL WRITE
-PID-1-G-1-main.main {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12, "PID-1-G-1-main.main":167, "PID-1-G-4-main.(*Producer).produce":14}
-SYSCALL UNLOCK
-PID-1-G-1-main.main {"PID-1-G-1-main.main":168, "PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":12}
-END; PropFailures: Property Failures:0
+PID-1-G-1-main.main {"PID-1-G-4-main.(*Producer).produce":14, "PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":18, "PID-1-G-1-main.main":5}
+LOG
+PID-1-G-1-main.main {"PID-1-G-3-runtime.createfing":2, "PID-1-G-5-main.(*Consumer).consume":18, "PID-1-G-1-main.main":6, "PID-1-G-4-main.(*Producer).produce":14}
+END; Coverage: ../examples/ProducerConsumerInstrument/ProducerConsumerInstrument.go:121:119 - 1; PropFailures: Property Failures:1: Equality map[main.leftElements:1]
