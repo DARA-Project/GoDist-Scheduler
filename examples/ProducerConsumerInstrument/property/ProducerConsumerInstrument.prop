@@ -2,6 +2,6 @@ package property
 
 //Equality
 //main.leftElements
-func equalToZero(A int) {
+func EqualToZero(A int) {
     return A == 0
 }
