@@ -1,0 +1,7 @@
+package property
+
+//EqualToZero
+//main.leftElements
+func equalToZero(A int) {
+    return A == 0
+}
