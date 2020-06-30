@@ -1,0 +1,59 @@
+goos: linux
+goarch: amd64
+pkg: github.com/DARA-Project/GoDist-Scheduler/u-benchmarks
+BenchmarkFileOpen-12                   	 2000000	       616 ns/op
+BenchmarkFileRead-12                   	 2000000	       872 ns/op
+BenchmarkFileClose-12                  	 2000000	       848 ns/op
+BenchmarkFileWrite_NoRemove-12         	 1000000	      1002 ns/op
+BenchmarkFileWrite_RemovePerIter-12    	  500000	      3142 ns/op
+BenchmarkFileFstat-12                  	 2000000	       662 ns/op
+BenchmarkFileStat-12                   	 2000000	       811 ns/op
+BenchmarkFileLstat-12                  	 2000000	       790 ns/op
+BenchmarkFileLseek-12                  	 3000000	       464 ns/op
+BenchmarkFilePread64-12                	 1000000	      1045 ns/op
+BenchmarkFilePwrite64-12               	 2000000	       807 ns/op
+BenchmarkGetpagesize-12                	1000000000	         2.35 ns/op
+BenchmarkExecutable-12                 	2000000000	         0.24 ns/op
+BenchmarkGetpid-12                     	 5000000	       351 ns/op
+BenchmarkGetppid-12                    	 5000000	       360 ns/op
+BenchmarkGetwd-12                      	 1000000	      1901 ns/op
+BenchmarkReaddir-12                    	  300000	      4552 ns/op
+BenchmarkReaddirnames-12               	  500000	      2991 ns/op
+BenchmarkWait4-12                      	   50000	     33128 ns/op
+BenchmarkKill-12                       	 1000000	      1820 ns/op
+BenchmarkGetuid-12                     	 5000000	       339 ns/op
+BenchmarkGeteuid-12                    	 5000000	       336 ns/op
+BenchmarkGetgid-12                     	 5000000	       337 ns/op
+BenchmarkGetegid-12                    	 5000000	       338 ns/op
+BenchmarkGetgroups-12                  	 2000000	       854 ns/op
+BenchmarkRename-12                     	 1000000	      1542 ns/op
+BenchmarkTruncate-12                   	 1000000	      2123 ns/op
+BenchmarkLink-12                       	 1000000	      1996 ns/op
+BenchmarkSymlink-12                    	  500000	      3190 ns/op
+BenchmarkPipe2-12                      	  300000	      4691 ns/op
+BenchmarkMkdir-12                      	  200000	     10402 ns/op
+BenchmarkChdir-12                      	 3000000	       554 ns/op
+BenchmarkUnsetenv-12                   	 3000000	       513 ns/op
+BenchmarkGetenv-12                     	20000000	        64.9 ns/op
+BenchmarkSetenv-12                     	 2000000	       963 ns/op
+BenchmarkClearenv-12                   	20000000	       105 ns/op
+BenchmarkEnviron-12                    	30000000	        53.2 ns/op
+BenchmarkTimenow-12                    	50000000	        35.6 ns/op
+BenchmarkReadlink-12                   	 2000000	       701 ns/op
+BenchmarkChmod-12                      	 2000000	       918 ns/op
+BenchmarkFchmod-12                     	 2000000	       802 ns/op
+BenchmarkChown-12                      	 1000000	      1001 ns/op
+BenchmarkLchown-12                     	 1000000	      1002 ns/op
+BenchmarkFchown-12                     	 2000000	       877 ns/op
+BenchmarkFtruncate-12                  	 1000000	      1964 ns/op
+BenchmarkFsync-12                      	   20000	     65445 ns/op
+BenchmarkUtimes-12                     	 2000000	       948 ns/op
+BenchmarkFchdir-12                     	 3000000	       497 ns/op
+BenchmarkSetDeadline-12                	10000000	       164 ns/op
+BenchmarkSetReadDeadline-12            	10000000	       160 ns/op
+BenchmarkSetWriteDeadline-12           	10000000	       162 ns/op
+BenchmarkNetRead-12                    	  500000	      2882 ns/op
+BenchmarkNetWrite-12                   	  500000	      3570 ns/op
+BenchmarkNetClose-12                   	2020/06/20 10:17:36 dial tcp 127.0.0.1:12345: connect: cannot assign requested address
+exit status 1
+FAIL	github.com/DARA-Project/GoDist-Scheduler/u-benchmarks	557.853s
