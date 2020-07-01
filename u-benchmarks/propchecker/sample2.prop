@@ -1,0 +1,24 @@
+package property
+//Sample Property file
+//A property file should only have function definitions
+//and comment for the function. The definition corresponds
+//to the property to be checked. The comment provides
+//the meta information: Property name and full qualified
+//path of each variable in the source package. The full
+//qualified path is used for data collection 
+//Caveat: The variables used in the property must start
+//with an uppercase letter
+
+//Equality
+//main.a
+//main.b
+func equality(A int, B int) {
+    return A == B
+}
+
+//SumZero
+//main.a
+//main.b
+func sumZero(A int, B int) {
+    return A + B == 0
+}

@@ -1,0 +1,121 @@
+package property
+//Sample Property file
+//A property file should only have function definitions
+//and comment for the function. The definition corresponds
+//to the property to be checked. The comment provides
+//the meta information: Property name and full qualified
+//path of each variable in the source package. The full
+//qualified path is used for data collection 
+//Caveat: The variables used in the property must start
+//with an uppercase letter
+
+//Equality
+//main.a
+//main.b
+func equality(A int, B int) {
+    return A == B
+}
+
+//SumZero
+//main.a
+//main.b
+func sumZero(A int, B int) {
+    return A + B == 0
+}
+
+//DiffZero
+//main.a
+//main.b
+func diffZero(A int, B int) {
+    return A - B == 0
+}
+
+//MultipleZero
+//main.a
+//main.b
+func multipleZero(A int, B int) {
+    return A == 0 && B == 0
+}
+
+//OnlyOneZero
+//main.a
+//main.b
+func onlyOneZero(A int, B int) {
+    if A == 0 && B != 0 {
+        return true
+    }
+    if B == 0 && A != 0 {
+        return true
+    }
+
+    return false
+}
+
+//AllZero
+//main.a
+//main.b
+//main.c
+//main.d
+func allZero(A int, B int, C int, D int) {
+    count := 0
+    if A == 0 {
+        count += 1
+    }
+    if B == 0 {
+        count += 1
+    }
+    if C == 0 {
+        count += 1
+    }
+    if D == 0 {
+        count += 1
+    }
+    return count == 4
+}
+
+//AllNonZero
+//main.a
+//main.b
+//main.c
+//main.d
+func allNonZero(A int, B int, C int, D int) {
+    count := 0
+    if A != 0 {
+        count += 1
+    }
+    if B != 0 {
+        count += 1
+    }
+    if C != 0 {
+        count += 1
+    }
+    if D != 0 {
+        count += 1
+    }
+    return count == 4    
+}
+
+//TwoPair
+//main.a
+//main.b
+//main.c
+//main.d
+func twoPair(A int, B int, C int, D int) {
+    return (A == B && C == D && A != C) || (A == C && B == D && A != B) || (A == D && B == C && A != B)
+}
+
+//AtleastOneZero
+//main.a
+//main.b
+//main.c
+//main.d
+func atleastOneZero(A int, B int, C int, D int) {
+    return A == 0 || B == 0 || C == 0 || D == 0
+}
+
+//Inequality
+//main.a
+//main.b
+func inequality(A int, B int) {
+    return A != B
+}
