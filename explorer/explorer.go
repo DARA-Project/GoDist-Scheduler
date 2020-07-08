@@ -17,6 +17,9 @@ type Strategy int
 const (
 	// RANDOM strategy does random exploration
 	RANDOM Strategy = iota
+	COVERAGE_UNIQUE
+	COVERAGE_FREQUENCY
+	COVERAGE_NODE_FREQUENCY
 )
 
 // ProcThread represents a unique goroutine in the system
@@ -165,7 +168,7 @@ func (e *Explorer) getNextPossibleThreads(threads *[]ProcThread) *[]ProcThread {
 }
 
 // GetNextThread returns the next goroutine to be scheduled based on the previously selected strategy
-func (e *Explorer) GetNextThread(threads *[]ProcThread, events *[]dara.Event, coverage *map[string]uint64) *ProcThread {
+func (e *Explorer) GetNextThread(threads *[]ProcThread, events *[]dara.Event, coverage *CovStats) *ProcThread {
 	nextPossibleThreads := e.getNextPossibleThreads(threads)
 
 	// TODO: Switch over different strategies. Currently only random is implemented

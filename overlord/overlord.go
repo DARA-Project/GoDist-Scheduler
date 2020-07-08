@@ -48,6 +48,7 @@ type ExecOptions struct {
 	PreloadReplay bool         `json:"fast_replay"`
 	PropertyFile  string       `json:"property_file"`
 	BlocksFile    string       `json:"blocks_file"`
+	Strategy      string       `json:"strategy"`
 }
 
 //Options specific for benchmarking
@@ -216,8 +217,11 @@ func install_global_scheduler() error {
 }
 
 //Launches the global scheduler and the run script to run the system
-func launch_global_scheduler(mode string, numProcs int, sched_file string) (*exec.Cmd, error) {
+func launch_global_scheduler(mode string, numProcs int, sched_file string, strategy string) (*exec.Cmd, error) {
 	arg := "--" + mode + "=true --procs=" + strconv.Itoa(numProcs) + " --schedule=" + sched_file
+	if strategy != "" {
+		arg += " --strategy=" + strategy
+	}
 	cmd := exec.Command("/bin/bash", "./exec_script.sh", arg)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -235,12 +239,12 @@ func start_go_benchmark() (*exec.Cmd, error) {
 }
 
 //Starts the global scheduler for this dara run
-func start_global_scheduler(mode string, numProcs int, sched_file string) (*exec.Cmd, error) {
+func start_global_scheduler(mode string, numProcs int, sched_file string, strategy string) (*exec.Cmd, error) {
 	err := install_global_scheduler()
 	if err != nil {
 		return nil, err
 	}
-	cmd, err := launch_global_scheduler(mode, numProcs, sched_file)
+	cmd, err := launch_global_scheduler(mode, numProcs, sched_file, strategy)
 	if err != nil {
 		return nil, err
 	}
@@ -498,7 +502,7 @@ func record(options ExecOptions) error {
 	if err != nil {
 		return err
 	}
-	cmd, err := start_global_scheduler("record", options.NumProcesses, options.SchedFile)
+	cmd, err := start_global_scheduler("record", options.NumProcesses, options.SchedFile, "")
 	if err != nil {
 		return err
 	}
@@ -515,7 +519,7 @@ func replay(options ExecOptions) error {
 	if options.PreloadReplay {
 		set_fast_replay()
 	}
-	cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile)
+	cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "")
 	if err != nil {
 		return err
 	}
@@ -535,7 +539,7 @@ func explore(options ExecOptions) error {
 		return err
 	}
     go start_rpc_server(options)
-	cmd, err := start_global_scheduler("explore", options.NumProcesses, options.SchedFile)
+	cmd, err := start_global_scheduler("explore", options.NumProcesses, options.SchedFile, options.Strategy)
 	if err != nil {
 		return err
 	}
@@ -588,7 +592,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
 		}
 		fmt.Println("Record Iteration #", i)
 		start := time.Now()
-		cmd, err := start_global_scheduler("record", options.NumProcesses, options.SchedFile)
+		cmd, err := start_global_scheduler("record", options.NumProcesses, options.SchedFile, "")
 		if err != nil {
 			return err
 		}
@@ -623,7 +627,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
 		}
 		fmt.Println("Replay Iteration #", i)
 		start := time.Now()
-		cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile)
+		cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "")
 		if err != nil {
 			return err
 		}
@@ -646,7 +650,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
 			set_fast_replay()
 			fmt.Println("Fast Replay Iteration #", i)
 			start := time.Now()
-			cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile)
+			cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "")
 			if err != nil {
 				return err
 			}

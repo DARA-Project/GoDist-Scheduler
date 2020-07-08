@@ -32,6 +32,7 @@ var (
 	replay     = flag.Bool("replay", false, "Replay an execution")
 	explore    = flag.Bool("explore", false, "Explore a recorded execution")
 	sched_file = flag.String("schedule", "", "The schedule file where the schedule will be stored/loaded from")
+	strategy   = flag.String("strategy", "random", "The strategy to be used for exploration. One of [random|unique|frequency|nodefrequency]")
 )
 
 const (
@@ -77,6 +78,8 @@ var (
 	lockStatus map[int]bool
 	// Map that maps Dara Process ID to linux PID
 	linuxpids map[int]uint64
+	// Proc Coverage
+	allCoverage map[int]*explorer.CovStats
 )
 
 // decodeInputSchedule decodes the input schedule for replay/exploration use
@@ -107,7 +110,10 @@ func checkargs() {
 	if *record {
 		l.Print("Recording")
 	} else if *explore {
-		l.Print("Exploring")
+		l.Print("Exploring")	
+		if *strategy != "random" || *strategy != "unique" || *strategy != "frequency" || *strategy != "nodefrequency" {
+			l.Fatal("Invalid exploration strategy" + *strategy + "specified")
+		}
 	} else {
 		l.Print("Replaying")
 	}
@@ -170,8 +176,8 @@ func getSchedulingEvents(sched *dara.Schedule) map[int][]dara.Event {
 }
 
 // ConsumeCoverage consumes the coverage information for this run
-func ConsumeCoverage(ProcID int) map[string]uint64 {
-    coverage := make(map[string]uint64)
+func ConsumeCoverage(ProcID int) explorer.CovStats {
+    coverage := make(explorer.CovStats)
     for i := 0; i < procchan[ProcID].CoverageIndex; i++ {
         blockID := string(bytes.Trim(procchan[ProcID].Coverage[i].BlockID[:dara.BLOCKIDLEN], "\x00")[:])
         count := procchan[ProcID].Coverage[i].Count
@@ -308,9 +314,19 @@ func CheckEndOrCrash(e dara.Event) bool {
 	return false
 }
 
-// Initializes the explorer
+// initExplorer initializes the explorer
 func initExplorer(seed *dara.Schedule) *explorer.Explorer {
-	e, err := explorer.MountExplorer(EXPLORATION_LOG_FILE, explorer.RANDOM, seed)
+	var explorationStrat explorer.Strategy
+	if *strategy == "random" {
+		explorationStrat = explorer.RANDOM
+	} else if *strategy == "unique" {
+		explorationStrat = explorer.COVERAGE_UNIQUE
+	} else if *strategy == "frequency" {
+		explorationStrat = explorer.COVERAGE_FREQUENCY
+	} else if *strategy == "nodefrequency" {
+		explorationStrat = explorer.COVERAGE_NODE_FREQUENCY
+	}
+	e, err := explorer.MountExplorer(EXPLORATION_LOG_FILE, explorationStrat, seed)
 	if err != nil {
 		l.Fatal(err)
 	}
@@ -498,7 +514,7 @@ func replaySchedule() {
 
 // extractDataFromProc consumes events and coverage information and then check properties
 // Context, schedule, and the index are modified by this function
-func extractDataFromProc(ProcID int, index *int, schedule *dara.Schedule, context *map[string]interface{}) (*[]dara.Event, *map[string]uint64) {
+func extractDataFromProc(ProcID int, index *int, schedule *dara.Schedule, context *map[string]interface{}) (*[]dara.Event, *explorer.CovStats) {
 	events := ConsumeAndPrint(ProcID, context)
 	coverage := ConsumeCoverage(ProcID)
 	dprint(dara.DEBUG, func() { l.Println("Consumed ", len(coverage), "blocks") })
@@ -513,6 +529,7 @@ func extractDataFromProc(ProcID int, index *int, schedule *dara.Schedule, contex
 	schedule.LogEvents = append(schedule.LogEvents, events...)
 	coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: *index + len(events) - 1}
 	schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
+	*index += len(events)
 	return &events, &coverage
 }
 
@@ -557,39 +574,16 @@ func recordSchedule() {
 				}
 				if procchan[ProcID].Run == -100 { 
 					// Process has finished
-					events := ConsumeAndPrint(ProcID, &context)
-					coverage := ConsumeCoverage(ProcID)
-					dprint(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
-					result, propevents, err := checkProperties(context)
-					if err != nil {
-						dprint(dara.INFO, func() { l.Println(err) })
-					}
-					if !result {
-						dprint(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
-					}
-					schedule.PropEvents = append(schedule.PropEvents, dara.CreatePropCheckEvent(*propevents, i + len(events) - 1))
-					schedule.LogEvents = append(schedule.LogEvents, events...)
-					coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
-					schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
+					// Ignore the return values since we really don't need them in record.
+					// Return value of extractDataFromProc are only useful during exploration
+					_, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
 				}
 				if procchan[ProcID].Run == -6 {
 					//Process is blocked on network, hopefully it is unblocked after a full cycle of process scheduling!
 					// If this is the first time we chose this Process to run after getting blocked then we need
 					// to consume the events and the coverage
 					if procchan[ProcID].LogIndex > 0 {
-						events := ConsumeAndPrint(ProcID, &context)
-						coverage := ConsumeCoverage(ProcID)
-						result, propevents, err := checkProperties(context)
-						if err != nil {
-							dprint(dara.INFO, func() {l.Println(err)})
-						}
-						if !result {
-							dprint(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
-						}
-						schedule.PropEvents = append(schedule.PropEvents, dara.CreatePropCheckEvent(*propevents, i + len(events) - 1))
-						schedule.LogEvents = append(schedule.LogEvents, events...)
-						coverageEvent := dara.CoverageEvent{CoverageInfo: coverage, EventIndex: i + len(events) - 1}
-						schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
+						_, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
 					}
 					// Continue to hold the lock until the process has become unblocked
 					break
@@ -606,20 +600,7 @@ func recordSchedule() {
 					// Process scheduled a goroutine which means we have events to add to the schedule.
 					dprint(dara.DEBUG, func() { l.Printf("Procchan Run status inside is %d for Process %d\n", procchan[ProcID].Run, ProcID) })
 					dprint(dara.DEBUG, func() { l.Printf("Recording Event on Process/Node %d\n", ProcID) })
-					events := ConsumeAndPrint(ProcID, &context)
-					coverage := ConsumeCoverage(ProcID)
-					dprint(dara.DEBUG, func() { l.Println("Record Consumed ", len(coverage), "blocks") })
-					result, propevents, err := checkProperties(context)
-					if err != nil {
-						dprint(dara.INFO, func() { l.Println(err) })
-					}
-					if !result {
-						dprint(dara.INFO, func() { l.Println("Property check failed with", len(*propevents), "failures") })
-					}
-					schedule.PropEvents = append(schedule.PropEvents, dara.CreatePropCheckEvent(*propevents, i + len(events) - 1))
-					schedule.LogEvents = append(schedule.LogEvents, events...)							
-					coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: i + len(events) - 1}
-					schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
+					_, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
 					if i >= RECORDLEN-*procs {
 						//mark the processes for death
 						dprint(dara.DEBUG, func() { l.Printf("Ending Execution!") })
@@ -628,9 +609,6 @@ func recordSchedule() {
 						//Reset the local scheduler to continue with its wizardry.
 						procchan[ProcID].Run = -3
 					}
-
-					dprint(dara.DEBUG, func() { l.Printf("Found %d log events", len(events)) })
-					i += len(events)
 					// We got some events so now we should run some other process.
 					break
 				}
@@ -642,6 +620,7 @@ func recordSchedule() {
 			}
 		}
 	}
+	// Create the schedule file and encode/store the captured schedule
 	f, err := os.Create(*sched_file)
 	if err != nil {
 		l.Fatal(err)
@@ -740,7 +719,8 @@ func exploreSchedule() {
 					// Extract data and update the variables from this run!
 					// We don't need the events and coverage anymore for this event
 					// They are already in the schedule
-					_, _ = extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
+					_, coverage := extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
+					explorer.CoverageUnion(allCoverage[ProcID], coverage)
 					dprint(dara.INFO, func() {l.Println("Process has finished")})
 					// Mark the process as DEAD
 					procStatus[ProcID] = DEAD
@@ -756,6 +736,8 @@ func exploreSchedule() {
 					// Ask the exploration unit what goroutine needs to be executed next
 					// Extract data and update the variables from this run!
 					events, coverage := extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
+					// Update the full coverage
+					explorer.CoverageUnion(allCoverage[ProcID], coverage)
 					// Choose the next goroutine to run
 					procs := getDaraProcs(ProcID)
 					next_routine := explore_unit.GetNextThread(procs, events, coverage)
@@ -827,10 +809,13 @@ func initGlobalScheduler() {
 	procStatus = make(map[int]ProcStatus)
 	lockStatus = make(map[int]bool)
 	linuxpids = make(map[int]uint64)
+	allCoverage = make(map[int]*explorer.CovStats)
 	for i := 1; i <= *procs; i++ {
 		procStatus[i] = ALIVE
 		lockStatus[i] = true // By default, global scheduler owns the locks on every local scheduler
 		linuxpids[i] = uint64(0)
+		covStats := make(explorer.CovStats)
+		allCoverage[i] = &covStats 
 	}
 	dprint(dara.INFO, func() { l.Println("Starting the Scheduler") })
 
