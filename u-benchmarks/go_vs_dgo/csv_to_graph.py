@@ -18,7 +18,7 @@ def plot_vertical_bars(dataset_name, orderings, labels, legend):
     # This is the fitting width. Right now, lets just hardcode it
     width = 0.15
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8,4))
     ax = fig.add_subplot(111)
 
     i = 0

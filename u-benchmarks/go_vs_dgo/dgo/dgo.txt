@@ -1,0 +1,6 @@
+goos: linux
+goarch: amd64
+pkg: github.com/DARA-Project/GoDist-Scheduler/u-benchmarks/go_vs_dgo/dgo
+BenchmarkDaraOnCheck-12    	50000000	        34.5 ns/op
+PASS
+ok  	github.com/DARA-Project/GoDist-Scheduler/u-benchmarks/go_vs_dgo/dgo	1.759s

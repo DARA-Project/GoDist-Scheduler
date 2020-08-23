@@ -1,0 +1,21 @@
+{
+    "exec" : {
+        "path" : "../structured/dphil_local/dining_philosophers.go",
+        "size" : "400M",
+        "processes" : 1,
+        "sched" : "Schedule.json",
+        "loglevel" : "FATAL",
+        "blocks_file" : "../structured/dphil_local/blocks",
+        "maxruns" : 50,
+        "strategy" : "frequency"
+    },
+    "instr" : {
+        "file" : "../structured/dphil_local/dining_philosophers.go",
+        "dir" : "",
+        "blocks_file" : "../structured/dphil_local/blocks"
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}

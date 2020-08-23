@@ -1,5 +1,9 @@
 package explorer
 
+import (
+	"log"
+)
+
 // CovStats represents the coverage information captured during runtime.
 // It is essentially a pseudonym for a map[string]uint64
 // Each key is a unique BlockID and value is the # of times the block was reached.
@@ -42,6 +46,14 @@ func CalcCoverageScore(coverage *CovStats, obj Objective) float64 {
 // CoverageUnion merges the coverage information from cov2 into cov1
 // cov1 is modified as part of the execution of this function
 func CoverageUnion(cov1, cov2 *CovStats) {
+	if cov1 == nil {
+		// Well they shouldn't be fucking nil
+		log.Println("[Explorer] Coverage 1 is nil wtf")
+		return 
+	} else if cov2 == nil {
+		log.Println("[Explorer] Coverage 2 is nil wtf")
+		return
+	}
 	for block, frequency := range *cov2 {
 		if v, ok := (*cov1)[block]; ok {
 			(*cov1)[block] = v + frequency
@@ -55,6 +67,9 @@ func CoverageUnion(cov1, cov2 *CovStats) {
 // For input coverage A, B the output is the set difference A - B.
 func CoverageDifference(cov1, cov2 *CovStats) *CovStats {
 	result := make(CovStats)
+	if cov1 == nil {
+		return &result
+	}
 	for block, _ := range *cov1 {
 		if v, ok := (*cov2)[block]; !ok {
 			result[block] = v
@@ -81,15 +96,7 @@ func merge_coverage(allCoverage map[int]*CovStats) map[string]*BlockInfo {
 	return merged_coverage
 }
 
-// CalcFullCoverageScore calculates the total coverage across all nodes
-// Currently, 3 objective functions are supported.
-// UNIQUE: Score is calculated as total number of unique blocks covered across all nodes (Union-Count)
-// FREQUENCY: Score is calculated as \Sum_{b \in Blocks} \frac{1}{frequency(b)}. Higher score will be for coverage
-//            where all the blocks covered have fewer duplicate blocks
-// NODE_FREQUENCY: Score is calculated as \Sum_{b \in Blocks} \frac{1}{frequency(b)} * NodeCount(b). Higher score will
-//                 be for coverage where more nodes cover a lot of unique blocks without any duplication
-func CalcFullCoverageScore(allCoverage map[int]*CovStats, obj Objective) float64 {
-	flattened_coverage := merge_coverage(allCoverage)
+func calcScore(flattened_coverage map[string]*BlockInfo, obj Objective) float64 {
 	var score float64
 	switch obj {
 	case UNIQUE:
@@ -104,4 +111,28 @@ func CalcFullCoverageScore(allCoverage map[int]*CovStats, obj Objective) float64
 		}
 	}
 	return score
+}
+
+// CalcFullCoverageScore calculates the total coverage across all nodes
+// Currently, 3 objective functions are supported.
+// UNIQUE: Score is calculated as total number of unique blocks covered across all nodes (Union-Count)
+// FREQUENCY: Score is calculated as \Sum_{b \in Blocks} \frac{1}{frequency(b)}. Higher score will be for coverage
+//            where all the blocks covered have fewer duplicate blocks
+// NODE_FREQUENCY: Score is calculated as \Sum_{b \in Blocks} \frac{1}{frequency(b)} * NodeCount(b). Higher score will
+//                 be for coverage where more nodes cover a lot of unique blocks without any duplication
+func CalcFullCoverageScore(allCoverage map[int]*CovStats, obj Objective) float64 {
+	flattened_coverage := merge_coverage(allCoverage)
+	return calcScore(flattened_coverage, obj)
+}
+
+func GetCoverageEstimate(allCoverage map[int]*CovStats, newCoverage *CovStats, procID int, obj Objective) float64 {
+	old_coverage := make(CovStats)
+	if v, ok := allCoverage[procID]; ok {
+		for key, val := range *v {
+			old_coverage[key] = val
+		}
+	}
+	CoverageUnion(&old_coverage, newCoverage)
+	allCoverage[procID] = &old_coverage
+	return CalcFullCoverageScore(allCoverage, obj)
 }

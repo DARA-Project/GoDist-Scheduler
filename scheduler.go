@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
+	"fmt"
 )
 
 type ProcStatus int
@@ -33,6 +34,8 @@ var (
 	explore    = flag.Bool("explore", false, "Explore a recorded execution")
 	sched_file = flag.String("schedule", "", "The schedule file where the schedule will be stored/loaded from")
 	strategy   = flag.String("strategy", "random", "The strategy to be used for exploration. One of [random|unique|frequency|nodefrequency]")
+	maxdepth   = flag.Int("maxdepth", 100, "The maximum depth for an exploration path")
+	maxruns    = flag.Int("maxruns", 2, "The maximum number of exploration runs to be performed")
 )
 
 const (
@@ -41,9 +44,12 @@ const (
 	RECORDLEN             = 10000
 	EXPLORELEN            = 100
 	EXPLORATION_LOG_FILE  = "visitedLog.txt"
-	MAX_EXPLORATION_DEPTH = 10
     // TODO: Make this an option
 	OVERLORD_RPC_SERVER = "0.0.0.0:45000"
+)
+
+var (
+	MAX_EXPLORATION_DEPTH = 100
 	MAX_EXPLORE_RUNS = 1
 )
 
@@ -71,6 +77,8 @@ var (
 	// Variable where the schedule is stored
 	// This might be the input scheduler for replay/explore or the output schedule for record
 	schedule dara.Schedule
+	// Monotonous event counter
+	eventCounter int
 
 	// Map that maps the Dara Process ID to its status
 	procStatus map[int]ProcStatus
@@ -80,6 +88,8 @@ var (
 	linuxpids map[int]uint64
 	// Proc Coverage
 	allCoverage map[int]*explorer.CovStats
+	// Virtual Clocks
+	clocks    map[int]*explorer.VirtualClock
 )
 
 // decodeInputSchedule decodes the input schedule for replay/exploration use
@@ -111,8 +121,8 @@ func checkargs() {
 		l.Print("Recording")
 	} else if *explore {
 		l.Print("Exploring")	
-		if *strategy != "random" || *strategy != "unique" || *strategy != "frequency" || *strategy != "nodefrequency" {
-			l.Fatal("Invalid exploration strategy" + *strategy + "specified")
+		if *strategy != "random" && *strategy != "unique" && *strategy != "frequency" && *strategy != "nodefrequency" {
+			l.Fatal("Invalid exploration strategy " + *strategy + " specified")
 		}
 	} else {
 		l.Print("Replaying")
@@ -122,6 +132,8 @@ func checkargs() {
 	if err != nil {
 		l.Fatal("Invalid log level specified")
 	}
+	MAX_EXPLORATION_DEPTH = *maxdepth
+	MAX_EXPLORE_RUNS = *maxruns
 	LogLevel = int(i)
 	return
 }
@@ -227,13 +239,30 @@ func ConsumeLog(ProcID int, context *map[string]interface{}) []dara.Event {
 			}
 		}
 		(*e).SyscallInfo = (*ee).SyscallInfo
-		//(*e).Msg = (*ee).EM //TODO complete messages
 		dprint(dara.DEBUG, func() { l.Println(common.ConciseEventString(e)) })
 		if e.Type == dara.THREAD_EVENT {
 			dprint(dara.DEBUG, func() { l.Println("Thread creation noted with ID", e.G.Gid, "at function", string(e.G.FuncInfo[:64])) })
 		}
 		if e.Type == dara.SCHED_EVENT {
-			dprint(dara.INFO, func() { l.Println("Scheduling event for Process", ProcID, "and goroutine", common.RoutineInfoString(&e.G))})
+			dprint(dara.DEBUG, func() { l.Println("Scheduling event for Process", ProcID, "and goroutine", common.RoutineInfoString(&e.G))})
+		}
+		if e.Type == dara.TIMER_EVENT {
+			// A timer was installed! Put this on the vclock queue.
+			if v, ok := clocks[ProcID]; ok {
+				eventCounter += 1
+				v.AddTimerEvent(eventCounter, explorer.Timer, uint64(e.SyscallInfo.Args[1].Integer64), uint64(e.SyscallInfo.Args[2].Integer64), int64(e.G.Gid), e.SyscallInfo.Args[0].Integer64)
+			} else {
+				dprint(dara.WARN, func() {l.Println("Virtual Clock not found for Process: ", ProcID)} )
+			}
+		}
+		if e.SyscallInfo.SyscallNum == dara.DSYS_SLEEP {
+			// A goroutine was put to sleep. It will wake back up ....when the explorer decides
+			if v, ok := clocks[ProcID]; ok {
+				eventCounter += 1
+				v.AddTimerEvent(eventCounter, explorer.Sleep, uint64(e.SyscallInfo.Args[0].Integer64), 0, e.SyscallInfo.Args[1].Integer64, 0)
+			} else {
+				dprint(dara.WARN, func() {l.Println("Virtual Clock not found for Process: ", ProcID)} )
+			}
 		}
 	}
 	procchan[ProcID].LogIndex = 0
@@ -326,7 +355,7 @@ func initExplorer(seed *dara.Schedule) *explorer.Explorer {
 	} else if *strategy == "nodefrequency" {
 		explorationStrat = explorer.COVERAGE_NODE_FREQUENCY
 	}
-	e, err := explorer.MountExplorer(EXPLORATION_LOG_FILE, explorationStrat, seed)
+	e, err := explorer.MountExplorer(EXPLORATION_LOG_FILE, explorationStrat, seed, *procs, LogLevel)
 	if err != nil {
 		l.Fatal(err)
 	}
@@ -341,6 +370,19 @@ func getDaraProcs(procID int) *[]explorer.ProcThread {
 		if dara.GetDaraProcStatus(routine.Status) != dara.Idle {
 			t := explorer.ProcThread{ProcID: procID, Thread: routine}
 			threads = append(threads, t)
+		}
+	}
+	return &threads
+}
+
+func getAllDaraProcs() *[]explorer.ProcThread {
+	threads := []explorer.ProcThread{}
+	for i := 1; i <= *procs; i++ {
+		for _, routine := range procchan[i].Routines {
+			if dara.GetDaraProcStatus(routine.Status) != dara.Idle {
+				t := explorer.ProcThread{ProcID: i, Thread: routine}
+				threads = append(threads, t)
+			}
 		}
 	}
 	return &threads
@@ -514,7 +556,7 @@ func replaySchedule() {
 
 // extractDataFromProc consumes events and coverage information and then check properties
 // Context, schedule, and the index are modified by this function
-func extractDataFromProc(ProcID int, index *int, schedule *dara.Schedule, context *map[string]interface{}) (*[]dara.Event, *explorer.CovStats) {
+func extractDataFromProc(ProcID int, index *int, schedule *dara.Schedule, context *map[string]interface{}) (*[]dara.Event, *explorer.CovStats, bool) {
 	events := ConsumeAndPrint(ProcID, context)
 	coverage := ConsumeCoverage(ProcID)
 	dprint(dara.DEBUG, func() { l.Println("Consumed ", len(coverage), "blocks") })
@@ -529,8 +571,15 @@ func extractDataFromProc(ProcID int, index *int, schedule *dara.Schedule, contex
 	schedule.LogEvents = append(schedule.LogEvents, events...)
 	coverageEvent := dara.CoverageEvent{CoverageInfo:coverage, EventIndex: *index + len(events) - 1}
 	schedule.CovEvents = append(schedule.CovEvents, coverageEvent)
+	hasBug := !result
+	for _, e := range events {
+		if e.Type == dara.CRASH_EVENT {
+			hasBug = true
+			break
+		}
+	}
 	*index += len(events)
-	return &events, &coverage
+	return &events, &coverage, hasBug
 }
 
 // recordSchedule records a new execution
@@ -545,7 +594,8 @@ func recordSchedule() {
 			break
 		}
 		ProcID := roundRobin()
-		dprint(dara.INFO, func() { l.Println("Chosen process for running is", ProcID) })
+		dprint(dara.WARN, func() {l.Println("Chosen process for running", ProcID)} )
+		//dprint(dara.INFO, func() { l.Println("Chosen process for running is", ProcID) })
 		if procchan[ProcID].Run == -1 {
 			// Initialize the local scheduler to record events
 			procchan[ProcID].Run = -3
@@ -564,7 +614,7 @@ func recordSchedule() {
 				}
 				// We own the lock now if we didn't before.
 				lockStatus[ProcID] = true
-				dprint(dara.DEBUG, func() { l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID) })
+				//dprint(dara.DEBUG, func() { l.Println("Obtained Lock with run value", procchan[ProcID].Run, "on process", ProcID) })
 				if procchan[ProcID].Run == -3 {
 					// The local scheduler hasn't run anything yet.
 					atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
@@ -576,14 +626,14 @@ func recordSchedule() {
 					// Process has finished
 					// Ignore the return values since we really don't need them in record.
 					// Return value of extractDataFromProc are only useful during exploration
-					_, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
+					_, _, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
 				}
 				if procchan[ProcID].Run == -6 {
 					//Process is blocked on network, hopefully it is unblocked after a full cycle of process scheduling!
 					// If this is the first time we chose this Process to run after getting blocked then we need
 					// to consume the events and the coverage
 					if procchan[ProcID].LogIndex > 0 {
-						_, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
+						_, _, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
 					}
 					// Continue to hold the lock until the process has become unblocked
 					break
@@ -594,13 +644,14 @@ func recordSchedule() {
 					atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
 					procchan[ProcID].Run = -3
 					lockStatus[ProcID] = false
+					forward() //Give the process a chance to grab the lock
 					continue
 				}
-				if procchan[ProcID].Run > 0 {
+				if procchan[ProcID].Run >= 0 {
 					// Process scheduled a goroutine which means we have events to add to the schedule.
 					dprint(dara.DEBUG, func() { l.Printf("Procchan Run status inside is %d for Process %d\n", procchan[ProcID].Run, ProcID) })
 					dprint(dara.DEBUG, func() { l.Printf("Recording Event on Process/Node %d\n", ProcID) })
-					_, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
+					_, _, _ = extractDataFromProc(ProcID, &i, &schedule, &context)
 					if i >= RECORDLEN-*procs {
 						//mark the processes for death
 						dprint(dara.DEBUG, func() { l.Printf("Ending Execution!") })
@@ -616,6 +667,8 @@ func recordSchedule() {
 					procStatus[ProcID] = DEAD
 					dprint(dara.INFO, func() { l.Println("Process ", ProcID, " has finished")})
 					break
+				} else {
+					dprint(dara.INFO, func() { l.Println("Run value for process ", ProcID, " is ", procchan[ProcID].Run)})
 				}
 			}
 		}
@@ -665,6 +718,14 @@ func dara_rpc_client(command chan string, response chan bool) {
 							response <- false
 						}
 						response <- true
+					case "restart":
+						var reply bool
+                        err = client.Call("DaraRpcServer.RestartExecution", 0, &reply)
+                        if err != nil {
+							l.Println(err)
+							response <- false
+						}
+						response <- true
                 }
         }
     }
@@ -677,9 +738,59 @@ func exploreSchedule() {
 	response_chan := make(chan bool)
 	go dara_rpc_client(command_chan, response_chan)
 	explore_unit := initExplorer(schedule)
+	explore_unit.SetMaxDepth(MAX_EXPLORATION_DEPTH)
 	dprint(dara.INFO, func() { l.Println("Dara the Explorer begins")})
 	current_run := 0
+	restart := false
+	start := true
+	var all_times []float64
+	var run_times []float64
+	var firstBugRun int
+	var numbuggyPaths int
 	for current_run < MAX_EXPLORE_RUNS {
+		l.Println("Exploring path #", current_run + 1)
+		isblocked := make(map[int]bool)
+		if restart {
+			// Reset shared memory and all the status
+			for i := 0; i <= *procs; i++ {
+				dprint(dara.DEBUG, func() {l.Println("Re-Initializing", i) })
+				procchan[i].Lock = dara.LOCKED
+				procchan[i].SyscallLock = dara.UNLOCKED
+				procchan[i].Run = -1
+				procchan[i].Syscall = -1
+				procchan[i].CoverageIndex = 0
+				procchan[i].RunningRoutine = dara.RoutineInfo{}
+				for j := 0; j < len(procchan[i].Routines); j++ {
+					procchan[i].Routines[j] = dara.RoutineInfo{}
+				}
+			}
+			for i := 1; i <= *procs; i++ {
+				procStatus[i] = ALIVE
+				lockStatus[i] = true // By default, global scheduler owns the locks on every local scheduler
+				linuxpids[i] = uint64(0)
+				covStats := make(explorer.CovStats)
+				allCoverage[i] = &covStats 
+				clocks[i] = explorer.NewClock()
+				isblocked[i] = false
+			}
+			command_chan <- "restart"
+			response := <- response_chan
+			if response {
+				dprint(dara.INFO, func() {l.Println("Overlord restarted execution successfully")})
+			} else {
+				dprint(dara.INFO, func() {l.Println("Overlord didn't restart execution successfully")})
+			}
+		}
+		if restart || start {
+			for i := 1; i <= *procs; i++ {
+				isblocked[i] = false
+			}
+			// Give time for the program to start/restart
+			time.Sleep(5 * time.Second)
+			start = false
+			//time.Sleep(5 * time.Millisecond)
+		}
+		runStart := time.Now()
 		// Initialize variables for this run
 		var event_index int
 		var current_schedule dara.Schedule // current schedule
@@ -690,26 +801,72 @@ func exploreSchedule() {
 			linuxpids[i] = 0
 		}
 
-		// Initialize each dara proc
-		for ProcID := 1; ProcID <= *procs; ProcID++ {
-			if procchan[ProcID].Run == -1 {
-				// Initialize the local scheduler to record events
-				procchan[ProcID].Run = -5
-				dprint(dara.INFO, func() { l.Println("Setting up exploration on Process", ProcID) })
-				dprint(dara.INFO, func() { l.Println("Linux PID for this process is", procchan[ProcID].PID)})
-				atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
-				lockStatus[ProcID] = false
-				forward() // Give the local scheduler a chance to grab the lock
-			}
-		}
-
 		// The choice of goroutine to be run is broken down into 2 parts
 		// Part 1: Selecting the Process
 		// Part 2: Selecting the goroutine on the process
+		actionComplete := true
+		actionInstalled := false
+		actionSelected := false
+		var ProcID int
+		var events *[]dara.Event
+		var coverage *explorer.CovStats
+		var next_routine *explorer.ProcThread
+		var next_timer *explorer.ProcTimer
+		var action explorer.Action
+		var numActions int
+		var bugFound bool
+		dprint(dara.INFO, func() {l.Println("Before inner loop")})
 		for {
 			// Have the explorer choose the process
-			ProcID := explore_unit.GetNextProcess(*procs)
-			if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&procchan[ProcID].Lock)), dara.UNLOCKED, dara.LOCKED) {
+			allBlocked := true
+			var hasBug bool
+			for _, v := range isblocked {
+				allBlocked = allBlocked && v
+			}
+			if actionComplete && !allBlocked{
+				// Get New action now!
+				numActions += 1
+				threads := getAllDaraProcs()
+				start := time.Now()
+				action = explore_unit.GetNextAction(threads, events, coverage, &clocks, &allCoverage, isblocked)
+				end := time.Now().Sub(start)
+				all_times = append(all_times, end.Seconds())
+				// If action is restart then kill current execution and restart
+				if action.Type == explorer.RESTART {
+					command_chan <- "kill"
+					response := <-response_chan
+					if response {
+						dprint(dara.INFO, func() {l.Println("Overlord finished execution successfully")})
+					} else {
+						dprint(dara.INFO, func() {l.Println("Overlord didn't finish execution successfully")})
+					}
+					restart = true
+					// Update the run counter and break away to the next iteration
+					current_run += 1
+					break
+				} else if action.Type == explorer.SCHEDULE {
+					if ptr, ok := action.Arg.(*explorer.ProcThread); ok {
+						next_routine = ptr
+						ProcID = next_routine.ProcID
+						dprint(dara.INFO, func() {l.Println("Goroutine chosen to be scheduled is", next_routine.Thread.Gid)})
+					} else {
+						dprint(dara.FATAL, func() {l.Println("Failed to parse explorer action")} )
+					}
+				} else if action.Type == explorer.TIMER {
+					if ptr, ok := action.Arg.(*explorer.ProcTimer); ok {
+						next_timer = ptr
+					} else {
+						dprint(dara.FATAL, func() {l.Println("Failed to parse explorer action")} )
+					}
+				}
+				
+				actionSelected = true
+				actionComplete = false
+			} else if allBlocked {
+				actionSelected = false
+			}
+			// Loop until chosen action is completed
+			if lockStatus[ProcID] || atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(&procchan[ProcID].Lock)), dara.UNLOCKED, dara.LOCKED) {
 				lockStatus[ProcID] = true
 				if linuxpids[ProcID] == 0 && procchan[ProcID].PID !=0 {
 					linuxpids[ProcID] = procchan[ProcID].PID
@@ -719,11 +876,14 @@ func exploreSchedule() {
 					// Extract data and update the variables from this run!
 					// We don't need the events and coverage anymore for this event
 					// They are already in the schedule
-					_, coverage := extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
+					events, coverage, hasBug = extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
 					explorer.CoverageUnion(allCoverage[ProcID], coverage)
 					dprint(dara.INFO, func() {l.Println("Process has finished")})
+					// Check for crash events and property failures. Save the current schedule if there are any such failures
+					bugFound = bugFound || hasBug
 					// Mark the process as DEAD
 					procStatus[ProcID] = DEAD
+					actionComplete = true
 				} else if procchan[ProcID].Run == -5 {
 					// The process is executing some previously chosen instruction
 					// It is unlikely we ever get the lock back in this state
@@ -732,29 +892,84 @@ func exploreSchedule() {
 					lockStatus[ProcID] = false
 					continue
 				} else if procchan[ProcID].Run == -1 {
-					// Local Runtime is waiting for instructions about the next choice to be made
-					// Ask the exploration unit what goroutine needs to be executed next
-					// Extract data and update the variables from this run!
-					events, coverage := extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
-					// Update the full coverage
-					explorer.CoverageUnion(allCoverage[ProcID], coverage)
-					// Choose the next goroutine to run
-					procs := getDaraProcs(ProcID)
-					next_routine := explore_unit.GetNextThread(procs, events, coverage)
-					procchan[ProcID].Run = -5
-					procchan[ProcID].RunningRoutine = next_routine.Thread
-					lockStatus[ProcID] = false
+					// Local Runtime is either waiting for instructions about the next choice to be made
+					// or it has completed our action
+					if actionInstalled {
+						// Action has now been completed. Woohoo!
+						actionComplete = true
+						actionInstalled = false
+						events, coverage, hasBug = extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
+						// Update the full coverage
+						explorer.CoverageUnion(allCoverage[ProcID], coverage)
+						// Check for crash events and property failures. Save the current schedule if there are any such failures
+						bugFound = bugFound || hasBug
+						// Keep holding the lock until we need to schedule a new action for this process. Don't release the lock.
+					} else {
+						// Need to install the action
+						actionInstalled = true
+						dprint(dara.INFO, func() {l.Println("Installing a new action")})
+						procchan[ProcID].Run = -5
+						if action.Type == explorer.SCHEDULE {
+							// Either the action is to schedule a goroutine
+							procchan[ProcID].RunningRoutine = next_routine.Thread
+						} else if action.Type == explorer.TIMER {
+							// Or the action is to fire off a timer
+							// Need to add the timer firing event to the schedule manually.
+							procchan[ProcID].RunningRoutine.Gid = int(next_timer.ID) // timerID
+							procchan[ProcID].RunningRoutine.RoutineCount = -5 // Special Code
+						}
+
+						// Release the lock so that the installed action can be completed.
+						lockStatus[ProcID] = false
+						atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
+					}
+				} else if procchan[ProcID].Run == -6 {
+					// This process is now blocked polling on network. Need to switch different processes!
+					isblocked[ProcID] = true
+					dprint(dara.DEBUG, func() {l.Println("Process", ProcID, "blocked polling on network")})
+					if actionInstalled {
+						dprint(dara.INFO, func() { l.Println("action was installed")})
+						// Action has now been completed. Woohoo!
+						actionComplete = true
+						actionInstalled = false
+						events, coverage, hasBug = extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
+						// Update the full coverage
+						explorer.CoverageUnion(allCoverage[ProcID], coverage)
+						// Check for crash events and property failures. Save the current schedule if there are any such failures
+						bugFound = bugFound || hasBug
+					}
+				} else if procchan[ProcID].Run == -7 {
+					// This process is now available to be run woohoo!
+					isblocked[ProcID] = false
+					dprint(dara.INFO, func() {l.Println("Process", ProcID, "unblocked from network poll")})
 					atomic.StoreInt32((*int32)(unsafe.Pointer(&(procchan[ProcID].Lock))), dara.UNLOCKED)
+					lockStatus[ProcID] = false
+					if actionSelected {
+						// Possibly schedule that action?
+					}
 				}
 			}
 			if CheckAllProcsDead() {
 				// All the processes are dead so we can move on to the next run/finish exploration
 				current_run += 1
+				explore_unit.RestartExploration()
+				restart = true
 				break
+			}
+		}
+		runend := time.Now().Sub(runStart)
+		run_times = append(run_times, runend.Seconds())
+		l.Println("Total Number of actions:", numActions)
+		if bugFound {
+			numbuggyPaths++
+			if firstBugRun == 0 {
+				firstBugRun = current_run
 			}
 		}
 	}
 	// Notify the overlord that we are done with exploration
+	l.Println("Total number of buggy paths", numbuggyPaths)
+	l.Println("First bug run:", firstBugRun)
 	command_chan <- "finish"
 	response := <-response_chan
 	if response {
@@ -766,6 +981,26 @@ func exploreSchedule() {
 	err := explore_unit.SaveVisitedSchedules()
 	if err != nil {
 		dprint(dara.FATAL, func() { l.Fatal(err) })
+	}
+	file, err := os.Create("action_times-" + *strategy + ".csv")
+	if err != nil {
+		dprint(dara.FATAL, func() {l.Fatal(err)})
+	}
+	defer file.Close()
+	for _, t := range all_times {
+		file.WriteString(fmt.Sprintf("%f\n", t))
+	}
+	rfile, err := os.Create("run_times-" + *strategy + ".csv")
+	if err != nil {
+		dprint(dara.FATAL, func() {l.Fatal(err)})
+	}
+	defer rfile.Close()
+	for _, t := range run_times {
+		rfile.WriteString(fmt.Sprintf("%f\n", t))
+	}
+	err = explore_unit.SaveStateSpaceResults("states-" + *strategy + ".csv")
+	if err != nil {
+		dprint(dara.FATAL, func() {l.Fatal(err)})
 	}
 }
 
@@ -810,12 +1045,14 @@ func initGlobalScheduler() {
 	lockStatus = make(map[int]bool)
 	linuxpids = make(map[int]uint64)
 	allCoverage = make(map[int]*explorer.CovStats)
+	clocks = make(map[int]*explorer.VirtualClock)
 	for i := 1; i <= *procs; i++ {
 		procStatus[i] = ALIVE
 		lockStatus[i] = true // By default, global scheduler owns the locks on every local scheduler
 		linuxpids[i] = uint64(0)
 		covStats := make(explorer.CovStats)
 		allCoverage[i] = &covStats 
+		clocks[i] = explorer.NewClock()
 	}
 	dprint(dara.INFO, func() { l.Println("Starting the Scheduler") })
 
@@ -832,6 +1069,7 @@ func main() {
 		recordSchedule()
 		dprint(dara.INFO, func() { l.Println("Finished recording") })
 	} else if *explore {
+		dprint(dara.INFO, func() { l.Println("Started exploring")})
 		exploreSchedule()
 		dprint(dara.INFO, func() { l.Println("Finished exploring") })
 	}

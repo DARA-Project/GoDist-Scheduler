@@ -5,6 +5,7 @@ import (
     "os"
     "log"
     "math/rand"
+    "math"
     "fmt"
     "time"
 )
@@ -15,6 +16,7 @@ func main() {
     var build_times []float64
     var load_check_times []float64
     var check_times []float64
+    var check_time_sds []float64
     for _, filename := range files {
         start := time.Now()
         checker, err := propchecker.NewChecker(filename)
@@ -44,8 +46,10 @@ func main() {
         }
         log.Println(result)
 
-        var total_time float64
-        for i := 0; i < 100; i++ {
+        var total_time []float64
+        var sum_time float64
+        N := 100000
+        for i := 0; i < N; i++ {
             context["main.b"] = i
             context["main.a"] = rand.Intn(i + 1)
             context["main.c"] = rand.Intn(2 * i + 1)
@@ -53,13 +57,21 @@ func main() {
             start = time.Now()
             _, _, err := checker.Check(context)
             elapsed = time.Since(start)
-            log.Printf("Checking properties took %s\n", elapsed)
+            //log.Printf("Checking properties took %s\n", elapsed)
             if err != nil {
                 log.Fatal(err)
             }
-            total_time += elapsed.Seconds()
+            total_time = append(total_time, elapsed.Seconds())
+            sum_time += elapsed.Seconds()
         }
-        check_times = append(check_times, total_time / 100)
+        average := sum_time / float64(N)
+        check_times = append(check_times, average)
+        var sd float64
+        for _, val := range total_time {
+            sd += math.Pow(val - average, 2)
+        }
+        sd = math.Sqrt(sd/float64(N))
+        check_time_sds = append(check_time_sds, sd)
     }
 
     f, err := os.Create("results.csv")
@@ -67,12 +79,12 @@ func main() {
         log.Fatal(err)
     }
     defer f.Close()
-    _, err = f.WriteString("Filename,NumProps,BuildTime,LoadTime,CheckTime\n")
+    _, err = f.WriteString("Filename,NumProps,BuildTime,LoadTime,CheckTime,SD\n")
     if err != nil {
         log.Fatal(err)
     }
     for i := 0; i < 4; i++ {
-        _, err = f.WriteString(files[i] + "," + num_props[i] + fmt.Sprintf(",%f,%f,%f\n", build_times[i], load_check_times[i], check_times[i]))
+        _, err = f.WriteString(files[i] + "," + num_props[i] + fmt.Sprintf(",%f,%f,%f,%f\n", build_times[i], load_check_times[i], check_times[i], check_time_sds[i]))
         if err != nil {
             log.Fatal(err)
         }

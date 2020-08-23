@@ -8,7 +8,7 @@ import (
     "go/printer"
     "bytes"
     "errors"
-    "log"
+    //"log"
     "dara"
 )
 
@@ -134,7 +134,7 @@ func (c* Checker) Check(context map[string]interface{}) (bool, *[]dara.FailedPro
     result := true
     var failures []dara.FailedPropertyEvent
     for _, property := range c.Properties {
-        log.Println("[PropertyChecker]Checking property", property.Name)
+        //log.Println("[PropertyChecker]Checking property", property.Name)
         execVar := eek.ExecVar{}
         currentPropContext := make(map[string]interface{})
         allVarsFound := true
@@ -161,7 +161,7 @@ func (c* Checker) Check(context map[string]interface{}) (bool, *[]dara.FailedPro
         if !found {
             return result, &failures, errors.New("Property doesn't return a bool value")
         }
-        log.Println("[PropertyChecker]Property checking result", temp_res_val)
+        //log.Println("[PropertyChecker]Property checking result", temp_res_val)
         if !temp_res_val {
             failure := dara.FailedPropertyEvent{Name: property.Name, Context: currentPropContext}
             failures = append(failures, failure)

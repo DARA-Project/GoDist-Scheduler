@@ -4,11 +4,14 @@
         "size" : "400M",
         "processes" : 1,
         "sched" : "Schedule.json",
-        "loglevel" : "INFO"
+        "loglevel" : "INFO",
+        "blocks_file" : "../examples/ProducerConsumer/blocks",
+        "property_file" : "/home/vaastav/go-path/src/github.com/DARA-Project/GoDist-Scheduler/examples/ProducerConsumer/property/ProducerConsumer.prop"
     },
     "instr" : {
-        "dir" : "./example",
-        "file" : ""
+        "file" : "../examples/ProducerConsumer/ProducerConsumer.go",
+        "dir" : "",
+        "blocks_file" : "../examples/ProducerConsumer/blocks"
     },
     "bench" : {
         "path" : "stats.csv",

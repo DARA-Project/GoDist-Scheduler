@@ -1,0 +1,21 @@
+{
+    "exec" : {
+        "path" : "../structured/dphil/diningphilosopher.go",
+        "size" : "600M",
+        "processes" : 3,
+        "sched" : "Schedule.json",
+        "loglevel" : "DEBUG",
+        "build" : {
+            "build_path" : "../structured/dphil/build.sh",
+            "run_path" : "run.sh"
+        }
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}

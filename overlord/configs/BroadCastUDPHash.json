@@ -1,0 +1,22 @@
+{
+    "exec" : {
+        "path" : "../examples/broadcastUDPHash/build.sh",
+        "size" : "600M",
+        "processes" : 3,
+        "sched" : "Schedule.json",
+        "loglevel" : "DEBUG",
+        "build" : {
+            "build_path" : "../examples/broadcastUDPHash/build.sh",
+            "run_path" : "run.sh"
+        },
+        "maxruns": 1
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}

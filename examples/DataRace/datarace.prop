@@ -1,0 +1,7 @@
+package prop
+
+//LessThan5
+//child_i
+func LessThan5(I int) bool {
+    return I < 5
+}

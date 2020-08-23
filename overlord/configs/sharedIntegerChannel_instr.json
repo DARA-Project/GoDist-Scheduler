@@ -1,0 +1,17 @@
+{
+    "exec" : {
+        "path" : "../examples/sharedIntegerChannel_instrumentation/sharedIntegerChannel.go",
+        "size" : "400M",
+        "processes" : 1,
+        "sched" : "Schedule.json",
+        "loglevel" : "INFO"
+    },
+    "instr" : {
+        "dir" : "../examples/sharedIntergerChannel_instrumentation/sharedIntegerChannel.go",
+        "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 10
+    }
+}

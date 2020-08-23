@@ -1,0 +1,8 @@
+package property
+
+//EqualSendingsDeliveries
+//NumSendings
+//NumDeliveries
+func equalSendingsDeliveries(A int, B int) bool {
+    return A == B
+}

@@ -1,8 +1,8 @@
 {
     "exec" : {
         "path" : "../../../../go.etcd.io/etcd/dgo_build",
-        "size" : "400M",
-        "processes" : 1,
+        "size" : "600M",
+        "processes" : 3,
         "sched" : "file_read.json",
         "loglevel" : "FATAL",
         "build" : {
@@ -11,7 +11,8 @@
         }
     },
     "instr" : {
-        "dir" : "./example",
+        "dir" : "../../../../go.etcd.io/etcd/",
+        "blocks_file" : "etcd_blocks",
         "file" : ""
     },
     "bench" : {

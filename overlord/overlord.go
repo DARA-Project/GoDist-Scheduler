@@ -49,6 +49,10 @@ type ExecOptions struct {
 	PropertyFile  string       `json:"property_file"`
 	BlocksFile    string       `json:"blocks_file"`
 	Strategy      string       `json:"strategy"`
+	Microbenchmark bool        `json:"microbench"`
+	Nanobenchmark bool         `json:"nanobench"`
+	MaxDepth      int          `json:"maxdepth"`
+	MaxRuns       int          `json:"maxruns"`
 }
 
 //Options specific for benchmarking
@@ -113,7 +117,10 @@ func instrument_dir(directory string, outdir string, blocks_file string) error {
 	var allBlocks []string
 	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			log.Println(err)
+		}
+		if strings.Contains(path, "vendor/") {
+			return nil
 		}
 		if !info.IsDir() && filepath.Ext(path) == ".go" {
 			outpath := strings.Replace(path, directory, outdir, -1)
@@ -128,9 +135,10 @@ func instrument_dir(directory string, outdir string, blocks_file string) error {
 		return nil
 	})
 	if err != nil {
-		return err
+		log.Println(err)
 	}
 	err = write_blocks_file(blocks_file, allBlocks)
+	log.Println("Total number of blocks is", len(allBlocks))
 	return err
 }
 
@@ -183,6 +191,16 @@ func set_dara_mode(mode string) {
 	os.Setenv("DARA_MODE", mode)
 }
 
+//Sets Nanobenchmark enivornment variable
+func set_nanobenchmark() {
+	os.Setenv("NANOBENCH", "true")
+}
+
+//Set Microbenchmark environment variable
+func set_microbenchmark() {
+	os.Setenv("UBENCH", "true")
+}
+
 //Generic function for copying file from src to dst
 func copy_file(src string, dst string) error {
 	in, err := os.Open(src)
@@ -217,10 +235,16 @@ func install_global_scheduler() error {
 }
 
 //Launches the global scheduler and the run script to run the system
-func launch_global_scheduler(mode string, numProcs int, sched_file string, strategy string) (*exec.Cmd, error) {
+func launch_global_scheduler(mode string, numProcs int, sched_file string, strategy string, maxdepth int, maxruns int) (*exec.Cmd, error) {
 	arg := "--" + mode + "=true --procs=" + strconv.Itoa(numProcs) + " --schedule=" + sched_file
 	if strategy != "" {
 		arg += " --strategy=" + strategy
+	}
+	if maxdepth != 0 {
+		arg += " --maxdepth=" + strconv.Itoa(maxdepth)
+	}
+	if maxruns != 0 {
+		arg += " --maxruns=" + strconv.Itoa(maxruns)
 	}
 	cmd := exec.Command("/bin/bash", "./exec_script.sh", arg)
 	cmd.Stdout = os.Stdout
@@ -239,12 +263,12 @@ func start_go_benchmark() (*exec.Cmd, error) {
 }
 
 //Starts the global scheduler for this dara run
-func start_global_scheduler(mode string, numProcs int, sched_file string, strategy string) (*exec.Cmd, error) {
+func start_global_scheduler(mode string, numProcs int, sched_file string, strategy string, maxdepth int, maxruns int) (*exec.Cmd, error) {
 	err := install_global_scheduler()
 	if err != nil {
 		return nil, err
 	}
-	cmd, err := launch_global_scheduler(mode, numProcs, sched_file, strategy)
+	cmd, err := launch_global_scheduler(mode, numProcs, sched_file, strategy, maxdepth, maxruns)
 	if err != nil {
 		return nil, err
 	}
@@ -321,6 +345,7 @@ func copy_launch_script(dir string) error {
 	if err != nil {
 		return err
 	}
+	log.Println("Copying exec script from", cwd, " to ", dir)
 	err = copy_file(cwd+"/exec_script.sh", dir+"/exec_script.sh")
 	return err
 }
@@ -369,14 +394,16 @@ func (d * DaraRpcServer) killprogram() error {
         cmd := exec.Command("pkill", program)
         err := cmd.Run()
         if err != nil {
-            d.logger.Println("Error while killing program", err)
+			// This "error" means the program ended before we could kill it
+            //d.logger.Println("Error while killing program", err)
             return err
         }
     } else {
         cmd := exec.Command("pkill", d.Options.Build.RunScript)
         err := cmd.Run()
         if err != nil {
-            d.logger.Println("Error while killing program", err)
+			// This "error" means the program ended before we could kill it
+            //d.logger.Println("Error while killing program", err)
             return err
         }
     }
@@ -392,6 +419,16 @@ func (d * DaraRpcServer) KillExecution(unused_arg int, ack *bool) error {
     }
     *ack = true
     return nil
+}
+
+func (d * DaraRpcServer) RestartExecution(unused_arg int, ack * bool) error {
+	f, err := os.Create("./explore_restart")
+	if err != nil {
+		d.logger.Println("Failed to finish exploration")
+        return err
+	}
+	f.Close()
+	return nil
 }
 
 func (d * DaraRpcServer) FinishExecution(unused_arg int, ack *bool) error {
@@ -470,6 +507,12 @@ func setup(options ExecOptions, mode string) error {
 	if err != nil {
 		return err
 	}
+	if options.Nanobenchmark {
+		set_nanobenchmark()
+	}
+	if options.Microbenchmark {
+		set_microbenchmark()
+	}
 	err = copy_launch_script(dir)
 	if err != nil {
 		return err
@@ -502,7 +545,7 @@ func record(options ExecOptions) error {
 	if err != nil {
 		return err
 	}
-	cmd, err := start_global_scheduler("record", options.NumProcesses, options.SchedFile, "")
+	cmd, err := start_global_scheduler("record", options.NumProcesses, options.SchedFile, "", 0, 0)
 	if err != nil {
 		return err
 	}
@@ -519,7 +562,7 @@ func replay(options ExecOptions) error {
 	if options.PreloadReplay {
 		set_fast_replay()
 	}
-	cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "")
+	cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "", 0, 0)
 	if err != nil {
 		return err
 	}
@@ -539,7 +582,7 @@ func explore(options ExecOptions) error {
 		return err
 	}
     go start_rpc_server(options)
-	cmd, err := start_global_scheduler("explore", options.NumProcesses, options.SchedFile, options.Strategy)
+	cmd, err := start_global_scheduler("explore", options.NumProcesses, options.SchedFile, options.Strategy, options.MaxDepth, options.MaxRuns)
 	if err != nil {
 		return err
 	}
@@ -592,7 +635,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
 		}
 		fmt.Println("Record Iteration #", i)
 		start := time.Now()
-		cmd, err := start_global_scheduler("record", options.NumProcesses, options.SchedFile, "")
+		cmd, err := start_global_scheduler("record", options.NumProcesses, options.SchedFile, "", 0, 0)
 		if err != nil {
 			return err
 		}
@@ -627,7 +670,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
 		}
 		fmt.Println("Replay Iteration #", i)
 		start := time.Now()
-		cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "")
+		cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "", 0, 0)
 		if err != nil {
 			return err
 		}
@@ -650,7 +693,7 @@ func bench(options ExecOptions, bOptions BenchOptions) error {
 			set_fast_replay()
 			fmt.Println("Fast Replay Iteration #", i)
 			start := time.Now()
-			cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "")
+			cmd, err := start_global_scheduler("replay", options.NumProcesses, options.SchedFile, "", 0, 0)
 			if err != nil {
 				return err
 			}

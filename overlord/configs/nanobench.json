@@ -1,0 +1,23 @@
+{
+    "exec" : {
+        "path" : "../u-benchmarks/go_vs_dgo/sys_test.go",
+        "size" : "400M",
+        "processes" : 1,
+        "sched" : "Schedule.json",
+        "loglevel" : "DEBUG",
+        "fast_replay" : true,
+        "build" : {
+            "build_path" : "../u-benchmarks/go_vs_dgo/dara_build.sh",
+            "run_path" : "dara_run.sh"
+        },
+        "nanobench" : true
+    },
+    "instr" : {
+        "dir" : "./example",
+        "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}

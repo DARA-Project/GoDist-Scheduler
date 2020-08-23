@@ -4,8 +4,9 @@
         "size" : "400M",
         "processes" : 1,
         "sched" : "Schedule.json",
-        "loglevel" : "INFO",
-        "blocks_file" : "../examples/SimpleInstrument/blocks"
+        "loglevel" : "OFF",
+        "blocks_file" : "../examples/SimpleInstrument/blocks",
+        "microbench" : true
     },
     "instr" : {
         "dir" : "",

@@ -1,0 +1,22 @@
+{
+    "exec" : {
+        "path" : "../examples/DataRace/datarace.go",
+        "size" : "400M",
+        "processes" : 1,
+        "sched" : "Schedule.json",
+        "loglevel" : "FATAL",
+        "blocks_file" : "../examples/DataRace/blocks",
+    	"property_file" : "/home/vaastav/go-path/src/github.com/DARA-Project/GoDist-Scheduler/examples/DataRace/datarace.prop",
+        "maxruns" : 20,
+        "strategy" : "random"
+    },
+    "instr" : {
+        "dir" : "",
+        "file" : "../examples/DataRace/datarace.go",
+        "blocks_file" : "../examples/DataRace/blocks"
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}

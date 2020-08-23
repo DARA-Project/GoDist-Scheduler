@@ -1,5 +1,5 @@
-Filename,NumProps,BuildTime,LoadTime,CheckTime
-./sample1.prop,1,0.082753,0.000973,0.000011
-./sample2.prop,2,0.183082,0.001150,0.000023
-./sample5.prop,5,0.450529,0.003093,0.000069
-./sample10.prop,10,0.897496,0.005431,0.000117
+Filename,NumProps,BuildTime,LoadTime,CheckTime,SD
+./sample1.prop,1,0.081185,0.001006,0.000006,0.000002
+./sample2.prop,2,0.161359,0.001161,0.000012,0.000003
+./sample5.prop,5,0.405315,0.002943,0.000031,0.000006
+./sample10.prop,10,0.831785,0.005382,0.000075,0.001224

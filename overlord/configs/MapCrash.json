@@ -4,7 +4,9 @@
         "size" : "400M",
         "processes" : 1,
         "sched" : "Schedule.json",
-        "loglevel" : "INFO"
+        "loglevel" : "DEBUG",
+        "maxruns" : 10,
+        "strategy": "frequency"
     },
     "instr" : {
         "dir" : "./example",

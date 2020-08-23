@@ -1,0 +1,22 @@
+{
+    "exec" : {
+        "path" : "../../../../go.etcd.io/etcd/dgo_build",
+        "size" : "400M",
+        "processes" : 1,
+        "sched" : "file_read.json",
+        "loglevel" : "FATAL",
+        "build" : {
+            "build_path" : "../../../../go.etcd.io/etcd/dgo_build",
+            "run_path" : "run.sh"
+        }
+    },
+    "instr" : {
+        "dir" : "../../../cockroachdb/cockroach/",
+        "blocks_file" : "cockroach_blocks",
+        "file" : ""
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}

@@ -41,6 +41,7 @@ def plot_vertical_bars(name, data, xlabels, legend, ylabel,figsize):
             i += 1
 
         ax.set_ylabel(ylabel)
+        ax.set_xlabel("Number of scheduled actions in the application")
         ax.set_xticks(indices + width * (len(data)-1)/2)
         ax.set_xticklabels(xlabels)
         #ax.legend(rects, legend, loc='lower left', bbox_to_anchor=(0.0,1.01), frameon=False, ncol=int(len(data)/2))
@@ -64,7 +65,6 @@ def main():
     for f in files:
         print("Processing",f)
         name = os.path.splitext(os.path.basename(f))[0]
-        names += [name]
         df = pd.read_csv(f)
         normal_val = get_value(df, "Normal")
         record_val = get_value(df, "Record")
@@ -76,8 +76,8 @@ def main():
     data += [normal]
     data += [record]
     data += [replay]
-    print(data)
-    plot_vertical_bars("Macro_Bench", data, names, ['Go v1.10.4', 'Record', 'Replay'], 'Slowdown factor', (8,4)) 
+    df = pd.read_csv('events.csv')
+    plot_vertical_bars("Macro_Bench", data, names, ['Go v1.10.4', 'Record', 'Schedule'], 'Slowdown factor', (8,4)) 
 
 if __name__ == '__main__':
     main()

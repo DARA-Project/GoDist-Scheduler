@@ -1,0 +1,20 @@
+{
+    "exec" : {
+        "path" : "../examples/SimpleInstrument/file_read.go",
+        "size" : "400M",
+        "processes" : 1,
+        "sched" : "Schedule.json",
+        "loglevel" : "OFF",
+        "blocks_file" : "../examples/SimpleInstrument/blocks",
+        "microbench" : true
+    },
+    "instr" : {
+        "dir" : "",
+        "file" : "../examples/BlockBug/blockbug.go",
+        "blocks_file" : "../examples/SimpleInstrument/blocks"
+    },
+    "bench" : {
+        "path" : "stats.csv",
+        "iter" : 1
+    }
+}
