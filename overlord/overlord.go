@@ -35,6 +35,7 @@ type Options struct {
 type BuildOptions struct {
 	BuildScript string `json:"build_path"`
 	RunScript   string `json:"run_path"`
+	CleanScript string `json:"clean_path"` // CleanScript cleans the environment before every restart
 }
 
 //Dara execution options
@@ -313,6 +314,17 @@ func execute_build_script(script string, execution_dir string) error {
 	return err
 }
 
+func execute_clean_script(script string) error {
+	cmd := exec.Command(script)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 //Build the program executable using vanilla dgo
 func build_target_program(dir string) error {
 	err := os.Chdir(dir)
@@ -422,6 +434,11 @@ func (d * DaraRpcServer) KillExecution(unused_arg int, ack *bool) error {
 }
 
 func (d * DaraRpcServer) RestartExecution(unused_arg int, ack * bool) error {
+	if d.Options.Build.CleanScript != "" {
+		// Run the environment clean script between runs
+		err := execute_clean_script(d.Options.Build.CleanScript)
+		d.logger.Println("Failed to clean environment", err)
+	}
 	f, err := os.Create("./explore_restart")
 	if err != nil {
 		d.logger.Println("Failed to finish exploration")

@@ -7,7 +7,7 @@
         "loglevel" : "FATAL",
         "blocks_file" : "../structured/dphil_local/blocks",
         "maxruns" : 50,
-        "strategy" : "frequency"
+        "strategy" : "random"
     },
     "instr" : {
         "file" : "../structured/dphil_local/dining_philosophers.go",

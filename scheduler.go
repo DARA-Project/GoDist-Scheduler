@@ -747,6 +747,7 @@ func exploreSchedule() {
 	var run_times []float64
 	var firstBugRun int
 	var numbuggyPaths int
+	var bugruns []int
 	for current_run < MAX_EXPLORE_RUNS {
 		l.Println("Exploring path #", current_run + 1)
 		isblocked := make(map[int]bool)
@@ -828,7 +829,7 @@ func exploreSchedule() {
 				numActions += 1
 				threads := getAllDaraProcs()
 				start := time.Now()
-				action = explore_unit.GetNextAction(threads, events, coverage, &clocks, &allCoverage, isblocked)
+				action = explore_unit.GetNextAction(threads, events, coverage, &clocks, isblocked)
 				end := time.Now().Sub(start)
 				all_times = append(all_times, end.Seconds())
 				// If action is restart then kill current execution and restart
@@ -876,14 +877,19 @@ func exploreSchedule() {
 					// Extract data and update the variables from this run!
 					// We don't need the events and coverage anymore for this event
 					// They are already in the schedule
-					events, coverage, hasBug = extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
-					explorer.CoverageUnion(allCoverage[ProcID], coverage)
-					dprint(dara.INFO, func() {l.Println("Process has finished")})
-					// Check for crash events and property failures. Save the current schedule if there are any such failures
-					bugFound = bugFound || hasBug
-					// Mark the process as DEAD
-					procStatus[ProcID] = DEAD
-					actionComplete = true
+					if actionInstalled {
+						events, coverage, hasBug = extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
+						explorer.CoverageUnion(allCoverage[ProcID], coverage)
+						explore_unit.UpdateActionCoverage(events, coverage)
+						dprint(dara.INFO, func() {l.Println("Process has finished")})
+						// Check for crash events and property failures. Save the current schedule if there are any such failures
+						bugFound = bugFound || hasBug
+						// Mark the process as DEAD
+						procStatus[ProcID] = DEAD
+						actionComplete = true
+						actionInstalled = false
+					}
+					// We shouldn't be in this state if action was installed
 				} else if procchan[ProcID].Run == -5 {
 					// The process is executing some previously chosen instruction
 					// It is unlikely we ever get the lock back in this state
@@ -901,6 +907,7 @@ func exploreSchedule() {
 						events, coverage, hasBug = extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
 						// Update the full coverage
 						explorer.CoverageUnion(allCoverage[ProcID], coverage)
+						explore_unit.UpdateActionCoverage(events, coverage)
 						// Check for crash events and property failures. Save the current schedule if there are any such failures
 						bugFound = bugFound || hasBug
 						// Keep holding the lock until we need to schedule a new action for this process. Don't release the lock.
@@ -935,6 +942,7 @@ func exploreSchedule() {
 						events, coverage, hasBug = extractDataFromProc(ProcID, &event_index, &current_schedule, &current_context)
 						// Update the full coverage
 						explorer.CoverageUnion(allCoverage[ProcID], coverage)
+						explore_unit.UpdateActionCoverage(events, coverage)
 						// Check for crash events and property failures. Save the current schedule if there are any such failures
 						bugFound = bugFound || hasBug
 					}
@@ -965,6 +973,7 @@ func exploreSchedule() {
 			if firstBugRun == 0 {
 				firstBugRun = current_run
 			}
+			bugruns = append(bugruns, current_run)
 		}
 	}
 	// Notify the overlord that we are done with exploration
@@ -1001,6 +1010,14 @@ func exploreSchedule() {
 	err = explore_unit.SaveStateSpaceResults("states-" + *strategy + ".csv")
 	if err != nil {
 		dprint(dara.FATAL, func() {l.Fatal(err)})
+	}
+	bugrunfile, err := os.Create("bugruns-" + *strategy + ".csv")
+	if err != nil {
+		dprint(dara.FATAL, func(){l.Fatal(err)})
+	}
+	defer bugrunfile.Close()
+	for _, v := range bugruns {
+		bugrunfile.WriteString(fmt.Sprintf("%d\n", v))
 	}
 }
 

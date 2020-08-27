@@ -8,7 +8,9 @@ import (
 	"os"
 	"strconv"
 	"time"
-    "log"
+	"log"
+	"sort"
+	"strings"
 )
 
 // Strategy represents the exploration strategy currently deployed
@@ -105,6 +107,9 @@ func dprint(level int, pfunc func()) {
 	}
 }
 
+// State represents a unique state in the system
+type State string
+
 // Explorer is the exploration unit that performs the exploration
 type Explorer struct {
 	logFilePath string
@@ -123,6 +128,7 @@ type Explorer struct {
 	initStatus  map[int]bool
 	stateSpaceResults []int64
 	runningProc int
+	exploredStates map[State]bool
 }
 
 // loadVisitedSchedule loads all the previously seen schedules
@@ -384,7 +390,6 @@ func (e *Explorer) GetNextThread(nextPossibleThreads *[]ProcThread, events *[]da
 	e.currentSchedule = e.currentSchedule + nextThread.String()
 	if _, ok := e.visitedScheds[e.currentSchedule]; !ok {
 		e.visitedScheds[e.currentSchedule] = true
-		e.uniqueStates += 1
 		e.currentDepth += 1
 	}
 	return nextThread
@@ -411,7 +416,6 @@ func (e *Explorer) GetNextTimer(clock *VirtualClock, ProcID int) *ProcTimer {
 	e.currentSchedule = e.currentSchedule + procTimer.String()
 	if _, ok := e.visitedScheds[e.currentSchedule]; !ok {
 		e.visitedScheds[e.currentSchedule] = true
-		e.uniqueStates += 1
 		e.currentDepth += 1
 	}
 	return procTimer
@@ -453,25 +457,51 @@ func (e *Explorer) UpdateCurrentActionStats(events *[]dara.Event, coverage *CovS
 	}
 }
 
+func (e *Explorer) UpdateActionCoverage(events *[]dara.Event, coverage *CovStats) {
+	if e.currentAction != "" || e.currentAction != "RESTART" {
+		if coverage != nil {
+			e.UpdateCurrentActionStats(events, coverage)
+		}
+		if e.runningProc != 0 {
+			// Update the coverage of the current run
+			CoverageUnion(e.currentCoverage[e.runningProc], coverage)
+			// Update the total coverage
+			CoverageUnion(e.totalCoverage[e.runningProc], coverage)
+		}
+		// Update the unique states counter if we have not seen this state before
+		var currentState State
+		var procStates []string
+		for i := 1; i <= len(e.currentCoverage); i++ {
+			var procState string
+			procState = "P" + strconv.Itoa(i)
+			var keys []string
+			cov := e.currentCoverage[i]
+			for k := range *cov {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			var coverageStrings []string
+			for _, key := range keys {
+				coverageStrings = append(coverageStrings, key + ":" + strconv.FormatUint((*cov)[key], 10))
+			}
+			procState = procState + "," + strings.Join(coverageStrings, ",")
+			procStates = append(procStates, procState)
+		}
+		currentState = State(strings.Join(procStates, ","))
+		if _, ok := e.exploredStates[currentState]; !ok {
+			e.uniqueStates += 1
+			e.exploredStates[currentState] = true
+		} 
+	}
+}
+
 // GetNextAction gets the next action to be executed
 // threads: List of all goroutines in the system
 // events: Events that were executed by the last action
 // coverage: Coverage statistics of the last action
 // clocks: Virtual Clocks of all the processes
 // allCoverage: Total Coverage across all nodes across all runs
-func (e *Explorer) GetNextAction(threads *[]ProcThread, events *[]dara.Event, coverage *CovStats, clocks *map[int]*VirtualClock, allCoverage *map[int]*CovStats, isblocked map[int]bool) Action {
-	// Update current action stats
-	if e.currentAction != "" || e.currentAction != "RESTART" {
-		if coverage != nil {
-			e.UpdateCurrentActionStats(events, coverage)
-			if e.runningProc != 0 {
-				// Update the coverage of the current run
-				CoverageUnion(e.currentCoverage[e.runningProc], coverage)
-				// Update the total coverage
-				CoverageUnion(e.totalCoverage[e.runningProc], coverage)
-			}
-		}
-	}
+func (e *Explorer) GetNextAction(threads *[]ProcThread, events *[]dara.Event, coverage *CovStats, clocks *map[int]*VirtualClock, isblocked map[int]bool) Action {
 	// Choose next action
 	nextPossibleThreads := e.getNextPossibleThreads(threads, clocks, isblocked)
 	if e.currentDepth >= e.maxDepth || (len(*nextPossibleThreads) == 0 && e.noWaitingEvents(clocks)) {
@@ -532,6 +562,7 @@ func MountExplorer(logFilePath string, explorationStrategy Strategy, seed * dara
 		e.totalCoverage[i] = &covStatsTotal
 		e.initStatus[i] = false // Process hasn't been initialized yet
 	}
+	e.exploredStates = make(map[State]bool)
 	e.BuildActionStats()
 	e.visitedScheds = make(map[string]bool)
 	LogLevel = level
