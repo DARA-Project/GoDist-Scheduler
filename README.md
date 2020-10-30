@@ -33,6 +33,16 @@ Ensure that the modified go runtime (dgo) is setup correctly
     > which dgo  # Output should be /usr/bin/dgo
 ```
 
+Make sure that the binary `GoDist-Scheduler` is in your `$PATH`. You can find out by running:
+
+``` sh
+which GoDist-Scheduler
+```
+
+If you cannot find it, link `$GOPATH/bin/GoPath-Scheduler` to a directory in your `$PATH`. If `GoPath-Scheduler` is not in `$GOPATH/bin` run `go install` and the executable should be on that file.
+
+You will also need to have `dinv` cloned. You can get the [code here](https://github.com/ModelInference/dinv) and make sure to put it in `$GOPATH/src/bitbucket.org/bestchai/dinv`.
+
 ## Running Dara
 
 ### Configuration File
