@@ -1,5 +1,0 @@
-{
-    "StateVars": ["Excused", "RequestStick", "Thinking", "BUFF_SIZE", "ExcuseMe", "Ack", "ReleaseStick", "SIZEOFINT", "SLEEP_MAX", "n", "Eating"],
-    "EventVars": ["Type"],
-    "Servers": [ {"Name": "cerf", "Location": "localhost", "Cpus": 4} ]
-}
